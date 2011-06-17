@@ -188,6 +188,14 @@ public final class Utils {
 	}
 	
 	/**
+	 * @return OPP Status request action
+	 */
+	public static String getStatusRequestAction(Class<? extends Probe> probeClass) {
+		// TODO: make this an OPP name
+		return probeClass.getName() + ".REQUEST_STATUS";
+	}
+	
+	/**
 	 * @param probeClass
 	 * @return OPP Data action for probe with class
 	 */
@@ -292,28 +300,4 @@ public final class Utils {
 		lock.acquire();
 		return lock;
 	}
-	/*
-	public static Archive<File> getDefaultFileArchive(Context context) {
-		Archive<File> backupArchive = FileDirectoryArchive.getRollingFileArchive(new File("/sdcard/funf/backup"));
-		Archive<File> mainArchive = new CompositeFileArchive(
-				FileDirectoryArchive.getTimestampedFileArchive(new File("/sdcard/funf/archive")),
-				FileDirectoryArchive.getTimestampedFileArchive(context.getDir("funf_archive", Context.MODE_PRIVATE))
-				);
-		return new BackedUpArchive(mainArchive, backupArchive);
-	}
-	
-	public static Gson getGson() {
-		return new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Bundle.class, new BundleSerializer()).create();
-	}
-	 public static class BundleSerializer implements JsonSerializer<Bundle> {
-			@Override
-			public JsonElement serialize(Bundle bundle, Type type, JsonSerializationContext context) {
-				JsonObject object = new JsonObject();
-				for (Map.Entry<String, Object> entry : Utils.getValues(bundle).entrySet()) {
-					object.add(entry.getKey(), context.serialize(entry.getValue()));
-				}
-				return object;
-			}
-	 }
-	 */
 }

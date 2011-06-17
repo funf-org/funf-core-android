@@ -46,7 +46,8 @@ public class ProbeController extends Service  {
 				public void runCommand() {
 					// TODO: check that the required permissions and features exist for device and app
 					for (String probeInterface : nonNullStrings(getProbe().getProbeInterfaces())) {
-			        	registerReceiver(probeMessageReceiver, new IntentFilter(probeInterface + ".GET"));
+			        	registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getDataRequestAction(getProbe().getClass())));
+			        	registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getStatusRequestAction(getProbe().getClass())));
 			        }
 				}
 			};

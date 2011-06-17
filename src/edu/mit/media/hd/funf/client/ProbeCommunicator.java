@@ -1,5 +1,7 @@
-package edu.mit.media.hd.funf.probe;
+package edu.mit.media.hd.funf.client;
 
+import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.Utils;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,6 +28,7 @@ public class ProbeCommunicator {
 		Intent i = new Intent(probeClass.getName());
 		i.setPackage(context.getPackageName());
 		i.putExtra("PARAMETERS", params);
+		i.putExtra("REQUESTER", context.getPackageName());
 		context.sendBroadcast(i);
 	}
 	
