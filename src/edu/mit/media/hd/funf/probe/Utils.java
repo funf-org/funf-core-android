@@ -160,6 +160,7 @@ public final class Utils {
 	 * @param second
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> T[] concat(T[] first, T[] second) {
 		T[] result = (T[])new Object[first.length + second.length];
 		System.arraycopy(first, 0, result, 0, first.length);
@@ -247,6 +248,7 @@ public final class Utils {
 	 * @param context
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static Set<Class<? extends Probe>> getAvailableProbeClasses(Context context) {
 		Set<Class<? extends Probe>> probes = new HashSet<Class<? extends Probe>>();
 		try {

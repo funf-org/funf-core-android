@@ -1,15 +1,20 @@
 package edu.mit.media.hd.funf.storage;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import android.app.Service;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import edu.mit.media.hd.funf.FunfConfig;
+import edu.mit.media.hd.funf.ProbeDatabaseConfig;
 
 /**
  * Simple database service that is able to write timestamp, name, value tuples.  
@@ -21,30 +26,23 @@ import android.util.Log;
  * @author alangardner
  *
  */
-public abstract class DatabaseService extends Service {
+public class DatabaseService extends Service {
 
 	public static final String TAG = DatabaseService.class.getName();
-	public static final String TIMESTAMP_KEY = "TIMESTAMP";
+	public static final String DATABASE_NAME_KEY = "DATABASE_NAME";
 	public static final String NAME_KEY = "NAME";
 	public static final String VALUE_KEY = "VALUE";
+	public static final String TIMESTAMP_KEY = "TIMESTAMP";
 	
 	private Thread writeThread;
 	private LinkedBlockingQueue<Message> dataQueue;
-	private DatabaseHelper dbHelper;
-	private String databaseName;
-	private Archive<File> archive;
-	
-	
-	protected abstract String getDatabaseName();
-	protected abstract Archive<File> getArchive();
+	private Map<String, DatabaseHelper> databaseHelpers;
 	
 	@Override
 	public void onCreate() {
 		Log.i(TAG, "Creating");
-		this.databaseName = getDatabaseName();
-		this.archive = getArchive();
 		dataQueue = new LinkedBlockingQueue<Message>();
-		dbHelper = new DatabaseHelper(this, databaseName, 1);
+		runReloadConfig();
 		writeThread = new Thread(new Runnable(){
 			public void run() {
 				while(true) {
@@ -57,7 +55,9 @@ public abstract class DatabaseService extends Service {
 		    			} else {
 		    				// Handle messages
 		    				if (Message.ARCHIVE.equals(message.name)) {
-		    					runArchive();
+		    					runArchive(message.databaseName);
+		    				} else if (Message.RELOAD.equals(message.name)) {
+		    					runReloadConfig();
 		    				} else if (Message.END.equals(message.name)) {
 		    					break; // end loop, Signal to exit
 		    				}
@@ -88,7 +88,7 @@ public abstract class DatabaseService extends Service {
 	@Override
 	public void onDestroy() {
 		Log.i(TAG, "Destroying");
-		dataQueue.offer(new Message(Message.END, null)); // Signal the end of the queue
+		dataQueue.offer(new Message(null, Message.END, null)); // Signal the end of the queue
 		try {
 			// Try waiting until the thread is finished
 			writeThread.join(500);
@@ -97,7 +97,9 @@ public abstract class DatabaseService extends Service {
 			dataQueue.clear();
 			writeThread.stop();
 		}
-		dbHelper.close();
+		for (DatabaseHelper dbHelper : databaseHelpers.values()) {
+			dbHelper.close();
+		}
 		Log.i(TAG, "Destroyed");
 	}
 
@@ -105,9 +107,10 @@ public abstract class DatabaseService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.i(TAG, "Started");
 		final long timestamp = intent.getLongExtra(TIMESTAMP_KEY, 0L);
+		final String databaseName = intent.getStringExtra(DATABASE_NAME_KEY);
 		final String name = intent.getStringExtra(NAME_KEY);
 		final String value = intent.getStringExtra(VALUE_KEY);
-		save(timestamp, name, value);
+		save(databaseName, name, value, timestamp);
 		stopSelf(startId); // TODO: may decide it is not worth stopping between writes, or set timeout
 		return Service.START_STICKY;
 	}
@@ -118,27 +121,72 @@ public abstract class DatabaseService extends Service {
 	 * @param name
 	 * @param value
 	 */
-	public void save(long timestamp, final String name, final String value) {
+	public void save(String databaseName, final String name, final String value, long timestamp) {
 		if (timestamp == 0L || name == null || value == null) {
 			Log.e(TAG, "Unable to save data.  Not all required values specified. " + timestamp + " " + name + " - " + value);
 		} else {
 			Log.i(TAG, "Queing up data");
-			dataQueue.offer(new Datum(timestamp, name, value));
+			dataQueue.offer(new Datum(databaseName, name, value, timestamp));
 		}
 	}
 	
 	public void archive() {
-		Log.i(TAG, "Queing archive");
-		dataQueue.offer(new Message(Message.ARCHIVE, null));
+		for (String databaseName : databaseHelpers.keySet()) {
+			archive(databaseName);
+		}
 	}
 	
-	private void runArchive() {
+	public void archive(String databaseName) {
+		Log.i(TAG, "Queing archive");
+		dataQueue.offer(new Message(databaseName, Message.ARCHIVE, null));
+	}
+	
+	protected Archive<File> getArchive(String databaseName) {
+		return getDefaultArchive(this, databaseName);
+	}
+	
+	public static Archive<File> getDefaultArchive(Context contex, String databaseName) {
+		String rootSdCardPath = "/sdcard/" + contex.getPackageName() + "/" + databaseName + "/";
+		Archive<File> backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
+		Archive<File> mainArchive = new CompositeFileArchive(
+				FileDirectoryArchive.getTimestampedFileArchive(new File(rootSdCardPath + "archive")),
+				FileDirectoryArchive.getTimestampedFileArchive(contex.getDir("funf_" + databaseName + "_archive", Context.MODE_PRIVATE))
+				);
+		return new BackedUpArchive(mainArchive, backupArchive);
+	}
+	
+	
+	private void runArchive(String databaseName) {
 		Log.i(TAG, "Running archive: " + getDatabasePath(databaseName));
+		DatabaseHelper dbHelper = databaseHelpers.get(databaseName);
 		dbHelper.close();
+		Archive<File> archive = getArchive(databaseName);
 		if (archive.add(getDatabasePath(databaseName))) {
 			getDatabasePath(databaseName).delete();
 		}
 		dbHelper = new DatabaseHelper(this, databaseName, 1);
+	}
+	
+	public void reloadConfig() {
+		Log.i(TAG, "Queing reload");
+		dataQueue.offer(new Message(null, Message.RELOAD, null));
+	}
+	
+	private void runReloadConfig() {
+		Log.i(TAG, "Reloading config");
+		for (DatabaseHelper dbHelper : databaseHelpers.values()) {
+			dbHelper.close();
+		}
+		databaseHelpers = new HashMap<String, DatabaseHelper>();
+		FunfConfig config = FunfConfig.getFunfConfig(this);
+		if (config == null) {
+			stopSelf();
+		} else {
+			for (Map.Entry<String,ProbeDatabaseConfig> dbEntry : config.getDatabases().entrySet()) {
+				String dbName = dbEntry.getKey();
+				databaseHelpers.put(dbName, new DatabaseHelper(this, dbName, 1));
+			}
+		}
 	}
 	
 	
@@ -149,6 +197,11 @@ public abstract class DatabaseService extends Service {
 	 */
 	private void writeToDatabase(Datum datum) {
 		Log.i(TAG, "Writing to database");
+		DatabaseHelper dbHelper = databaseHelpers.get(datum.databaseName);
+		if (dbHelper == null) {
+			Log.e(TAG, "DataBaseService: no database with name '" + datum.databaseName + "'");
+			return;
+		}
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
 		try {
 			db.beginTransaction();
@@ -175,8 +228,8 @@ public abstract class DatabaseService extends Service {
 	 */
 	private static class Datum extends Message {
 		public final long timestamp;
-		public Datum(long timestamp, final String name, final String value) {
-			super(name, value);
+		public Datum(final String databaseName, final String name, final String value, long timestamp) {
+			super(databaseName, name, value);
 			this.timestamp = timestamp;
 		}
 	}
@@ -187,9 +240,11 @@ public abstract class DatabaseService extends Service {
 	 */
 	private static class Message {
 		public static final String ARCHIVE = "__ARCHIVE__";
+		public static final String RELOAD = "__RELOAD__";
 		public static final String END = "__END__";
-		public final String name, value;
-		public Message(String name, String value) {
+		public final String databaseName, name, value;
+		public Message(String databaseName, String name, String value) {
+			this.databaseName = databaseName;
 			this.name = name;
 			this.value = value;
 		}

@@ -20,12 +20,10 @@ import android.os.Bundle;
  */
 public class ProbeScheduleResolver {
 	
-	private Set<Bundle> requests;
 	private long nextRunTime;
 	private Bundle nextRunParams;
 
 	public ProbeScheduleResolver(final Set<Bundle> requests, final Bundle defaults, final long lastRunTime, final Bundle lastRunParams) {
-		this.requests = requests;
 		this.nextRunTime = Long.MAX_VALUE;
 		this.nextRunParams = new Bundle();
 		for (Bundle request : requests) {

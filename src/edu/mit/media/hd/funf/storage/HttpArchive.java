@@ -20,18 +20,18 @@ import android.util.Log;
  * NOTE: not complete or tested
  *
  */
-public class HttpArchiver {
+public class HttpArchive implements RemoteArchive {
 
-	public static final String TAG = HttpArchiver.class.getName();
+	public static final String TAG = HttpArchive.class.getName();
 	
 	private String uploadUrl;
 	private String mimeType;
 	
-	public HttpArchiver(final String uploadUrl) {
+	public HttpArchive(final String uploadUrl) {
 		this(uploadUrl, "application/x-binary");
 	}
 	
-	public HttpArchiver(final String uploadUrl, final String mimeType) {
+	public HttpArchive(final String uploadUrl, final String mimeType) {
 		this.uploadUrl = uploadUrl;
 		this.mimeType = mimeType;
 	}
@@ -54,7 +54,7 @@ public class HttpArchiver {
 		    	return false;
 		    }
 		    Log.i(TAG, "Response " + response.getStatusLine().getStatusCode() + ": " 
-		    		+ inputStreamToString(resEntity.getContent(), "UTF-8"));
+		    		+ IOUtils.inputStreamToString(resEntity.getContent(), "UTF-8"));
 		} catch (ClientProtocolException e) {
 			Log.e(TAG, e.getLocalizedMessage());
 			e.printStackTrace();
@@ -69,20 +69,6 @@ public class HttpArchiver {
 	    return true;
 		*/
 		return uploadFile(file, uploadUrl);
-	}
-	
-	private static String inputStreamToString(InputStream is, String encoding) throws IOException {
-		final char[] buffer = new char[0x10000];
-		StringBuilder out = new StringBuilder();
-		Reader in = new InputStreamReader(is, encoding);
-		int read;
-		do {
-		  read = in.read(buffer, 0, buffer.length);
-		  if (read>0) {
-		    out.append(buffer, 0, read);
-		  }
-		} while (read>=0);
-		return out.toString();
 	}
 	
 	

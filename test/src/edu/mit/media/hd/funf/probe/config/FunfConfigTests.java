@@ -8,6 +8,8 @@ import junit.framework.TestCase;
 import org.json.JSONException;
 
 import android.os.Bundle;
+import edu.mit.media.hd.funf.FunfConfig;
+import edu.mit.media.hd.funf.ProbeDatabaseConfig;
 
 public class FunfConfigTests extends TestCase {
 
@@ -25,6 +27,7 @@ public class FunfConfigTests extends TestCase {
 				1000 * 60 * 60 *3, 
 				databases, 
 				dataRequests);
+		System.out.println(config.toJson());
 		FunfConfig parsedConfig = new FunfConfig(config.toJson());
 		assertEquals(1, parsedConfig.getVersion());
 		assertEquals("http://funf.media.mit.edu", parsedConfig.getConfigUrl());

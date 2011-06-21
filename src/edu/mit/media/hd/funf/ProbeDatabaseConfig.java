@@ -1,4 +1,4 @@
-package edu.mit.media.hd.funf.probe.config;
+package edu.mit.media.hd.funf;
 
 import java.util.Arrays;
 
@@ -17,26 +17,27 @@ public class ProbeDatabaseConfig {
 	public static final String ENCRYPTION_KEY_KEY = "encryptionKey";
 	public static final String PROBES_TO_RECORD_KEY = "probesToRecord";
 	
+	private final String[] probesToRecord;
 	private final String uploadUrl;
 	private final String encryptionKey;
-	private final String[] probesToRecord;
 	
 	
 	public ProbeDatabaseConfig(String[] probesToRecord, String dataUploadUrl, String encryptionKey) {
+		this.probesToRecord = copyStringArray(probesToRecord);
 		this.uploadUrl = dataUploadUrl;
 		this.encryptionKey = encryptionKey;
-		this.probesToRecord = copyStringArray(probesToRecord);
 	}
 	
 	public ProbeDatabaseConfig(JSONObject jsonObject) throws JSONException {
-		this.uploadUrl = jsonObject.optString(UPLOAD_URL_KEY, null);
-		this.encryptionKey = jsonObject.optString(ENCRYPTION_KEY_KEY, null);
 		JSONArray probesJsonArray = jsonObject.getJSONArray(PROBES_TO_RECORD_KEY);
 		this.probesToRecord = new String[probesJsonArray.length()];
 		for (int i = 0; i < probesJsonArray.length(); i++) {
 			this.probesToRecord[i] = probesJsonArray.optString(i);
 			// TODO: consider removing null or uncoerceable items
 		}
+		this.uploadUrl = jsonObject.optString(UPLOAD_URL_KEY, null);
+		this.encryptionKey = jsonObject.optString(ENCRYPTION_KEY_KEY, null);
+		
 	}
 	
 	ProbeDatabaseConfig(String jsonString) throws JSONException {

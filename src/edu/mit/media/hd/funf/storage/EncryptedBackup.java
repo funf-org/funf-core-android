@@ -10,10 +10,8 @@ import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 
 import javax.crypto.Cipher;
@@ -68,12 +66,12 @@ public class EncryptedBackup {
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 	    RSAPublicKeySpec pubKeySpec = new RSAPublicKeySpec(new BigInteger(
 	        "12345678", 16), new BigInteger("11", 16));
-	    RSAPrivateKeySpec privKeySpec = new RSAPrivateKeySpec(new BigInteger(
-	        "12345678", 16), new BigInteger("12345678",
-	        16));
+	    //RSAPrivateKeySpec privKeySpec = new RSAPrivateKeySpec(new BigInteger(
+	    //    "12345678", 16), new BigInteger("12345678",
+	    //    16));
 
 	    RSAPublicKey pubKey = (RSAPublicKey) keyFactory.generatePublic(pubKeySpec);
-	    RSAPrivateKey privKey = (RSAPrivateKey) keyFactory.generatePrivate(privKeySpec);
+	    //RSAPrivateKey privKey = (RSAPrivateKey) keyFactory.generatePrivate(privKeySpec);
 	    return pubKey;
 	}
 	

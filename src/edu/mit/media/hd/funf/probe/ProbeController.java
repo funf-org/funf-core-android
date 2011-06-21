@@ -18,8 +18,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 
-import static edu.mit.media.hd.funf.probe.Utils.nonNullStrings;
-
 /**
  * Discovers probes that are defined in the app manifest, 
  * and dynamically creates broadcast receivers to listen for OPP requests.
@@ -45,10 +43,11 @@ public class ProbeController extends Service  {
 				@Override
 				public void runCommand() {
 					// TODO: check that the required permissions and features exist for device and app
-					for (String probeInterface : nonNullStrings(getProbe().getProbeInterfaces())) {
+					// TODO: loop over probeInterfaces
+					//for (String probeInterface : nonNullStrings(getProbe().getProbeInterfaces())) {
 			        	registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getDataRequestAction(getProbe().getClass())));
 			        	registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getStatusRequestAction(getProbe().getClass())));
-			        }
+			        //}
 				}
 			};
 			// TODO: register with permissions

@@ -39,7 +39,6 @@ public class ProbeRequests {
 		prefs.edit().putString(PROBE_NAME_PREF_KEY, name).commit();
 	}
 	
-	private static Map<String,ProbeRequests> probeNameToSchedule = new HashMap<String, ProbeRequests>();
 	public static ProbeRequests getRequestsForProbe(final Context context, final SharedPreferences probePrefs) {
 		String name = probePrefs.getString(ProbeRequests.PROBE_NAME_PREF_KEY, null);
 		if (name == null) {
@@ -70,12 +69,6 @@ public class ProbeRequests {
 	 * @return
 	 */
 	public static ProbeRequests getRequestsForProbe(final Context context, final String probeName) {
-//		ProbeRequests requests = probeNameToSchedule.get(probeName);
-//		if (requests == null) {
-//			requests = new ProbeRequests(context, probeName);
-//			probeNameToSchedule.put(probeName, requests);
-//		}
-//		return requests;
 		return new ProbeRequests(context, probeName);
 	}
 	
