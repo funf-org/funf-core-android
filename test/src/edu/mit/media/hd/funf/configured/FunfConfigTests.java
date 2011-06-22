@@ -1,4 +1,4 @@
-package edu.mit.media.hd.funf.probe.config;
+package edu.mit.media.hd.funf.configured;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,8 +8,6 @@ import junit.framework.TestCase;
 import org.json.JSONException;
 
 import android.os.Bundle;
-import edu.mit.media.hd.funf.FunfConfig;
-import edu.mit.media.hd.funf.ProbeDatabaseConfig;
 
 public class FunfConfigTests extends TestCase {
 
@@ -24,17 +22,25 @@ public class FunfConfigTests extends TestCase {
 		databases.put("test_db", new ProbeDatabaseConfig(new String[]{"test.probe"}, "http://test.upload.url.com", null));
 		FunfConfig config = new FunfConfig(1, 
 				"http://funf.media.mit.edu", 
-				1000 * 60 * 60 *3, 
+				hoursToMillis(3), 
+				hoursToMillis(5),
+				0L,
 				databases, 
 				dataRequests);
 		System.out.println(config.toJson());
 		FunfConfig parsedConfig = new FunfConfig(config.toJson());
 		assertEquals(1, parsedConfig.getVersion());
 		assertEquals("http://funf.media.mit.edu", parsedConfig.getConfigUrl());
-		assertEquals(1000 * 60 * 60 *3, parsedConfig.getUpdatePeriod());
+		assertEquals(hoursToMillis(3), parsedConfig.getUpdatePeriod());
+		assertEquals(hoursToMillis(5), parsedConfig.getArchivePeriod());
+		assertEquals(FunfConfig.DEFAULT_REMOTE_ARCHIVE_PERIOD, parsedConfig.getRemoteArchivePeriod());
 		assertTrue(parsedConfig.getDatabases().containsKey("test_db"));
 		assertEquals("http://test.upload.url.com", parsedConfig.getDatabases().get("test_db").getUploadUrl());
 		assertEquals("test.probe", parsedConfig.getDatabases().get("test_db").getProbesToRecord()[0]);
 		assertNull(parsedConfig.getDatabases().get("test_db").getEncryptionKey());
+	}
+	
+	private static long hoursToMillis(int hours) {
+		return 1000 * 60 * 60 * hours;
 	}
 }

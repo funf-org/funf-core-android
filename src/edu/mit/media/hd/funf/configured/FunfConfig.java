@@ -29,7 +29,7 @@ public class FunfConfig {
 
 	public static final long DEFAULT_ARCHIVE_PERIOD = 3 * 60 * 60 * 1000;  // 3 hours
 	public static final long DEFAULT_REMOTE_ARCHIVE_PERIOD = 6 * 60 * 60 * 1000;  // 6 hours
-	static final int DEFAULT_UPDATE_PERIOD = 1000 * 60 * 60;
+	static final int DEFAULT_UPDATE_PERIOD = 1 * 60 * 60 * 1000;
 	// TODO: should we add an application name to the config, so that multiple apps can co-exist?
 	// private final String appName;
 	private final int version;
@@ -38,12 +38,12 @@ public class FunfConfig {
 	private final Map<String, ProbeDatabaseConfig> databases;
 	private final Map<String,Bundle[]> dataRequests;
 	
-	public FunfConfig(int version, String configDownloadUrl, int configCheckPeriod, long archivePeriod, long remoteArchivePeriod, Map<String, ProbeDatabaseConfig> databases, Map<String,Bundle[]> dataRequests) {
+	public FunfConfig(int version, String configDownloadUrl, long configCheckPeriod, long archivePeriod, long remoteArchivePeriod, Map<String, ProbeDatabaseConfig> databases, Map<String,Bundle[]> dataRequests) {
 		this.version = version;
 		this.configUrl = configDownloadUrl;
-		this.updatePeriod = configCheckPeriod == 0 ? DEFAULT_UPDATE_PERIOD : configCheckPeriod;
-		this.archivePeriod = archivePeriod == 0 ? DEFAULT_ARCHIVE_PERIOD : archivePeriod;
-		this.remoteArchivePeriod = remoteArchivePeriod == 0 ? DEFAULT_REMOTE_ARCHIVE_PERIOD : remoteArchivePeriod;
+		this.updatePeriod = configCheckPeriod;
+		this.archivePeriod = archivePeriod;
+		this.remoteArchivePeriod = remoteArchivePeriod;
 		this.databases = new HashMap<String, ProbeDatabaseConfig>(databases);
 		this.dataRequests = new HashMap<String, Bundle[]>(dataRequests);
 	}
@@ -53,9 +53,9 @@ public class FunfConfig {
 		JSONObject jsonObject = new JSONObject(jsonString);
 		version = jsonObject.getInt(VERSION_KEY);
 		configUrl = jsonObject.optString(CONFIG_URL_KEY, null);
-		updatePeriod = jsonObject.optLong(UPDATE_PERIOD_KEY, DEFAULT_UPDATE_PERIOD);
-		this.archivePeriod = jsonObject.optLong(ARCHIVE_PERIOD_KEY, DEFAULT_ARCHIVE_PERIOD);
-		this.remoteArchivePeriod = jsonObject.optLong(REMOTE_ARCHIVE_PERIOD_KEY, DEFAULT_REMOTE_ARCHIVE_PERIOD);
+		updatePeriod = jsonObject.optLong(UPDATE_PERIOD_KEY, 0L);
+		archivePeriod = jsonObject.optLong(ARCHIVE_PERIOD_KEY, 0L);
+		remoteArchivePeriod = jsonObject.optLong(REMOTE_ARCHIVE_PERIOD_KEY, 0L);
 		
 		databases = new HashMap<String, ProbeDatabaseConfig>();
 		JSONObject databasesJsonObject = jsonObject.getJSONObject(DATABASES_KEY);
@@ -148,15 +148,15 @@ public class FunfConfig {
 	}
 
 	public long getUpdatePeriod() {
-		return updatePeriod;
+		return updatePeriod == 0L ? DEFAULT_UPDATE_PERIOD : updatePeriod;
 	}
 	
 	public long getArchivePeriod() {
-		return archivePeriod;
+		return archivePeriod == 0L ? DEFAULT_ARCHIVE_PERIOD : archivePeriod;
 	}
 
 	public long getRemoteArchivePeriod() {
-		return remoteArchivePeriod;
+		return remoteArchivePeriod == 0L ? DEFAULT_REMOTE_ARCHIVE_PERIOD : remoteArchivePeriod;
 	}
 
 	public Map<String, ProbeDatabaseConfig> getDatabases() {
@@ -174,13 +174,13 @@ public class FunfConfig {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(VERSION_KEY, version);
 		jsonObject.put(CONFIG_URL_KEY, configUrl);
-		if (updatePeriod != DEFAULT_UPDATE_PERIOD) {
+		if (updatePeriod != 0L) {
 			jsonObject.put(UPDATE_PERIOD_KEY, updatePeriod);
 		}
-		if (archivePeriod != DEFAULT_ARCHIVE_PERIOD) {
+		if (archivePeriod != 0L) {
 			jsonObject.put(ARCHIVE_PERIOD_KEY, archivePeriod);
 		}
-		if (remoteArchivePeriod != DEFAULT_REMOTE_ARCHIVE_PERIOD) {
+		if (remoteArchivePeriod != 0L) {
 			jsonObject.put(REMOTE_ARCHIVE_PERIOD_KEY, remoteArchivePeriod);
 		}
 		
