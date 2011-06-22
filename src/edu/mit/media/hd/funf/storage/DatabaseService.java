@@ -122,7 +122,7 @@ public abstract class DatabaseService extends Service {
 	 * @param value
 	 */
 	public void save(String databaseName, final String name, final String value, long timestamp) {
-		if (timestamp == 0L || name == null || value == null) {
+		if (databaseName == null || timestamp == 0L || name == null || value == null) {
 			Log.e(TAG, "Unable to save data.  Not all required values specified. " + timestamp + " " + name + " - " + value);
 		} else {
 			Log.i(TAG, "Queing up data");
@@ -174,8 +174,10 @@ public abstract class DatabaseService extends Service {
 	
 	private void runReload() {
 		Log.i(TAG, "Reloading config");
-		for (DatabaseHelper dbHelper : databaseHelpers.values()) {
-			dbHelper.close();
+		if (databaseHelpers != null) {
+			for (DatabaseHelper dbHelper : databaseHelpers.values()) {
+				dbHelper.close();
+			}
 		}
 		databaseHelpers = getDatabaseHelpers();
 	}

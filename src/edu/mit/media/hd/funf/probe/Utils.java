@@ -201,7 +201,11 @@ public final class Utils {
 	 * @return OPP Data action for probe with class
 	 */
 	public static String getDataAction(Class<? extends Probe> probeClass) {
-		return probeClass.getName() + ".DATA";
+		return getDataAction(probeClass.getName());
+	}
+	
+	public static String getDataAction(String probeName) {
+		return probeName + ".DATA";
 	}
 	
 	public static boolean isDataAction(final String action) {
