@@ -65,6 +65,7 @@ public interface FileCopier {
 
 		@Override
 		public boolean copy(File sourceFile, File destinationFile) {
+			// TODO: implement and remove encrypted backup class
 			throw new UnsupportedOperationException("Not yet implemented");
 		}
 		

@@ -13,8 +13,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-import edu.mit.media.hd.funf.FunfConfig;
-import edu.mit.media.hd.funf.ProbeDatabaseConfig;
+import edu.mit.media.hd.funf.configured.FunfConfig;
+import edu.mit.media.hd.funf.configured.ProbeDatabaseConfig;
 
 /**
  * Simple database service that is able to write timestamp, name, value tuples.  
@@ -26,7 +26,7 @@ import edu.mit.media.hd.funf.ProbeDatabaseConfig;
  * @author alangardner
  *
  */
-public class DatabaseService extends Service {
+public abstract class DatabaseService extends Service {
 
 	public static final String TAG = DatabaseService.class.getName();
 	public static final String DATABASE_NAME_KEY = "DATABASE_NAME";
@@ -42,7 +42,7 @@ public class DatabaseService extends Service {
 	public void onCreate() {
 		Log.i(TAG, "Creating");
 		dataQueue = new LinkedBlockingQueue<Message>();
-		runReloadConfig();
+		runReload();
 		writeThread = new Thread(new Runnable(){
 			public void run() {
 				while(true) {
@@ -57,7 +57,7 @@ public class DatabaseService extends Service {
 		    				if (Message.ARCHIVE.equals(message.name)) {
 		    					runArchive(message.databaseName);
 		    				} else if (Message.RELOAD.equals(message.name)) {
-		    					runReloadConfig();
+		    					runReload();
 		    				} else if (Message.END.equals(message.name)) {
 		    					break; // end loop, Signal to exit
 		    				}
@@ -167,27 +167,20 @@ public class DatabaseService extends Service {
 		dbHelper = new DatabaseHelper(this, databaseName, 1);
 	}
 	
-	public void reloadConfig() {
+	public void reload() {
 		Log.i(TAG, "Queing reload");
 		dataQueue.offer(new Message(null, Message.RELOAD, null));
 	}
 	
-	private void runReloadConfig() {
+	private void runReload() {
 		Log.i(TAG, "Reloading config");
 		for (DatabaseHelper dbHelper : databaseHelpers.values()) {
 			dbHelper.close();
 		}
-		databaseHelpers = new HashMap<String, DatabaseHelper>();
-		FunfConfig config = FunfConfig.getFunfConfig(this);
-		if (config == null) {
-			stopSelf();
-		} else {
-			for (Map.Entry<String,ProbeDatabaseConfig> dbEntry : config.getDatabases().entrySet()) {
-				String dbName = dbEntry.getKey();
-				databaseHelpers.put(dbName, new DatabaseHelper(this, dbName, 1));
-			}
-		}
+		databaseHelpers = getDatabaseHelpers();
 	}
+	
+	protected abstract Map<String, DatabaseHelper> getDatabaseHelpers();
 	
 	
 	/**

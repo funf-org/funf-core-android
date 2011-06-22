@@ -23,6 +23,7 @@ import android.util.Log;
  * Encryption strategy for archiving files to the SDCard so they can't be read by other applications
  * NOTE: Currently In progress 
  */
+// TODO: finish the encrypted file copier and remove this class
 public class EncryptedBackup {
 
 	public static final String TAG = EncryptedBackup.class.getName();

@@ -7,16 +7,17 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import android.app.AlarmManager;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
+import edu.mit.media.hd.funf.AndroidUtils;
 import edu.mit.media.hd.funf.EqualsUtil;
-import edu.mit.media.hd.funf.FunfConfig;
 import edu.mit.media.hd.funf.HashCodeUtil;
-import edu.mit.media.hd.funf.ProbeDatabaseConfig;
+import edu.mit.media.hd.funf.configured.FunfConfig;
+import edu.mit.media.hd.funf.configured.ProbeDatabaseConfig;
 import edu.mit.media.hd.funf.probe.Utils;
 
 
@@ -24,14 +25,13 @@ import edu.mit.media.hd.funf.probe.Utils;
  * Archives the file when started
  *
  */
-public class WebArchiveService extends Service {
-	public static final String TAG = WebArchiveService.class.getName();
+public abstract class RemoteArchiverService extends Service {
+	public static final String TAG = RemoteArchiverService.class.getName();
 	
 	private Map<String, Integer> fileFailures;
 	private Queue<DatabaseFile> filesToUpload;
 	private Thread uploadThread;
 	private WakeLock lock;
-	private Map<String,ProbeDatabaseConfig> databases;
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -78,12 +78,6 @@ public class WebArchiveService extends Service {
 				stopSelf();
 			}
 		});
-		FunfConfig config = FunfConfig.getFunfConfig(this);
-		if (config == null) {
-			stopSelf();
-		} else {
-			databases = FunfConfig.getFunfConfig(this).getDatabases();
-		}
 	}
 	@Override
 	public void onDestroy() {
@@ -101,7 +95,7 @@ public class WebArchiveService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.i(TAG, "Starting...");
 		// Get all db files in DB dir
-		Set<String> databaseNames = databases.keySet();
+		Set<String> databaseNames = getDatabaseNames();
 		for (String databaseName : databaseNames) {
 			for (File file : getFileArchive(databaseName).getAll()) {
 				archive(databaseName, file);
@@ -112,18 +106,10 @@ public class WebArchiveService extends Service {
 		if (uploadThread != null && !uploadThread.isAlive()) {
 			uploadThread.start();
 		}
+		scheduleNextRun();
 		return Service.START_STICKY;
 	}
 	
-	@SuppressWarnings("unchecked")
-	protected Archive<File> getFileArchive(final String databaseName) {
-		return DatabaseService.getDefaultArchive(this, databaseName);
-	}
-
-	protected RemoteArchive getRemoteArchiver(final String databaseName) {
-		ProbeDatabaseConfig dbConfig = databases.get(databaseName);
-		return new HttpArchive(dbConfig.getUploadUrl());// TODO: how do i get the upload url here
-	}
 	
 	public void archive(String databaseName, File file) {
 		DatabaseFile dbFile = new DatabaseFile(databaseName, file);
@@ -151,6 +137,17 @@ public class WebArchiveService extends Service {
 			}
 		}
 		// TODO: Multiple web failure: queue up for one hour from now, and stop self
+	}
+	
+
+	protected abstract Set<String> getDatabaseNames();
+	
+	protected abstract Archive<File> getFileArchive(final String databaseName);
+
+	protected abstract RemoteArchive getRemoteArchiver(final String databaseName);
+	
+	protected void scheduleNextRun() {
+		AndroidUtils.configureAlarm(this, getClass(), 6 * AlarmManager.INTERVAL_HOUR);
 	}
 	
 }

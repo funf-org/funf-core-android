@@ -1,4 +1,4 @@
-package edu.mit.media.hd.funf;
+package edu.mit.media.hd.funf.configured;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -149,6 +149,14 @@ public class FunfConfig {
 
 	public long getUpdatePeriod() {
 		return updatePeriod;
+	}
+	
+	public long getArchivePeriod() {
+		return archivePeriod;
+	}
+
+	public long getRemoteArchivePeriod() {
+		return remoteArchivePeriod;
 	}
 
 	public Map<String, ProbeDatabaseConfig> getDatabases() {

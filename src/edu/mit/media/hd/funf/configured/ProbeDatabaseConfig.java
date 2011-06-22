@@ -1,4 +1,4 @@
-package edu.mit.media.hd.funf;
+package edu.mit.media.hd.funf.configured;
 
 import java.util.Arrays;
 
