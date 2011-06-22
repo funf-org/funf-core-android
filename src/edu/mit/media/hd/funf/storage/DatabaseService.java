@@ -1,7 +1,6 @@
 package edu.mit.media.hd.funf.storage;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -13,8 +12,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-import edu.mit.media.hd.funf.configured.FunfConfig;
-import edu.mit.media.hd.funf.configured.ProbeDatabaseConfig;
 
 /**
  * Simple database service that is able to write timestamp, name, value tuples.  
