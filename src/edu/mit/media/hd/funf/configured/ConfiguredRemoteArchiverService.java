@@ -1,6 +1,7 @@
 package edu.mit.media.hd.funf.configured;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,13 +42,14 @@ public class ConfiguredRemoteArchiverService extends RemoteArchiverService {
 
 	@Override
 	protected Set<String> getDatabaseNames() {
-		return databases.keySet();
+		return (databases == null) ? new HashSet<String>() : databases.keySet();
 	}
 
 	@Override
 	protected void scheduleNextRun() {
 		FunfConfig config = FunfConfig.getFunfConfig(this);
-		AndroidUtils.configureAlarm(this, getClass(), config.getRemoteArchivePeriod());
+		long remoteArchivePeriod = (config == null) ? 6 * 60 * 60 * 1000 : config.getRemoteArchivePeriod();
+		AndroidUtils.configureAlarm(this, getClass(), remoteArchivePeriod);
 	}
 	
 	

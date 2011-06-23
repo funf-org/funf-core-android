@@ -18,7 +18,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
-import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 /**
@@ -39,6 +39,7 @@ public class ProbeRequests {
 		prefs.edit().putString(PROBE_NAME_PREF_KEY, name).commit();
 	}
 	
+	private static Map<String,ProbeRequests> probeNameToSchedule = new HashMap<String, ProbeRequests>();
 	public static ProbeRequests getRequestsForProbe(final Context context, final SharedPreferences probePrefs) {
 		String name = probePrefs.getString(ProbeRequests.PROBE_NAME_PREF_KEY, null);
 		if (name == null) {
@@ -72,8 +73,8 @@ public class ProbeRequests {
 		return new ProbeRequests(context, probeName);
 	}
 	
-	private String getKey(final String requester, final String paramName) {
-		return paramName + "__" + requester;
+	private String getKey(final String requester, final String paramName, final int index) {
+		return paramName + "__" + requester + "__" + index;
 	}
 	
 	private boolean isRequesterKey(final String key) {
@@ -88,6 +89,10 @@ public class ProbeRequests {
 		return key.split("__")[0];
 	}
 	
+	private String getIndex(final String key) {
+		return key.split("__")[2];
+	}
+	
 	/**
 	 * @return The name of the Probe these requests are for
 	 */
@@ -100,25 +105,24 @@ public class ProbeRequests {
 	 * @param bundle
 	 * @return true if request was succesfully stored, false otherwise
 	 */
-	public boolean put(final Bundle bundle) {
-		if (bundle == null) {
-			return false;
-		}
-		final String requester = bundle.getString(SystemParameter.REQUESTER.name);
+	public boolean put(final String requester, final Bundle... bundles) {
 		if (requester == null) {
 			return false;
 		}
 
 		SharedPreferences.Editor editor = this.prefs.edit();
 		// TODO: what to do with no requester attribute?  Should it be required in OPP?
-		for (String paramName : bundle.keySet()) {
-			Object value = bundle.get(paramName);
-			if (value != null) {
-				try {
-					Utils.putInPrefs(editor, getKey(requester, paramName), value);
-				} catch (UnstorableTypeException e) {
-					Log.i(TAG, e.getLocalizedMessage());
-					return false;
+		for (int i = 0; i < bundles.length; i++) {
+			Bundle bundle = bundles[i];
+			for (String paramName : bundle.keySet()) {
+				Object value = bundle.get(paramName);
+				if (value != null) {
+					try {
+						Utils.putInPrefs(editor, getKey(requester, paramName, i), value);
+					} catch (UnstorableTypeException e) {
+						Log.i(TAG, e.getLocalizedMessage());
+						return false;
+					}
 				}
 			}
 		}
@@ -129,7 +133,7 @@ public class ProbeRequests {
 	private Set<String> keysForRequester(final String requester) {
 		Set<String> keys = new HashSet<String>();
 		for (String key : prefs.getAll().keySet()) {
-			if (key.endsWith("__" + requester)) {
+			if (key.contains("__" + requester)) {
 				keys.add(key);
 			}
 		}
@@ -157,11 +161,13 @@ public class ProbeRequests {
 		for(Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
 			if (isRequesterKey(entry.getKey())) {
 				final String requester = getRequester(entry.getKey());
+				final String index = getIndex(entry.getKey());
 				final String paramName = getParamName(entry.getKey());
-				Bundle bundle =  bundles.get(requester);
+				final String key = requester + "__" + index;
+				Bundle bundle =  bundles.get(key);
 				if (bundle == null) {
 					bundle = new Bundle();
-					bundles.put(requester, bundle);
+					bundles.put(key, bundle);
 				}
 				try {
 					Utils.putInBundle(bundle, paramName, entry.getValue());

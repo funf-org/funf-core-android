@@ -15,8 +15,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
-import edu.mit.media.hd.funf.probe.Utils;
 
 public class ActivityProbe extends Probe {
 

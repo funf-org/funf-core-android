@@ -9,7 +9,7 @@
  */
 package edu.mit.media.hd.funf.probe;
 
-import static edu.mit.media.hd.funf.probe.Utils.nonNullStrings;
+import static edu.mit.media.hd.funf.Utils.nonNullStrings;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +27,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 public abstract class Probe extends Service {
@@ -83,7 +84,13 @@ public abstract class Probe extends Service {
 	
 	@Override
 	public final int onStartCommand(Intent intent, int flags, int startId) {
-		run(intent.getExtras());
+		Bundle extras = intent.getExtras();
+		String requester = extras.getString(SystemParameter.REQUESTER.name);
+		boolean requestEnabled = extras.getBoolean(SystemParameter.ENABLED.name, true);
+		if (!requestEnabled) {
+			requests.remove(requester);
+		}
+		run(requester, (Bundle[])extras.getParcelableArray("PARAMETERS"));
 		return START_STICKY;
 	}
 
@@ -149,6 +156,7 @@ public abstract class Probe extends Service {
 	 * Sends a DATA broadcast for the probe, and records the time.
 	 */
 	protected void sendProbeData(long timestamp, Bundle params, Bundle data) {
+		Log.i(TAG, getClass().getName() + " sent probe data at " + timestamp);
 		mostRecentTimeDataSent = timestamp;
 		Intent dataBroadcast = new Intent(Utils.getDataAction(getClass()));
 		dataBroadcast.putExtra("TIMESTAMP", timestamp);
@@ -195,22 +203,19 @@ public abstract class Probe extends Service {
 	 * Depending on the probe implementation, the probe may stop automatically after it runs.
 	 * @param params
 	 */
-	public final void run(Bundle params) {
-		if (!requests.put(params)) {
+	public final void run(String requester, Bundle... params) {
+		if (!requests.put(requester, params)) {
 			Log.w(TAG, "Unable to start probe because REQUESTER parameter was not specified");
 			return; // Require successful storing of request
 		}
 		Log.i(TAG, "Running probe: " + getClass().getName());
-		boolean requestEnabled = params.getBoolean(SystemParameter.ENABLED.name, true);
-		if (!requestEnabled) {
-			String requester = params.getString(SystemParameter.REQUESTER.name);
-			requests.remove(requester);
-		}
 
 		if (!enabled) {
 			enable();
 		}
-		Bundle completeParams = getCompleteParams(params);
+		// Merge all schedules and run if necessary
+		ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(requests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
+		Bundle completeParams = getCompleteParams(scheduleResolver.getNextRunParams());
 		if (shouldRunNow(completeParams)) {
 			running = true;
 			if (lock == null) {
@@ -229,7 +234,7 @@ public abstract class Probe extends Service {
 			onRun(completeParams); // call onRun to update parameters
 		} 
 		if (requests.getAll().size() > 0) {
-			scheduleNextRun(params);
+			scheduleNextRun(scheduleResolver.getNextRunParams());
 		} else {
 			disable();
 		}

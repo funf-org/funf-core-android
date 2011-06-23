@@ -20,7 +20,8 @@ public class ConfiguredArchiverService extends ArchiverService {
 	
 	protected void scheduleNextRun() {
 		FunfConfig config = FunfConfig.getFunfConfig(this);
-		AndroidUtils.configureAlarm(this, getClass(), config.getArchivePeriod());
+		long archivePeriod = (config == null) ? 1 * 60 * 60 * 1000 : config.getArchivePeriod();
+		AndroidUtils.configureAlarm(this, getClass(), archivePeriod);
 	}
 
 

@@ -7,7 +7,7 @@ import java.util.List;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import edu.mit.media.hd.funf.probe.Utils;
+import edu.mit.media.hd.funf.Utils;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 

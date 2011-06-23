@@ -7,7 +7,7 @@
  *
  *
  */
-package edu.mit.media.hd.funf.probe;
+package edu.mit.media.hd.funf;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,6 +25,8 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
+import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.ProbeExceptions;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 public final class Utils {
@@ -235,8 +237,11 @@ public final class Utils {
 	 * @param probeClass
 	 * @return  OPP Data action for probe with class
 	 */
+	public static String getDataRequestAction(String probeName) {
+		return probeName + ".GET";
+	}
 	public static String getDataRequestAction(Class<? extends Probe> probeClass) {
-		return probeClass.getName() + ".GET";
+		return getDataRequestAction(probeClass.getName());
 	}
 	
 	public static boolean isStatusRequest(final String action) {

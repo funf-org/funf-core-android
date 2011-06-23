@@ -10,7 +10,7 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.os.Bundle;
-import edu.mit.media.hd.funf.probe.Utils;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 /**
@@ -76,6 +76,8 @@ public class FunfConfig {
 		}
 	}
 	
+	private static FunfConfig cachedConfig = null;
+	
 	public static boolean setFunfConfig(Context context, FunfConfig funfConfig) {
 		return setFunfConfig(context, context.getPackageName(), funfConfig);
 	}
@@ -83,6 +85,7 @@ public class FunfConfig {
 	static boolean setFunfConfig(Context context, String appPackage, FunfConfig funfConfig) {
 		try {
 			context.getSharedPreferences("FUNF_CONFIG", Context.MODE_PRIVATE).edit().putString(appPackage, funfConfig.toJson()).commit();
+			cachedConfig = null;
 			return true;
 		} catch (JSONException e) {
 			return false;
@@ -94,13 +97,15 @@ public class FunfConfig {
 	}
 	
 	static FunfConfig getFunfConfig(Context context, String appPackage) {
-		// TODO: queue up update if necessary
-		String configJson = context.getSharedPreferences("FUNF_CONFIG", Context.MODE_PRIVATE).getString(appPackage, null);
-		try {
-			return configJson == null ? null : new FunfConfig(configJson);
-		} catch (JSONException e) {
-			return null;
+		if (cachedConfig == null) {
+			String configJson = context.getSharedPreferences("FUNF_CONFIG", Context.MODE_PRIVATE).getString(appPackage, null);
+			try {
+				cachedConfig = configJson == null ? null : new FunfConfig(configJson);
+			} catch (JSONException e) {
+				return null;
+			}
 		}
+		return cachedConfig;
 	}
 	
 	private static Bundle[] getBundleArray(JSONArray jsonArray) throws JSONException {

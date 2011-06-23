@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import edu.mit.media.hd.funf.probe.Utils;
+import edu.mit.media.hd.funf.Utils;
 
 public class ProbeDataListener extends BroadcastReceiver {
 

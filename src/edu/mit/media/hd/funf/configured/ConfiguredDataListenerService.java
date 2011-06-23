@@ -8,7 +8,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
-import edu.mit.media.hd.funf.probe.Utils;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.storage.BundleSerializer;
 import edu.mit.media.hd.funf.storage.ProbeDataListener;
 

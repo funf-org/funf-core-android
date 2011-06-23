@@ -1,15 +1,19 @@
 package edu.mit.media.hd.funf.configured;
 
+import java.util.Map;
+
 import org.json.JSONException;
 
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import edu.mit.media.hd.funf.AndroidUtils;
 import edu.mit.media.hd.funf.IOUtils;
+import edu.mit.media.hd.funf.client.ProbeCommunicator;
 import edu.mit.media.hd.funf.storage.DatabaseService;
 
 public abstract class ConfigurationUpdaterService extends Service {
@@ -24,25 +28,43 @@ public abstract class ConfigurationUpdaterService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		// TODO: detect whether wifi is available, etc.
 		try {
-			String configJson = IOUtils.httpGet(getRemoteConfigUrl(), null);
-			if (configJson == null) {
-				Log.e(TAG, "Unable to download config");
+			FunfConfig config = getConfig();
+			if (config == null) {
+				Log.e(TAG, "Unable to get config");
 			} else {
-				FunfConfig config = new FunfConfig(IOUtils.httpGet(getRemoteConfigUrl(), null));
-				FunfConfig.setFunfConfig(this, config);
-				// TODO: only reload on different configuration
-				Intent dbIntent = new Intent(this, getDatabaseServiceClass());
-				bindService(dbIntent, new ServiceConnection() {
-					@Override
-					public void onServiceConnected(ComponentName name, IBinder service) {
-						DatabaseService dbService = ((DatabaseService.LocalBinder)service).getService();
-						dbService.reload();
-						unbindService(this);
+				FunfConfig oldConfig = FunfConfig.getFunfConfig(this);
+				// TODO: re-enable (disabled for debugging)
+				//if (!config.equals(oldConfig)) {
+
+					ProbeCommunicator probeCommunicatior = new ProbeCommunicator(this);
+					if (oldConfig != null) {
+						Log.i(TAG, "Removing old data requests");
+						for (String probe : oldConfig.getDataRequests().keySet()) {
+							probeCommunicatior.unregisterDataRequest(probe);
+						}
 					}
-					@Override
-					public void onServiceDisconnected(ComponentName name) {
+					FunfConfig.setFunfConfig(this, config);
+					Intent dbIntent = new Intent(this, getDatabaseServiceClass());
+					bindService(dbIntent, new ServiceConnection() {
+						@Override
+						public void onServiceConnected(ComponentName name, IBinder service) {
+							Log.i(TAG, "Reloading database configuration.");
+							DatabaseService dbService = ((DatabaseService.LocalBinder)service).getService();
+							dbService.reload();
+							unbindService(this);
+						}
+						@Override
+						public void onServiceDisconnected(ComponentName name) {
+						}
+					}, BIND_AUTO_CREATE);
+					
+					// Send data requests for all data requests
+					for (Map.Entry<String,Bundle[]> entry : config.getDataRequests().entrySet()) {
+						Log.i(TAG, "Registering data request for " + entry.getKey());
+						probeCommunicatior.registerDataRequest(entry.getKey(), entry.getValue());
 					}
-				}, BIND_AUTO_CREATE);
+
+				//}
 			}
 		} catch (JSONException e) {
 			Log.e(TAG, e.getLocalizedMessage());
@@ -60,6 +82,11 @@ public abstract class ConfigurationUpdaterService extends Service {
 
 	protected Class<? extends DatabaseService> getDatabaseServiceClass() {
 		return ConfiguredDatabaseService.class;
+	}
+	
+	protected FunfConfig getConfig() throws JSONException {
+		String configJson = IOUtils.httpGet(getRemoteConfigUrl(), null);
+		return (configJson == null) ? null : new FunfConfig(configJson);
 	}
 	
 	protected abstract String getRemoteConfigUrl();

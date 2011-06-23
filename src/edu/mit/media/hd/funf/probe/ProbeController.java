@@ -11,12 +11,15 @@ package edu.mit.media.hd.funf.probe;
 
 import java.util.Set;
 
+import edu.mit.media.hd.funf.Utils;
+
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.util.Log;
 
 /**
  * Discovers probes that are defined in the app manifest, 
@@ -38,6 +41,7 @@ public class ProbeController extends Service  {
 		// Discover probes and create listeners for probes in manifest
 		// TODO: need to coordinate with other Funf apps to determine which probes this app is in charge of
 		registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getStatusRequestAction()));
+		Log.i(TAG, "Registering for " + Utils.getStatusRequestAction());
 		for (Class<? extends Probe> probeClass : getAvailableProbeClasses()) {
 			new ProbeCommandServiceConnection(this, probeClass) {
 				@Override
@@ -45,6 +49,8 @@ public class ProbeController extends Service  {
 					// TODO: check that the required permissions and features exist for device and app
 					// TODO: loop over probeInterfaces
 					//for (String probeInterface : nonNullStrings(getProbe().getProbeInterfaces())) {
+					Log.i(TAG, "Registering for " + Utils.getDataRequestAction(getProbe().getClass()));
+					Log.i(TAG, "Registering for " + Utils.getStatusRequestAction(getProbe().getClass()));
 			        	registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getDataRequestAction(getProbe().getClass())));
 			        	registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getStatusRequestAction(getProbe().getClass())));
 			        //}
@@ -58,6 +64,7 @@ public class ProbeController extends Service  {
 	
 	@Override
 	public void onDestroy() {
+		Log.i(TAG, "Unregistering receiver");
 		unregisterReceiver(probeMessageReceiver);
 	}
 
@@ -70,6 +77,7 @@ public class ProbeController extends Service  {
 	private class ProbeMessageReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(final Context context, final Intent intent) {
+			Log.i(TAG, "Receiving action " + intent.getAction());
 			final String action = intent.getAction();
 			if (Utils.isStatusRequest(action)) {
 				for (Class<? extends Probe> probeClass : getAvailableProbeClasses()) {

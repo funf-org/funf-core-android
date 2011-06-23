@@ -44,9 +44,9 @@ public abstract class DatabaseService extends Service {
 			public void run() {
 				while(true) {
 					try{
-		    			Log.i(TAG,"DatabaseService: to save one datum");
 		    			Message message = dataQueue.take();
 		    			if (message instanceof Datum) { 
+			    			Log.i(TAG,"DatabaseService: to save one datum");
 		    				Datum d = (Datum)message;
 		    				writeToDatabase(d);
 		    			} else {

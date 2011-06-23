@@ -1,12 +1,14 @@
 package edu.mit.media.hd.funf.client;
 
-import edu.mit.media.hd.funf.probe.Probe;
-import edu.mit.media.hd.funf.probe.Utils;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import edu.mit.media.hd.funf.Utils;
+import edu.mit.media.hd.funf.probe.Probe;
 
 public class ProbeCommunicator {
+	public static final String TAG = ProbeCommunicator.class.getName();
 	
 	private final Context context;
 	
@@ -24,15 +26,24 @@ public class ProbeCommunicator {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 	
-	public void registerDataRequest(Class<? extends Probe> probeClass, Bundle... params) {
-		Intent i = new Intent(probeClass.getName());
+	public void registerDataRequest(String probeName, Bundle... params) {
+		Intent i = new Intent(Utils.getDataRequestAction(probeName));
+		Log.i(TAG, "Sending intent '" + i.getAction() + "'");
 		i.setPackage(context.getPackageName());
 		i.putExtra("PARAMETERS", params);
 		i.putExtra("REQUESTER", context.getPackageName());
 		context.sendBroadcast(i);
 	}
 	
+	public void registerDataRequest(Class<? extends Probe> probeClass, Bundle... params) {
+		registerDataRequest(probeClass.getName(), params);
+	}
+	
+	public void unregisterDataRequest(String probeName) {
+		registerDataRequest(probeName); // Blank data request
+	}
+	
 	public void unregisterDataRequest(Class<? extends Probe> probeClass) {
-		registerDataRequest(probeClass); // Blank data request
+		unregisterDataRequest(probeClass.getName());
 	}
 }
