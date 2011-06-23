@@ -154,12 +154,13 @@ public abstract class DatabaseService extends Service {
 	
 	
 	private void runArchive(String databaseName) {
-		Log.i(TAG, "Running archive: " + getDatabasePath(databaseName));
 		DatabaseHelper dbHelper = databaseHelpers.get(databaseName);
+		File dbFile = new File(dbHelper.getReadableDatabase().getPath());
+		Log.i(TAG, "Running archive: " + dbFile.getAbsolutePath());
 		dbHelper.close();
 		Archive<File> archive = getArchive(databaseName);
-		if (archive.add(getDatabasePath(databaseName))) {
-			getDatabasePath(databaseName).delete();
+		if (archive.add(dbFile)) {
+			dbFile.delete();
 		}
 		dbHelper = new DatabaseHelper(this, databaseName, 1);
 	}
