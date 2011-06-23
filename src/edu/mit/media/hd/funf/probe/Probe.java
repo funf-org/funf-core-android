@@ -90,7 +90,8 @@ public abstract class Probe extends Service {
 		if (!requestEnabled) {
 			requests.remove(requester);
 		}
-		run(requester, (Bundle[])extras.getParcelableArray("PARAMETERS"));
+		Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray("PARAMETERS"));
+		run(requester, requests);
 		return START_STICKY;
 	}
 
@@ -205,7 +206,7 @@ public abstract class Probe extends Service {
 	 */
 	public final void run(String requester, Bundle... params) {
 		if (!requests.put(requester, params)) {
-			Log.w(TAG, "Unable to start probe because REQUESTER parameter was not specified");
+			Log.w(TAG, "Unable to store requests for probe.");
 			return; // Require successful storing of request
 		}
 		Log.i(TAG, "Running probe: " + getClass().getName());

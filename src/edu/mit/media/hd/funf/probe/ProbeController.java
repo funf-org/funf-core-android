@@ -11,8 +11,6 @@ package edu.mit.media.hd.funf.probe;
 
 import java.util.Set;
 
-import edu.mit.media.hd.funf.Utils;
-
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -20,6 +18,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
+import edu.mit.media.hd.funf.Utils;
 
 /**
  * Discovers probes that are defined in the app manifest, 

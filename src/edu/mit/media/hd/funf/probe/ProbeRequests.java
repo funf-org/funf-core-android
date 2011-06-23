@@ -116,11 +116,12 @@ public class ProbeRequests {
 			Bundle bundle = bundles[i];
 			for (String paramName : bundle.keySet()) {
 				Object value = bundle.get(paramName);
+				Log.i(TAG, paramName + " = " + value.toString());
 				if (value != null) {
 					try {
 						Utils.putInPrefs(editor, getKey(requester, paramName, i), value);
 					} catch (UnstorableTypeException e) {
-						Log.i(TAG, e.getLocalizedMessage());
+						Log.e(TAG, e.getLocalizedMessage());
 						return false;
 					}
 				}

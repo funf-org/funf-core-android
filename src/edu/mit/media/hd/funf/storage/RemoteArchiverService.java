@@ -17,8 +17,6 @@ import edu.mit.media.hd.funf.AndroidUtils;
 import edu.mit.media.hd.funf.EqualsUtil;
 import edu.mit.media.hd.funf.HashCodeUtil;
 import edu.mit.media.hd.funf.Utils;
-import edu.mit.media.hd.funf.configured.FunfConfig;
-import edu.mit.media.hd.funf.configured.ProbeDatabaseConfig;
 
 
 /**

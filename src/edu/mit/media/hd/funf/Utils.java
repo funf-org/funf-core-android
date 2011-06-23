@@ -23,10 +23,10 @@ import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.PowerManager;
 import android.util.Log;
 import edu.mit.media.hd.funf.probe.Probe;
-import edu.mit.media.hd.funf.probe.ProbeExceptions;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 public final class Utils {
@@ -156,7 +156,7 @@ public final class Utils {
 	}
 	
 	/**
-	 * Conveneicne function for concatenating two arrays
+	 * Convenience function for concatenating two arrays
 	 * @param <T>
 	 * @param first
 	 * @param second
@@ -168,6 +168,13 @@ public final class Utils {
 		System.arraycopy(first, 0, result, 0, first.length);
 		System.arraycopy(second, 0, result, first.length, second.length);
 		return result;
+	}
+	
+
+	public static Bundle[] copyBundleArray(Parcelable[] parcelables) {
+		Bundle[] bundles = new Bundle[parcelables.length];
+		System.arraycopy(parcelables, 0, bundles, 0, parcelables.length);
+		return bundles;
 	}
 	
 	////////////////////////////
