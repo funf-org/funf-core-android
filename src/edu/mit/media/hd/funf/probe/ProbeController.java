@@ -84,7 +84,9 @@ public class ProbeController extends Service  {
 						@Override
 						public void runCommand() {
 							// TODO: verify the sender is on the white list of packages
-							getProbe().sendProbeStatus();
+							String requestingPackage = intent.getStringExtra(OppProbe.ReservedParamaters.REQUESTER.name);
+							boolean includeNonce = intent.getBooleanExtra(OppProbe.ReservedParamaters.NONCE.name, false);
+							getProbe().sendProbeStatus(requestingPackage, includeNonce);
 						}
 					};
 				}

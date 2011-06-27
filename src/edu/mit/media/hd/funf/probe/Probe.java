@@ -13,7 +13,10 @@ import static edu.mit.media.hd.funf.Utils.nonNullStrings;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -27,6 +30,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
+import edu.mit.media.hd.funf.HashCodeUtil;
 import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.OppProbe.Status;
@@ -39,6 +43,7 @@ public abstract class Probe extends Service {
 	private static final String MOST_RECENT_RUN_KEY = "mostRecentTimeRun";
 	private static final String MOST_RECENT_KEY = "mostRecentTimeDataSent";
 	private static final String MOST_RECENT_PARAMS_KEY = "mostRecentTimeDataSent";
+	private static final String NONCES_KEY = "nonces";
 	
 	private PowerManager.WakeLock lock;
 	private long mostRecentTimeRun;
@@ -49,7 +54,7 @@ public abstract class Probe extends Service {
 	private boolean enabled;
 	private boolean running;
 	private StopTimer stopTimer;
-	
+	private Set<Nonce> nonces;
 	
 	// TODO: keep list of all active requests to this probe
 	private ProbeRequests requests;
@@ -61,6 +66,7 @@ public abstract class Probe extends Service {
 		mostRecentTimeDataSent = prefs.getLong(MOST_RECENT_KEY, 0);
 		mostRecentTimeRun = prefs.getLong(MOST_RECENT_RUN_KEY, 0);
 		mostRecentParameters = Utils.getBundleFromPrefs(prefs, MOST_RECENT_PARAMS_KEY);
+		nonces = Nonce.unserializeNonces(prefs.getString(NONCES_KEY, null));
 		enabled = false;
 		running = false;
 		stopTimer = new StopTimer();
@@ -72,6 +78,7 @@ public abstract class Probe extends Service {
 			SharedPreferences.Editor editor = prefs.edit();
 			editor.putLong(MOST_RECENT_KEY, mostRecentTimeDataSent);
 			editor.putLong(MOST_RECENT_RUN_KEY, mostRecentTimeRun);
+			editor.putString(NONCES_KEY, Nonce.serializeNonces(nonces));
 			try {
 				Utils.putInPrefs(editor, MOST_RECENT_PARAMS_KEY, mostRecentParameters);
 			} catch (UnstorableTypeException e) {
@@ -88,12 +95,15 @@ public abstract class Probe extends Service {
 	public final int onStartCommand(Intent intent, int flags, int startId) {
 		Bundle extras = intent.getExtras();
 		String requester = extras.getString(OppProbe.ReservedParamaters.REQUESTER.name);
-		// TODO: may need to handle default top level bundle parameters
-		Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray(OppProbe.ReservedParamaters.REQUESTS.name));
-		if (requests.length == 0) {
-			this.requests.remove(requester);
-		} else {
-			run(requester, requests);
+		long nonce = extras.getLong(OppProbe.ReservedParamaters.NONCE.name, -1L);
+		if (redeemNonce(nonce)) {
+			// TODO: may need to handle default top level bundle parameters
+			Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray(OppProbe.ReservedParamaters.REQUESTS.name));
+			if (requests.length == 0) {
+				this.requests.remove(requester);
+			} else {
+				run(requester, requests);
+			}
 		}
 		return START_STICKY;
 	}
@@ -115,8 +125,7 @@ public abstract class Probe extends Service {
 	/**
 	 * Sends a STATUS broadcast for the probe.
 	 */
-	public void sendProbeStatus() {
-		// TODO: enable sending directly to packages
+	public void sendProbeStatus(final String packageName, final boolean includeNonce) {
 		Intent statusBroadcast = new Intent(OppProbe.getStatusAction(getClass()));
 		String name = getClass().getName();
 		String displayName = getClass().getName().replace(getClass().getPackage().getName() + ".", "");
@@ -143,8 +152,26 @@ public abstract class Probe extends Service {
 				parameters
 				);
 		statusBroadcast.putExtras(status.getBundle());
+		if (packageName != null) {
+			statusBroadcast.setPackage(packageName);
+			if (includeNonce) {
+				statusBroadcast.putExtra(OppProbe.ReservedParamaters.NONCE.name, createNonce());
+			}
+		}
 		sendBroadcast(statusBroadcast);
 	}
+	
+	private void removeInvalidNonces() {
+		List<Nonce> noncesToRemove = new ArrayList<Nonce>();
+		for (Nonce oldNonce : nonces) {
+			if(!oldNonce.isValid()) {
+				noncesToRemove.add(oldNonce);
+			}
+		}
+		nonces.removeAll(noncesToRemove);
+	}
+	
+	
 	
 	/**
 	 * Sends a DATA broadcast of the current data from the probe, if it is available.
@@ -433,8 +460,80 @@ public abstract class Probe extends Service {
 		return mBinder;
 	}
 	
+
+	/**
+	 * Create a new valid nonce
+	 * @return long value of the nonce
+	 */
+	protected long createNonce() {
+		removeInvalidNonces();
+		Nonce nonce = new Nonce();
+		nonces.add(nonce);
+		return nonce.value;
+	}
 	
+	/**
+	 * Checks if the nonce and valid and invalidates it if it exists.
+	 * @param nonce
+	 * @return true if valid nonce, false otherwise
+	 */
+	protected boolean redeemNonce(long nonce) {
+		removeInvalidNonces();
+		Nonce redeemedNonce = null;
+		for (Nonce existingNonce : nonces) {
+			if (existingNonce.value == nonce) {
+				redeemedNonce = existingNonce;
+				break;
+			}
+		}
+		nonces.remove(redeemedNonce);
+		return nonces != null;
+	}
 	
+
+	private static class Nonce {
+		public final long value;
+		public final long timestamp;
+		public Nonce() {
+			this(Math.abs(new Random().nextLong()), System.currentTimeMillis());
+		}
+		public Nonce(long value, long timestamp) {
+			this.value = value;
+			this.timestamp = timestamp;
+		}
+		public boolean isValid() {
+			return System.currentTimeMillis() < (timestamp + 1000); // 1 second expiration
+		}
+		@Override
+		public boolean equals(Object o) {
+			return o != null && o instanceof Nonce && this.value == ((Nonce)o).value;
+		}
+		@Override
+		public int hashCode() {
+			return HashCodeUtil.hash(HashCodeUtil.SEED, value);
+		}
+		
+
+		public static String serializeNonces(Set<Nonce> nonces) {
+			Set<String> nonceStrings = new HashSet<String>();
+			for (Nonce nonce : nonces) {
+				nonceStrings.add(nonce.value + "@" + nonce.timestamp);
+			}
+			return Utils.join(nonceStrings, ",");
+		}
+		
+		public static Set<Nonce> unserializeNonces(String noncesString) {
+			Set<Nonce> nonces = new HashSet<Nonce>();
+			if (noncesString != null) {
+			String[] nonceStrings = noncesString.split(",");
+				for (String nonceString : nonceStrings) {
+					String[] nonceParts = nonceString.split("@");
+					nonces.add(new Nonce(Long.valueOf(nonceParts[0]), Long.valueOf(nonceParts[1])));
+				}
+			}
+			return nonces;
+		}
+	}
 
 	
 	/**

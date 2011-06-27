@@ -16,6 +16,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import edu.mit.media.hd.funf.OppProbe;
+import edu.mit.media.hd.funf.client.ProbeCommunicator;
 import edu.mit.media.hd.funf.probe.Probe;
 
 public class ActivityProbe extends Probe {
@@ -144,11 +145,8 @@ public class ActivityProbe extends Probe {
 		}
 		long newDuration = params.getLong(SystemParameter.DURATION.name, DEFAULT_DURATION);
 		duration = Math.max(newDuration, duration);
-		Intent accProbeIntent = new Intent(OppProbe.getGetAction(AccelerometerProbe.class));
-		// TODO: need to convert over to client api
-		//accProbeIntent.putExtras(params);
-		//accProbeIntent.putExtra(SystemParameter.REQUESTER.name, getClass().getName());
-		sendBroadcast(accProbeIntent);
+		ProbeCommunicator probe = new ProbeCommunicator(this);
+		probe.registerDataRequest(AccelerometerProbe.class, params);
 	}
 
 	@Override
@@ -156,10 +154,8 @@ public class ActivityProbe extends Probe {
 		if (running) {
 			unregisterReceiver(accelerometerProbeListener);
 			running = false;
-			Intent accProbeIntent = new Intent(OppProbe.getGetAction(AccelerometerProbe.class));
-			//accProbeIntent.putExtra(SystemParameter.REQUESTER.name, getClass().getName());
-			//accProbeIntent.putExtra(SystemParameter.ENABLED.name, false);
-			sendBroadcast(accProbeIntent);
+			ProbeCommunicator probe = new ProbeCommunicator(this);
+			probe.unregisterDataRequest(AccelerometerProbe.class);
 		}
 	}
 
