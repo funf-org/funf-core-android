@@ -8,7 +8,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
-import edu.mit.media.hd.funf.Utils;
+import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.storage.BundleSerializer;
 import edu.mit.media.hd.funf.storage.ProbeDataListener;
 
@@ -48,7 +48,7 @@ public abstract class ConfiguredDataListenerService extends Service {
 					ProbeDataListener dataListener = getDataListener(databaseName);
 					IntentFilter filter = new IntentFilter();
 					for (String probe : probesToRecord) {
-						filter.addAction(Utils.getDataAction(probe));
+						filter.addAction(OppProbe.getDataAction(probe));
 					}
 					registerReceiver(dataListener, filter);
 				}

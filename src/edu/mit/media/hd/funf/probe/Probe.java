@@ -27,7 +27,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
+import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.Utils;
+import edu.mit.media.hd.funf.OppProbe.Status;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 public abstract class Probe extends Service {
@@ -113,7 +115,7 @@ public abstract class Probe extends Service {
 	 * Sends a STATUS broadcast for the probe.
 	 */
 	public void sendProbeStatus() {
-		Intent statusBroadcast = new Intent(Utils.getStatusAction());
+		Intent statusBroadcast = new Intent(OppProbe.getStatusAction(getClass()));
 		String name = getClass().getName();
 		String displayName = getClass().getName().replace(getClass().getPackage().getName() + ".", "");
 		
@@ -123,7 +125,7 @@ public abstract class Probe extends Service {
 		}
 		String[] requiredPermissions = new String[requiredPermissionsList.size()];
 		requiredPermissionsList.toArray(requiredPermissions);
-		List<Parameter> parameters = new ArrayList<Parameter>();
+		List<OppProbe.Parameter> parameters = new ArrayList<OppProbe.Parameter>();
 		parameters.add(new Parameter(SystemParameter.ENABLED, true));
 		parameters.add(new Parameter(SystemParameter.REQUESTER, ""));
 		for (Parameter param : getAvailableParametersNotNull()) {
@@ -159,7 +161,7 @@ public abstract class Probe extends Service {
 	protected void sendProbeData(long timestamp, Bundle params, Bundle data) {
 		Log.i(TAG, getClass().getName() + " sent probe data at " + timestamp);
 		mostRecentTimeDataSent = timestamp;
-		Intent dataBroadcast = new Intent(Utils.getDataAction(getClass()));
+		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
 		dataBroadcast.putExtra("TIMESTAMP", timestamp);
 		// TODO: should we send parameters with data broadcast?
 		dataBroadcast.putExtras(data);
@@ -434,88 +436,7 @@ public abstract class Probe extends Service {
 	}
 	
 	
-	/**
-	 * Convenience class for interacting with an OPP probe status bundle
-	 * @author alangardner
-	 *
-	 */
-	public final static class Status {
-		private Bundle bundle;
-		Status(String name, String displayName, 
-				boolean enabled, boolean running, 
-				long nextRun, long previousRun, 
-				String[] requiredPermissions, 
-				String[] requiredFeatures, 
-				List<Parameter> parameters) {
-			this.bundle = new Bundle();
-			bundle.putBoolean("ENABLED", enabled);
-			bundle.putBoolean("RUNNING", running);
-			bundle.putLong("NEXT_RUN", nextRun);
-			bundle.putLong("PREVIOUS_RUN", previousRun);
-			bundle.putString("NAME", name);
-			bundle.putString("DISPLAY_NAME", displayName);
-			bundle.putStringArray("REQUIRED_PERMISSIONS", requiredPermissions == null ? new String[]{} : requiredPermissions);
-			bundle.putStringArray("REQUIRED_FEATURES", requiredFeatures == null ? new String[]{} : requiredFeatures);
-			ArrayList<Bundle> paramBundles = new ArrayList<Bundle>();
-			if (parameters != null) {
-				for (Parameter param : parameters) {
-					paramBundles.add(param.getBundle());
-				}
-			}
-			bundle.putParcelableArrayList("PARAMETERS", paramBundles);
-			
-		}
-		public Status(Bundle bundle) {
-			this.bundle = bundle;
-		}
-		public String getName() {
-			return bundle.getString("NAME");
-		}
-		public String getDisplayName() {
-			return bundle.getString("DISPLAY_NAME");
-		}
-		public boolean isEnabled() {
-			return bundle.getBoolean("ENABLED");
-		}
-		public boolean isRunning() {
-			return bundle.getBoolean("RUNNING");
-		}
-		public long getNextRun() {
-			return bundle.getLong("NEXT_RUN");
-		}
-		public long getPreviousRun() {
-			return bundle.getLong("PREVIOUS_RUN");
-		}
-		public String[] getRequiredPermissions() {
-			return bundle.getStringArray("REQUIRED_PERMISSIONS");
-		}
-		public String[] getRequiredFeatures() {
-			return bundle.getStringArray("REQUIRED_FEATURES");
-		}
-		public Parameter[] getParameters() {
-			ArrayList<Bundle> paramBundles = bundle.getParcelableArrayList("PARAMETERS");
-			List<Parameter> paramList = new ArrayList<Parameter>();
-			for (Bundle paramBundle : paramBundles) {
-				paramList.add(new Parameter(paramBundle));
-			}
-			Parameter[] parameters = new Parameter[paramBundles.size()];
-			paramList.toArray(parameters);
-			return parameters;
-		}
-		public Bundle getBundle() {
-			return bundle;
-		}
-		@Override
-		public boolean equals(Object o) {
-			return o != null 
-			&& o instanceof Status 
-			&& getName().equals(((Status)o).getName());
-		}
-		@Override
-		public int hashCode() {
-			return getName().hashCode();
-		}
-	}
+	
 
 	
 	/**
@@ -523,30 +444,9 @@ public abstract class Probe extends Service {
 	 * @author alangardner
 	 *
 	 */
-	public final static class Parameter {
-
-		public static final String NAME_KEY = "NAME";
-		public static final String DEFAULT_VALUE_KEY = "DEFAULT_VALUE";
-		public static final String DISPLAY_NAME_KEY = "DISPLAY_NAME";
-		public static final String DESCRIPTION_KEY = "DESCRIPTION";
+	public final static class Parameter extends OppProbe.Parameter {
 		
 		private boolean supportedByProbe = true;
-		private final Bundle paramBundle;
-		
-		/**
-		 * Custom parameter constructor
-		 * @param name
-		 * @param value
-		 * @param displayName
-		 * @param description
-		 */
-		public Parameter(final String name, final Object value, final String displayName, final String description) {
-			paramBundle = new Bundle();
-			paramBundle.putString(NAME_KEY, name);
-			paramBundle.putString(DISPLAY_NAME_KEY, displayName);
-			paramBundle.putString(DESCRIPTION_KEY, description);
-			Utils.putInBundle(paramBundle, DEFAULT_VALUE_KEY, value);
-		}
 		
 		/**
 		 * System parameter constructor, to be handled by system
@@ -565,43 +465,14 @@ public abstract class Probe extends Service {
 		 * @param supportedByProbe
 		 */
 		public Parameter(final SystemParameter paramType, final Object defaultValue, final boolean supportedByProbe) {
-			this(paramType.name, defaultValue, paramType.displayName, paramType.description);
+			super(paramType.name, defaultValue, paramType.displayName, paramType.description);
 			this.supportedByProbe = supportedByProbe;
 		}
-		
-		/**
-		 * Convenience constructor to access parameter information from a bundle.
-		 * WARNING: this will not correctly set the 'isSupportedByProbe' flag.  Use only for convenient access to other parameters.
-		 * @param paramBundle
-		 */
-		public Parameter(final Bundle paramBundle) {
-			// TODO: we might want to ensure that the bundle has the appropriate keys
-			this.paramBundle = paramBundle;
-		}
 
-		public String getName() {
-			return paramBundle.getString(NAME_KEY);
-		}
-
-		public Object getValue() {
-			return paramBundle.get(DEFAULT_VALUE_KEY);
-		}
-
-		public String getDisplayName() {
-			return paramBundle.getString(DISPLAY_NAME_KEY);
-		}
-
-		public String getDescription() {
-			return paramBundle.getString(DESCRIPTION_KEY);
-		}
-		
 		public boolean isSupportedByProbe() {
 			return supportedByProbe;
 		}
 		
-		public Bundle getBundle() {
-			return paramBundle;
-		}
 	}
 	
 	/**

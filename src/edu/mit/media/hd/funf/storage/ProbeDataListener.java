@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import edu.mit.media.hd.funf.Utils;
+import edu.mit.media.hd.funf.OppProbe;
 
 public class ProbeDataListener extends BroadcastReceiver {
 
@@ -22,9 +22,9 @@ public class ProbeDataListener extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
-		if (Utils.isDataAction(action)) {
+		if (OppProbe.isDataAction(action)) {
 			String dataJson = bundleSerializer.serialize(intent.getExtras());
-			String probeName = Utils.getProbeName(action);
+			String probeName = OppProbe.getProbeName(action);
 			long timestamp = intent.getLongExtra("TIMESTAMP", 0L);
 			Bundle b = new Bundle();
 			b.putString(DatabaseService.DATABASE_NAME_KEY, databaseName);

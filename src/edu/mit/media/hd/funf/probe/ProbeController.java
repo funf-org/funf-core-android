@@ -18,7 +18,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
-import edu.mit.media.hd.funf.Utils;
+import edu.mit.media.hd.funf.OppProbe;
 
 /**
  * Discovers probes that are defined in the app manifest, 
@@ -39,8 +39,8 @@ public class ProbeController extends Service  {
 		this.probeMessageReceiver = new ProbeMessageReceiver();
 		// Discover probes and create listeners for probes in manifest
 		// TODO: need to coordinate with other Funf apps to determine which probes this app is in charge of
-		registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getStatusRequestAction()));
-		Log.i(TAG, "Registering for " + Utils.getStatusRequestAction());
+		registerReceiver(probeMessageReceiver, new IntentFilter(OppProbe.getGlobalPollAction()));
+		Log.i(TAG, "Registering for " + OppProbe.getGlobalPollAction());
 		for (Class<? extends Probe> probeClass : getAvailableProbeClasses()) {
 			new ProbeCommandServiceConnection(this, probeClass) {
 				@Override
@@ -48,10 +48,10 @@ public class ProbeController extends Service  {
 					// TODO: check that the required permissions and features exist for device and app
 					// TODO: loop over probeInterfaces
 					//for (String probeInterface : nonNullStrings(getProbe().getProbeInterfaces())) {
-					Log.i(TAG, "Registering for " + Utils.getDataRequestAction(getProbe().getClass()));
-					Log.i(TAG, "Registering for " + Utils.getStatusRequestAction(getProbe().getClass()));
-			        	registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getDataRequestAction(getProbe().getClass())));
-			        	registerReceiver(probeMessageReceiver, new IntentFilter(Utils.getStatusRequestAction(getProbe().getClass())));
+					Log.i(TAG, "Registering for " + OppProbe.getGetAction(getProbe().getClass()));
+					Log.i(TAG, "Registering for " + OppProbe.getPollAction(getProbe().getClass()));
+			        	registerReceiver(probeMessageReceiver, new IntentFilter(OppProbe.getGetAction(getProbe().getClass())));
+			        	registerReceiver(probeMessageReceiver, new IntentFilter(OppProbe.getPollAction(getProbe().getClass())));
 			        //}
 				}
 			};
@@ -78,7 +78,7 @@ public class ProbeController extends Service  {
 		public void onReceive(final Context context, final Intent intent) {
 			Log.i(TAG, "Receiving action " + intent.getAction());
 			final String action = intent.getAction();
-			if (Utils.isStatusRequest(action)) {
+			if (OppProbe.isPollAction(action)) {
 				for (Class<? extends Probe> probeClass : getAvailableProbeClasses()) {
 					new ProbeCommandServiceConnection(ProbeController.this, probeClass) {
 						@Override
@@ -87,7 +87,7 @@ public class ProbeController extends Service  {
 						}
 					};
 				}
-			} else if (Utils.isDataRequest(action)) {
+			} else if (OppProbe.isGetAction(action)) {
 				Class<? extends Probe> probeClass = getProbeClass(action);
 				// TODO: may need to coordinate schedule with master Funf controller
 				// TODO: may need to run remotely in other Funf app
@@ -104,11 +104,11 @@ public class ProbeController extends Service  {
 	
 	
 	private Set<Class<? extends Probe>> getAvailableProbeClasses() {
-		return Utils.getAvailableProbeClasses(this);
+		return ProbeUtils.getAvailableProbeClasses(this);
 	}
 	
 	private Class<? extends Probe> getProbeClass(final String action) {
-		return Utils.getProbeClass(getAvailableProbeClasses(), action);
+		return ProbeUtils.getProbeClass(getAvailableProbeClasses(), action);
 	}
 	
 

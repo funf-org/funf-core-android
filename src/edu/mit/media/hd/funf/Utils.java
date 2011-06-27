@@ -11,27 +11,20 @@ package edu.mit.media.hd.funf;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.ServiceInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.PowerManager;
 import android.util.Log;
-import edu.mit.media.hd.funf.probe.Probe;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 public final class Utils {
 
-	private static final String TAG = Utils.class.getName();
+	public static final String TAG = Utils.class.getName();
 	
 	/**
 	 * Should not be instantiated.  Used only as a namespace for static Utils functions
@@ -177,61 +170,6 @@ public final class Utils {
 		return bundles;
 	}
 	
-	////////////////////////////
-	// OPP
-	////////////////////////////
-	
-	/**
-	 * @return OPP status action
-	 */
-	public static String getStatusAction() {
-		// TODO: make this an OPP name
-		return "edu.mit.hd.funf.STATUS";
-	}
-
-	/**
-	 * @return OPP Status request action
-	 */
-	public static String getStatusRequestAction() {
-		// TODO: make this an OPP name
-		return "edu.mit.hd.funf.REQUEST_STATUS";
-	}
-	
-	/**
-	 * @return OPP Status request action
-	 */
-	public static String getStatusRequestAction(Class<? extends Probe> probeClass) {
-		// TODO: make this an OPP name
-		return probeClass.getName() + ".REQUEST_STATUS";
-	}
-	
-	/**
-	 * @param probeClass
-	 * @return OPP Data action for probe with class
-	 */
-	public static String getDataAction(Class<? extends Probe> probeClass) {
-		return getDataAction(probeClass.getName());
-	}
-	
-	public static String getDataAction(String probeName) {
-		return probeName + ".DATA";
-	}
-	
-	public static boolean isDataAction(final String action) {
-		return action != null && action.endsWith(".DATA");
-	}
-	
-	public static String getProbeName(final String action) {
-		if (action == null) {
-			return null;
-		}
-		final String actionString = action.endsWith(".DATA") ? ".DATA" 
-				: action.endsWith(".GET") ? ".GET" 
-				: null;
-		return (actionString == null) ? null 
-				: action.substring(0, action.length() - actionString.length());
-	}
-	
 	public static Map<String,Object> getValues(final Bundle bundle) {
 		HashMap<String, Object> values = new HashMap<String, Object>();
 		for (String key : bundle.keySet()) {
@@ -240,69 +178,6 @@ public final class Utils {
 		return values;
 	}
 	
-	/**
-	 * @param probeClass
-	 * @return  OPP Data action for probe with class
-	 */
-	public static String getDataRequestAction(String probeName) {
-		return probeName + ".GET";
-	}
-	public static String getDataRequestAction(Class<? extends Probe> probeClass) {
-		return getDataRequestAction(probeClass.getName());
-	}
-	
-	public static boolean isStatusRequest(final String action) {
-		return getStatusRequestAction().equals(action);
-	}
-	
-	public static boolean isDataRequest(final String action) {
-		return action != null && action.endsWith(".GET");
-	}
-	
-	/**
-	 * Scans the manifest for registered services, returning the set that are instances of Probe
-	 * @param context
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public static Set<Class<? extends Probe>> getAvailableProbeClasses(Context context) {
-		Set<Class<? extends Probe>> probes = new HashSet<Class<? extends Probe>>();
-		try {
-			PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_SERVICES);
-			for (ServiceInfo serviceInfo : info.services) {
-				try {
-					Class<?> probeServiceClass = Class.forName(serviceInfo.name);
-					if (Probe.class.isAssignableFrom(probeServiceClass)) {
-						probes.add((Class<? extends Probe>) probeServiceClass);
-					}
-				} catch (ClassNotFoundException e) {
-					Log.e(TAG, e.getLocalizedMessage());
-				}
-			}
-		} catch (NameNotFoundException e) {
-			Log.e(TAG, e.getLocalizedMessage());
-		}
-		return probes;
-	}
-	
-	/**
-	 * Get the class instance for the probe specified by the action, from the set of probe classes passed in.
-	 * @param probeClasses
-	 * @param action
-	 * @return probe class that matches action, or null if it doesn't exist
-	 */
-	public static Class<? extends Probe> getProbeClass(final Set<Class<? extends Probe>> probeClasses, final String action) {
-		// TODO: deal with registration of more than just class name for action
-		// work with interfaces as well, e.g. the common OPP interfaces
-		for (Class<? extends Probe> probeClass : probeClasses) {
-			if (action != null && action.startsWith(probeClass.getName())) {
-				return probeClass;
-			}
-		}
-		return null;
-	}
-	
-
 	/**
 	 * Convenience function for returning an empty string array if null is returned
 	 * @param array

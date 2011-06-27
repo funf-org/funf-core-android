@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import edu.mit.media.hd.funf.Utils;
+import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.probe.Probe;
 
 public class ProbeCommunicator {
@@ -17,7 +17,7 @@ public class ProbeCommunicator {
 	}
 	
 	public void requestStatusFromAll() {
-		Intent i = new Intent(Utils.getStatusRequestAction());
+		Intent i = new Intent(OppProbe.getGlobalPollAction());
 		context.sendBroadcast(i);
 	}
 	
@@ -27,7 +27,7 @@ public class ProbeCommunicator {
 	}
 	
 	public void registerDataRequest(String probeName, Bundle... params) {
-		Intent i = new Intent(Utils.getDataRequestAction(probeName));
+		Intent i = new Intent(OppProbe.getGetAction(probeName));
 		Log.i(TAG, "Sending intent '" + i.getAction() + "'");
 		i.setPackage(context.getPackageName());
 		i.putExtra("PARAMETERS", params);

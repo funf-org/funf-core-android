@@ -15,7 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
-import edu.mit.media.hd.funf.Utils;
+import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.probe.Probe;
 
 public class ActivityProbe extends Probe {
@@ -57,7 +57,7 @@ public class ActivityProbe extends Probe {
 	protected void onEnable() {
 		running = false;
 		handler = new Handler();
-		accelerometerProbeBroadcastFilter = new IntentFilter(Utils.getDataAction(AccelerometerProbe.class));
+		accelerometerProbeBroadcastFilter = new IntentFilter(OppProbe.getDataAction(AccelerometerProbe.class));
 		accelerometerProbeListener = new BroadcastReceiver() {
 
 			private long intervalStartTime;
@@ -144,7 +144,7 @@ public class ActivityProbe extends Probe {
 		}
 		long newDuration = params.getLong(SystemParameter.DURATION.name, DEFAULT_DURATION);
 		duration = Math.max(newDuration, duration);
-		Intent accProbeIntent = new Intent(Utils.getDataRequestAction(AccelerometerProbe.class));
+		Intent accProbeIntent = new Intent(OppProbe.getGetAction(AccelerometerProbe.class));
 		accProbeIntent.putExtras(params);
 		accProbeIntent.putExtra(SystemParameter.REQUESTER.name, getClass().getName());
 		sendBroadcast(accProbeIntent);
@@ -155,7 +155,7 @@ public class ActivityProbe extends Probe {
 		if (running) {
 			unregisterReceiver(accelerometerProbeListener);
 			running = false;
-			Intent accProbeIntent = new Intent(Utils.getDataRequestAction(AccelerometerProbe.class));
+			Intent accProbeIntent = new Intent(OppProbe.getGetAction(AccelerometerProbe.class));
 			accProbeIntent.putExtra(SystemParameter.REQUESTER.name, getClass().getName());
 			accProbeIntent.putExtra(SystemParameter.ENABLED.name, false);
 			sendBroadcast(accProbeIntent);
