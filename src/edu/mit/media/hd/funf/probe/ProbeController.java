@@ -83,6 +83,7 @@ public class ProbeController extends Service  {
 					new ProbeCommandServiceConnection(ProbeController.this, probeClass) {
 						@Override
 						public void runCommand() {
+							// TODO: verify the sender is on the white list of packages
 							getProbe().sendProbeStatus();
 						}
 					};

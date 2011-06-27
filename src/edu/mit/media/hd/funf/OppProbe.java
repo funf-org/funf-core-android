@@ -13,11 +13,13 @@ public class OppProbe {
 	 * @author alangardner
 	 *
 	 */
-	// TODO: REQUESTER is required for all, parameters is not but is reserved for data requests.  
-	// Need to figure out what to do with Reserved Parameters
+	// TODO: Should these reserved parameters be scoped to action types?
 	public enum ReservedParamaters {
 		REQUESTER("REQUESTER", "Requester", "The identifier for who is requesting data from this probe."),
-		PARAMETERS("PARAMETERS", "Parameters", "An array of Bundles that represent individual data request for the probes.");
+		REQUESTS("REQUESTS", "Requests", "An array of Bundles that represent individual data request for the probes."),
+		NONCE("NONCE", "Nonce", "A randomly generated long that is used to verify the identity of an android package."),
+		TIMESTAMP("TIMESTAMP", "Timestamp", "A long millisecond timestamp that identifies when the action was sent."),
+		PARAMETERS("PARAMETERS", "Parameters", "The parameter values used to run the probe (DATA), or the defaults (STATUS).");
 		
 		public final String name, displayName, description;
 		

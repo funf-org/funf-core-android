@@ -145,8 +145,9 @@ public class ActivityProbe extends Probe {
 		long newDuration = params.getLong(SystemParameter.DURATION.name, DEFAULT_DURATION);
 		duration = Math.max(newDuration, duration);
 		Intent accProbeIntent = new Intent(OppProbe.getGetAction(AccelerometerProbe.class));
-		accProbeIntent.putExtras(params);
-		accProbeIntent.putExtra(SystemParameter.REQUESTER.name, getClass().getName());
+		// TODO: need to convert over to client api
+		//accProbeIntent.putExtras(params);
+		//accProbeIntent.putExtra(SystemParameter.REQUESTER.name, getClass().getName());
 		sendBroadcast(accProbeIntent);
 	}
 
@@ -156,8 +157,8 @@ public class ActivityProbe extends Probe {
 			unregisterReceiver(accelerometerProbeListener);
 			running = false;
 			Intent accProbeIntent = new Intent(OppProbe.getGetAction(AccelerometerProbe.class));
-			accProbeIntent.putExtra(SystemParameter.REQUESTER.name, getClass().getName());
-			accProbeIntent.putExtra(SystemParameter.ENABLED.name, false);
+			//accProbeIntent.putExtra(SystemParameter.REQUESTER.name, getClass().getName());
+			//accProbeIntent.putExtra(SystemParameter.ENABLED.name, false);
 			sendBroadcast(accProbeIntent);
 		}
 	}

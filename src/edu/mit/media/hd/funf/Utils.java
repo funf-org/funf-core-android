@@ -165,6 +165,9 @@ public final class Utils {
 	
 
 	public static Bundle[] copyBundleArray(Parcelable[] parcelables) {
+		if (parcelables == null) {
+			return new Bundle[0];
+		}
 		Bundle[] bundles = new Bundle[parcelables.length];
 		System.arraycopy(parcelables, 0, bundles, 0, parcelables.length);
 		return bundles;

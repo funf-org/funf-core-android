@@ -87,13 +87,14 @@ public abstract class Probe extends Service {
 	@Override
 	public final int onStartCommand(Intent intent, int flags, int startId) {
 		Bundle extras = intent.getExtras();
-		String requester = extras.getString(SystemParameter.REQUESTER.name);
-		boolean requestEnabled = extras.getBoolean(SystemParameter.ENABLED.name, true);
-		if (!requestEnabled) {
-			requests.remove(requester);
+		String requester = extras.getString(OppProbe.ReservedParamaters.REQUESTER.name);
+		// TODO: may need to handle default top level bundle parameters
+		Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray(OppProbe.ReservedParamaters.REQUESTS.name));
+		if (requests.length == 0) {
+			this.requests.remove(requester);
+		} else {
+			run(requester, requests);
 		}
-		Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray("PARAMETERS"));
-		run(requester, requests);
 		return START_STICKY;
 	}
 
@@ -115,6 +116,7 @@ public abstract class Probe extends Service {
 	 * Sends a STATUS broadcast for the probe.
 	 */
 	public void sendProbeStatus() {
+		// TODO: enable sending directly to packages
 		Intent statusBroadcast = new Intent(OppProbe.getStatusAction(getClass()));
 		String name = getClass().getName();
 		String displayName = getClass().getName().replace(getClass().getPackage().getName() + ".", "");
@@ -126,14 +128,8 @@ public abstract class Probe extends Service {
 		String[] requiredPermissions = new String[requiredPermissionsList.size()];
 		requiredPermissionsList.toArray(requiredPermissions);
 		List<OppProbe.Parameter> parameters = new ArrayList<OppProbe.Parameter>();
-		parameters.add(new Parameter(SystemParameter.ENABLED, true));
-		parameters.add(new Parameter(SystemParameter.REQUESTER, ""));
 		for (Parameter param : getAvailableParametersNotNull()) {
-			// Add all parameters except duplicate enabled and requester parameters
-			if (!(SystemParameter.ENABLED.name.equals(param.getName()) || 
-					SystemParameter.REQUESTER.name.equals(param.getName()))) {
-				parameters.add(param);
-			}
+			parameters.add(param);
 		}
 		Status status = new Status(
 				name,
@@ -159,6 +155,7 @@ public abstract class Probe extends Service {
 	 * Sends a DATA broadcast for the probe, and records the time.
 	 */
 	protected void sendProbeData(long timestamp, Bundle params, Bundle data) {
+		// TODO: enable sending directly to packages
 		Log.i(TAG, getClass().getName() + " sent probe data at " + timestamp);
 		mostRecentTimeDataSent = timestamp;
 		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
@@ -306,13 +303,14 @@ public abstract class Probe extends Service {
 	}
 	
 	private boolean shouldRunNow(Bundle params) {
-		boolean enabled = params.getBoolean(SystemParameter.ENABLED.name, true);
+		if (params == null) {
+			return false;
+		}
 		long period = params.getLong(SystemParameter.PERIOD.name, 0L) * 1000;
 		long startTime = params.getLong(SystemParameter.START.name, 0L) * 1000;
 		long endTime = params.getLong(SystemParameter.END.name, 0L) * 1000;
 		long currentTime = System.currentTimeMillis();
-		return enabled 
-		    && (startTime == 0 || startTime <= currentTime) // After start time (if exists)
+		return (startTime == 0 || startTime <= currentTime) // After start time (if exists)
 			&& (endTime == 0 || currentTime <= endTime)   // Before end time (if exists)
 			&& (period == 0 || (mostRecentTimeRun + period) <= currentTime); // At least one period since last run
 	}	
@@ -481,8 +479,7 @@ public abstract class Probe extends Service {
 	 *
 	 */
 	public enum SystemParameter {
-		ENABLED("ENABLED", "Enabled", "Whether or not probe should run on requester's behalf."),
-		REQUESTER("REQUESTER", "Requester", "The identifier for who is requesting data from this probe."),
+		PASSIVE("PASSIVE", "Passive", "Whether the requester wants data they did not specifically request."),
 		DURATION("DURATION", "Duration", "Length of time probe will run for (seconds)"),
 		START("START_DATE", "Start Timestamp", "Date after which probe is allowed to run (millis since epoch)"),
 		END("END_DATE", "End Timestamp", "Date before which probe is allowed to run (millis since epoch)"),
