@@ -1,5 +1,8 @@
 package edu.mit.media.hd.funf.client;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,7 +19,7 @@ public class ProbeCommunicator {
 	private final String probeName;
 	
 	public ProbeCommunicator(Context context, String probeName) {
-		this.context = context;
+		this.context = context.getApplicationContext();
 		this.probeName = probeName;
 	}
 	public ProbeCommunicator(Context context, Class<? extends Probe> probeClass) {
@@ -46,25 +49,7 @@ public class ProbeCommunicator {
 	}
 	
 	public void registerDataRequest(final String requestId, final Bundle... requests) {
-		BroadcastReceiver statusReceiver = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				long nonce = intent.getLongExtra(OppProbe.ReservedParamaters.NONCE.name, 0L);
-				if (nonce != 0L) {
-					final Intent i = new Intent(OppProbe.getGetAction(probeName));
-					Log.i(TAG, "Sending intent '" + i.getAction() + "'");
-					i.setPackage(context.getPackageName());
-					i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, context.getPackageName());
-					if (requestId != null && !"".equals(requestId)) {
-						i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, requestId);
-					}
-					i.putExtra(OppProbe.ReservedParamaters.REQUESTS.name, requests);
-					i.putExtra(OppProbe.ReservedParamaters.NONCE.name, nonce);
-					context.sendBroadcast(i);
-					ProbeCommunicator.this.context.unregisterReceiver(this);
-				}
-			}
-		};
+		DataResponder statusReceiver = new DataResponder(requestId, requests);
 		context.registerReceiver(statusReceiver, new IntentFilter(OppProbe.getStatusAction(probeName)));
 		requestStatus(true);
 	}
@@ -75,5 +60,48 @@ public class ProbeCommunicator {
 	
 	public void unregisterDataRequest() {
 		unregisterDataRequest("");
+	}
+	
+	/**
+	 * Helper class to respond with data request once we get a nonce from a status request
+	 *
+	 */
+	private class DataResponder extends BroadcastReceiver {
+
+		private final String requestId;
+		private final Bundle[] requests;
+		private final Timer expirationTimer;
+		
+		public DataResponder(String requestId, Bundle... requests) {
+			this.requestId = requestId;
+			this.requests = requests;
+			this.expirationTimer = new Timer();
+			expirationTimer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					context.unregisterReceiver(DataResponder.this);
+				}
+			}, 1000);
+		}
+		
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			long nonce = intent.getLongExtra(OppProbe.ReservedParamaters.NONCE.name, 0L);
+			if (nonce != 0L) {
+				expirationTimer.cancel();
+				ProbeCommunicator.this.context.unregisterReceiver(this);
+				final Intent i = new Intent(OppProbe.getGetAction(probeName));
+				Log.i(TAG, "Sending intent '" + i.getAction() + "'");
+				i.setPackage(context.getPackageName());
+				i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, context.getPackageName());
+				if (requestId != null && !"".equals(requestId)) {
+					i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, requestId);
+				}
+				i.putExtra(OppProbe.ReservedParamaters.REQUESTS.name, requests);
+				i.putExtra(OppProbe.ReservedParamaters.NONCE.name, nonce);
+				context.sendBroadcast(i);
+			}
+		}
+		
 	}
 }

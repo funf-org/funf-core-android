@@ -52,7 +52,8 @@ public class FileDirectoryArchive implements Archive<File> {
 	@Override
 	public File[] getAll() {
 		cleaner.clean(archiveDir);
-		return archiveDir.listFiles();
+		File[] files = archiveDir.listFiles();
+		return (files == null) ? new File[0] : files;
 	}
 
 	@Override

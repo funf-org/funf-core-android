@@ -138,6 +138,9 @@ public final class Utils {
 		if (delimeter == null) {
 			delimeter = ",";
 		}
+		if (strings.isEmpty()) {
+			return "";
+		}
 		StringBuffer joined = new StringBuffer();
 		Iterator<?> stringIter = strings.iterator();
 		joined.append(stringIter.next().toString());

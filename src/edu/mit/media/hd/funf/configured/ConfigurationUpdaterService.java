@@ -33,7 +33,8 @@ public abstract class ConfigurationUpdaterService extends Service {
 				Log.e(TAG, "Unable to get config");
 			} else {
 				FunfConfig oldConfig = FunfConfig.getFunfConfig(this);
-				if (!config.equals(oldConfig)) {
+				// TODO: re-enable (disabled for debugging)
+				//if (!config.equals(oldConfig)) {
 
 					if (oldConfig != null) {
 						Log.i(TAG, "Removing old data requests");
@@ -64,7 +65,7 @@ public abstract class ConfigurationUpdaterService extends Service {
 						probeCommunicatior.registerDataRequest(entry.getValue());
 					}
 
-				}
+				//}
 			}
 		} catch (JSONException e) {
 			Log.e(TAG, e.getLocalizedMessage());

@@ -33,7 +33,7 @@ public interface DirectoryCleaner {
 		public void clean(File directory) {
 			if (directory.isDirectory()) {
 				File[] files = directory.listFiles();
-				if (files.length > numToKeep) {
+				if (files != null && files.length > numToKeep) {
 					// Sort descending by last modified time
 					Arrays.sort(files, new DescendingByLastModifiedComaparator());
 					// Delete all except the first numToKeep files
@@ -59,10 +59,12 @@ public interface DirectoryCleaner {
 		public void clean(File directory) {
 			if (directory.isDirectory()) {
 				File[] files = directory.listFiles();
-				long now = System.currentTimeMillis();
-				for (File file : files) {
-					if ((now - file.lastModified()) > millisToKeep) {
-						file.delete();
+				if (files != null) {
+					long now = System.currentTimeMillis();
+					for (File file : files) {
+						if ((now - file.lastModified()) > millisToKeep) {
+							file.delete();
+						}
 					}
 				}
 			}

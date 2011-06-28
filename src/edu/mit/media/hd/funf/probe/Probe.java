@@ -526,8 +526,8 @@ public abstract class Probe extends Service {
 		
 		public static Set<Nonce> unserializeNonces(String noncesString) {
 			Set<Nonce> nonces = new HashSet<Nonce>();
-			if (noncesString != null) {
-			String[] nonceStrings = noncesString.split(",");
+			if (noncesString != null && !noncesString.trim().equals("")) {
+				String[] nonceStrings = noncesString.split(",");
 				for (String nonceString : nonceStrings) {
 					String[] nonceParts = nonceString.split("@");
 					nonces.add(new Nonce(Long.valueOf(nonceParts[0]), Long.valueOf(nonceParts[1])));
