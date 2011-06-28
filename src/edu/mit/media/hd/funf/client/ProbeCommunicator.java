@@ -71,6 +71,7 @@ public class ProbeCommunicator {
 		private final String requestId;
 		private final Bundle[] requests;
 		private final Timer expirationTimer;
+		private boolean sent;
 		
 		public DataResponder(String requestId, Bundle... requests) {
 			this.requestId = requestId;
@@ -79,27 +80,39 @@ public class ProbeCommunicator {
 			expirationTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
-					context.unregisterReceiver(DataResponder.this);
+					try {
+						context.unregisterReceiver(DataResponder.this);
+					} catch (IllegalArgumentException e) {
+						// already removed;
+					}
 				}
 			}, 1000);
+			sent = false;
 		}
 		
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			long nonce = intent.getLongExtra(OppProbe.ReservedParamaters.NONCE.name, 0L);
-			if (nonce != 0L) {
-				expirationTimer.cancel();
-				ProbeCommunicator.this.context.unregisterReceiver(this);
-				final Intent i = new Intent(OppProbe.getGetAction(probeName));
-				Log.i(TAG, "Sending intent '" + i.getAction() + "'");
-				i.setPackage(context.getPackageName());
-				i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, context.getPackageName());
-				if (requestId != null && !"".equals(requestId)) {
-					i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, requestId);
+			if (intent.getAction().equals(OppProbe.getStatusAction(probeName))) {
+				long nonce = intent.getLongExtra(OppProbe.ReservedParamaters.NONCE.name, 0L);
+				if (!sent && nonce != 0L) {
+					sent = true;
+					expirationTimer.cancel();
+					try {
+						context.unregisterReceiver(DataResponder.this);
+					} catch (IllegalArgumentException e) {
+						// already removed;
+					}
+					final Intent i = new Intent(OppProbe.getGetAction(probeName));
+					Log.i(TAG, "Sending intent '" + i.getAction() + "'");
+					i.setPackage(context.getPackageName());
+					i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, context.getPackageName());
+					if (requestId != null && !"".equals(requestId)) {
+						i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, requestId);
+					}
+					i.putExtra(OppProbe.ReservedParamaters.REQUESTS.name, requests);
+					i.putExtra(OppProbe.ReservedParamaters.NONCE.name, nonce);
+					context.sendBroadcast(i);
 				}
-				i.putExtra(OppProbe.ReservedParamaters.REQUESTS.name, requests);
-				i.putExtra(OppProbe.ReservedParamaters.NONCE.name, nonce);
-				context.sendBroadcast(i);
 			}
 		}
 		

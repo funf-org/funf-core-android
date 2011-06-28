@@ -331,13 +331,24 @@ public abstract class Probe extends Service {
 		return completeParams;
 	}
 	
+	private static long getLong(Bundle bundle, String key, long defaultValue) {
+		long value = bundle.getLong(key, defaultValue);
+		if (value == defaultValue) {
+			int valueInt = bundle.getInt(key, -1);
+			if (valueInt != -1) {
+				value = valueInt;
+			}
+		}
+		return value;
+	}
+	
 	private boolean shouldRunNow(Bundle params) {
 		if (params == null) {
 			return false;
 		}
-		long period = params.getLong(SystemParameter.PERIOD.name, 0L) * 1000;
-		long startTime = params.getLong(SystemParameter.START.name, 0L) * 1000;
-		long endTime = params.getLong(SystemParameter.END.name, 0L) * 1000;
+		long period = getLong(params, SystemParameter.PERIOD.name, 0L) * 1000;
+		long startTime = getLong(params, SystemParameter.START.name, 0L) * 1000;
+		long endTime = getLong(params, SystemParameter.END.name, 0L) * 1000;
 		long currentTime = System.currentTimeMillis();
 		return (startTime == 0 || startTime <= currentTime) // After start time (if exists)
 			&& (endTime == 0 || currentTime <= endTime)   // Before end time (if exists)

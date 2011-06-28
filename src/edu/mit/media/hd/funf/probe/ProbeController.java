@@ -80,15 +80,18 @@ public class ProbeController extends Service  {
 			final String action = intent.getAction();
 			if (OppProbe.isPollAction(action)) {
 				for (Class<? extends Probe> probeClass : getAvailableProbeClasses()) {
-					new ProbeCommandServiceConnection(ProbeController.this, probeClass) {
-						@Override
-						public void runCommand() {
-							// TODO: verify the sender is on the white list of packages
-							String requestingPackage = intent.getStringExtra(OppProbe.ReservedParamaters.REQUESTER.name);
-							boolean includeNonce = intent.getBooleanExtra(OppProbe.ReservedParamaters.NONCE.name, false);
-							getProbe().sendProbeStatus(requestingPackage, includeNonce);
-						}
-					};
+					if (action.equals(OppProbe.getGlobalPollAction()) 
+							|| probeClass.getName().equals(OppProbe.getProbeName(action))) {
+						new ProbeCommandServiceConnection(ProbeController.this, probeClass) {
+							@Override
+							public void runCommand() {
+								// TODO: verify the sender is on the white list of packages
+								String requestingPackage = intent.getStringExtra(OppProbe.ReservedParamaters.REQUESTER.name);
+								boolean includeNonce = intent.getBooleanExtra(OppProbe.ReservedParamaters.NONCE.name, false);
+								getProbe().sendProbeStatus(requestingPackage, includeNonce);
+							}
+						};
+					}
 				}
 			} else if (OppProbe.isGetAction(action)) {
 				Class<? extends Probe> probeClass = getProbeClass(action);
