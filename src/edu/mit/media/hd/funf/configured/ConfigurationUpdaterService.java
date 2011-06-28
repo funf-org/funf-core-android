@@ -33,14 +33,13 @@ public abstract class ConfigurationUpdaterService extends Service {
 				Log.e(TAG, "Unable to get config");
 			} else {
 				FunfConfig oldConfig = FunfConfig.getFunfConfig(this);
-				// TODO: re-enable (disabled for debugging)
-				//if (!config.equals(oldConfig)) {
+				if (!config.equals(oldConfig)) {
 
-					ProbeCommunicator probeCommunicatior = new ProbeCommunicator(this);
 					if (oldConfig != null) {
 						Log.i(TAG, "Removing old data requests");
 						for (String probe : oldConfig.getDataRequests().keySet()) {
-							probeCommunicatior.unregisterDataRequest(probe);
+							ProbeCommunicator probeCommunicatior = new ProbeCommunicator(this, probe);
+							probeCommunicatior.unregisterDataRequest();
 						}
 					}
 					FunfConfig.setFunfConfig(this, config);
@@ -61,10 +60,11 @@ public abstract class ConfigurationUpdaterService extends Service {
 					// Send data requests for all data requests
 					for (Map.Entry<String,Bundle[]> entry : config.getDataRequests().entrySet()) {
 						Log.i(TAG, "Registering data request for " + entry.getKey());
-						probeCommunicatior.registerDataRequest(entry.getKey(), entry.getValue());
+						ProbeCommunicator probeCommunicatior = new ProbeCommunicator(this, entry.getKey());
+						probeCommunicatior.registerDataRequest(entry.getValue());
 					}
 
-				//}
+				}
 			}
 		} catch (JSONException e) {
 			Log.e(TAG, e.getLocalizedMessage());

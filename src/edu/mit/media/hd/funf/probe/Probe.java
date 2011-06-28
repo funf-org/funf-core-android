@@ -95,14 +95,16 @@ public abstract class Probe extends Service {
 	public final int onStartCommand(Intent intent, int flags, int startId) {
 		Bundle extras = intent.getExtras();
 		String requester = extras.getString(OppProbe.ReservedParamaters.REQUESTER.name);
+		String requestId = extras.getString(OppProbe.ReservedParamaters.REQUEST_ID.name);
+		requestId = (requestId == null) ? "" : requestId;
 		long nonce = extras.getLong(OppProbe.ReservedParamaters.NONCE.name, -1L);
 		if (redeemNonce(nonce)) {
 			// TODO: may need to handle default top level bundle parameters
 			Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray(OppProbe.ReservedParamaters.REQUESTS.name));
 			if (requests.length == 0) {
-				this.requests.remove(requester);
+				this.requests.remove(requester, requestId);
 			} else {
-				run(requester, requests);
+				run(requester, requestId, requests);
 			}
 		}
 		return START_STICKY;
@@ -230,8 +232,8 @@ public abstract class Probe extends Service {
 	 * Depending on the probe implementation, the probe may stop automatically after it runs.
 	 * @param params
 	 */
-	public final void run(String requester, Bundle... params) {
-		if (!requests.put(requester, params)) {
+	public final void run(String requester, String requestId, Bundle... params) {
+		if (!requests.put(requester, requestId, params)) {
 			Log.w(TAG, "Unable to store requests for probe.");
 			return; // Require successful storing of request
 		}

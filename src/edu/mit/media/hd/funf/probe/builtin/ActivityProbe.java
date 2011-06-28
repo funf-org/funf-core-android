@@ -145,8 +145,8 @@ public class ActivityProbe extends Probe {
 		}
 		long newDuration = params.getLong(SystemParameter.DURATION.name, DEFAULT_DURATION);
 		duration = Math.max(newDuration, duration);
-		ProbeCommunicator probe = new ProbeCommunicator(this);
-		probe.registerDataRequest(AccelerometerProbe.class, params);
+		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerProbe.class);
+		probe.registerDataRequest(getClass().getName(), params);
 	}
 
 	@Override
@@ -154,8 +154,8 @@ public class ActivityProbe extends Probe {
 		if (running) {
 			unregisterReceiver(accelerometerProbeListener);
 			running = false;
-			ProbeCommunicator probe = new ProbeCommunicator(this);
-			probe.unregisterDataRequest(AccelerometerProbe.class);
+			ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerProbe.class);
+			probe.unregisterDataRequest(getClass().getName());
 		}
 	}
 

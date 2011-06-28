@@ -13,17 +13,22 @@ public class ProbeCommunicator {
 	public static final String TAG = ProbeCommunicator.class.getName();
 	
 	private final Context context;
+	private final String probeName;
 	
-	public ProbeCommunicator(Context context) {
+	public ProbeCommunicator(Context context, String probeName) {
 		this.context = context;
+		this.probeName = probeName;
+	}
+	public ProbeCommunicator(Context context, Class<? extends Probe> probeClass) {
+		this(context, probeClass.getName());
 	}
 	
-	public void requestStatusFromAll() {
+	public static void requestStatusFromAll(Context context) {
 		Intent i = new Intent(OppProbe.getGlobalPollAction());
 		context.sendBroadcast(i);
 	}
 	
-	public void requestStatusFrom(String probeName, boolean includeNonce) {
+	public void requestStatus(boolean includeNonce) {
 		final Intent i = new Intent(OppProbe.getPollAction(probeName));
 		Log.i(TAG, "Sending intent '" + i.getAction() + "'");
 		i.setPackage(context.getPackageName());
@@ -32,15 +37,15 @@ public class ProbeCommunicator {
 		context.sendBroadcast(i);
 	}
 	
-	public void requestStatusFrom(String probeName) {
-		requestStatusFrom(probeName, false);
+	public void requestStatus() {
+		requestStatus(false);
 	}
 	
-	public void requestStatusFrom(Class<? extends Probe> probeClass) {
-		requestStatusFrom(probeClass.getName());
+	public void registerDataRequest(final Bundle... requests) {
+		registerDataRequest("", requests);
 	}
 	
-	public void registerDataRequest(final String probeName, final Bundle... requests) {
+	public void registerDataRequest(final String requestId, final Bundle... requests) {
 		BroadcastReceiver statusReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
@@ -50,6 +55,9 @@ public class ProbeCommunicator {
 					Log.i(TAG, "Sending intent '" + i.getAction() + "'");
 					i.setPackage(context.getPackageName());
 					i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, context.getPackageName());
+					if (requestId != null && !"".equals(requestId)) {
+						i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, requestId);
+					}
 					i.putExtra(OppProbe.ReservedParamaters.REQUESTS.name, requests);
 					i.putExtra(OppProbe.ReservedParamaters.NONCE.name, nonce);
 					context.sendBroadcast(i);
@@ -58,18 +66,14 @@ public class ProbeCommunicator {
 			}
 		};
 		context.registerReceiver(statusReceiver, new IntentFilter(OppProbe.getStatusAction(probeName)));
-		requestStatusFrom(probeName, true);
+		requestStatus(true);
 	}
 	
-	public void registerDataRequest(Class<? extends Probe> probeClass, Bundle... requests) {
-		registerDataRequest(probeClass.getName(), requests);
+	public void unregisterDataRequest(String requestId) {
+		registerDataRequest(requestId); // Blank data request
 	}
 	
-	public void unregisterDataRequest(String probeName) {
-		registerDataRequest(probeName); // Blank data request
-	}
-	
-	public void unregisterDataRequest(Class<? extends Probe> probeClass) {
-		unregisterDataRequest(probeClass.getName());
+	public void unregisterDataRequest() {
+		unregisterDataRequest("");
 	}
 }

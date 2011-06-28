@@ -15,7 +15,8 @@ public class OppProbe {
 	 */
 	// TODO: Should these reserved parameters be scoped to action types?
 	public enum ReservedParamaters {
-		REQUESTER("REQUESTER", "Requester", "The identifier for who is requesting data from this probe."),
+		REQUESTER("REQUESTER", "Requester", "The package name for who is requesting data from this probe."),
+		REQUEST_ID("REQUEST_ID", "RequestId", "The client chosen identifier for this request."),
 		REQUESTS("REQUESTS", "Requests", "An array of Bundles that represent individual data request for the probes."),
 		NONCE("NONCE", "Nonce", "A randomly generated long that is used to verify the identity of an android package."),
 		TIMESTAMP("TIMESTAMP", "Timestamp", "A long millisecond timestamp that identifies when the action was sent."),

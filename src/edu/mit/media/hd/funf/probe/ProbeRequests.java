@@ -38,8 +38,7 @@ public class ProbeRequests {
 		this.prefs = context.getSharedPreferences(name, Context.MODE_PRIVATE);
 		prefs.edit().putString(PROBE_NAME_PREF_KEY, name).commit();
 	}
-	
-	private static Map<String,ProbeRequests> probeNameToSchedule = new HashMap<String, ProbeRequests>();
+
 	public static ProbeRequests getRequestsForProbe(final Context context, final SharedPreferences probePrefs) {
 		String name = probePrefs.getString(ProbeRequests.PROBE_NAME_PREF_KEY, null);
 		if (name == null) {
@@ -73,8 +72,8 @@ public class ProbeRequests {
 		return new ProbeRequests(context, probeName);
 	}
 	
-	private String getKey(final String requester, final String paramName, final int index) {
-		return paramName + "__" + requester + "__" + index;
+	private String getKey(final String requester, final String requestId, final String paramName, final int index) {
+		return paramName + "__" + requester + "__" + requestId + "__" + index;
 	}
 	
 	private boolean isRequesterKey(final String key) {
@@ -85,12 +84,16 @@ public class ProbeRequests {
 		return key.split("__")[1];
 	}
 	
+	private String getRequestId(final String key) {
+		return key.split("__")[2];
+	}
+	
 	private String getParamName(final String key) {
 		return key.split("__")[0];
 	}
 	
 	private String getIndex(final String key) {
-		return key.split("__")[2];
+		return key.split("__")[3];
 	}
 	
 	/**
@@ -105,7 +108,7 @@ public class ProbeRequests {
 	 * @param bundle
 	 * @return true if request was succesfully stored, false otherwise
 	 */
-	public boolean put(final String requester, final Bundle... bundles) {
+	public boolean put(final String requester, final String requestId, final Bundle... bundles) {
 		if (requester == null) {
 			return false;
 		}
@@ -119,7 +122,7 @@ public class ProbeRequests {
 				Log.i(TAG, paramName + " = " + value.toString());
 				if (value != null) {
 					try {
-						Utils.putInPrefs(editor, getKey(requester, paramName, i), value);
+						Utils.putInPrefs(editor, getKey(requester, requestId, paramName, i), value);
 					} catch (UnstorableTypeException e) {
 						Log.e(TAG, e.getLocalizedMessage());
 						return false;
@@ -131,10 +134,10 @@ public class ProbeRequests {
 		return true;
 	}
 	
-	private Set<String> keysForRequester(final String requester) {
+	private Set<String> keysForRequester(final String requester, final String requestId) {
 		Set<String> keys = new HashSet<String>();
 		for (String key : prefs.getAll().keySet()) {
-			if (key.contains("__" + requester)) {
+			if (key.contains("__" + requester + "__" + requestId)) {
 				keys.add(key);
 			}
 		}
@@ -145,9 +148,9 @@ public class ProbeRequests {
 	 * Delete the current request from the current requester
 	 * @param requester
 	 */
-	public void remove(final String requester) {
+	public void remove(final String requester, final String requestId) {
 		SharedPreferences.Editor editor = this.prefs.edit();
-		for (String key : keysForRequester(requester)) {
+		for (String key : keysForRequester(requester, requestId)) {
 			editor.remove(key);
 		}
 		editor.commit();
@@ -162,9 +165,10 @@ public class ProbeRequests {
 		for(Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
 			if (isRequesterKey(entry.getKey())) {
 				final String requester = getRequester(entry.getKey());
+				final String requestId = getRequestId(entry.getKey());
 				final String index = getIndex(entry.getKey());
 				final String paramName = getParamName(entry.getKey());
-				final String key = requester + "__" + index;
+				final String key = requester + "__" + requestId + "__" + index;
 				Bundle bundle =  bundles.get(key);
 				if (bundle == null) {
 					bundle = new Bundle();
