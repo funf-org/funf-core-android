@@ -24,7 +24,6 @@ public class ActivityProbe extends Probe {
 	private static long DEFAULT_DURATION = 5L;
 	private static long INTERVAL = 1000L;  // Interval over which we calculate activity
 	
-	private boolean running;
 	private long duration;
 	private IntentFilter accelerometerProbeBroadcastFilter;
 	private BroadcastReceiver accelerometerProbeListener;
@@ -56,7 +55,6 @@ public class ActivityProbe extends Probe {
 	
 	@Override
 	protected void onEnable() {
-		running = false;
 		handler = new Handler();
 		accelerometerProbeBroadcastFilter = new IntentFilter(OppProbe.getDataAction(AccelerometerProbe.class));
 		accelerometerProbeListener = new BroadcastReceiver() {
@@ -128,35 +126,28 @@ public class ActivityProbe extends Probe {
 				update(x, y, z);
 			}
 		};
+		registerReceiver(accelerometerProbeListener, accelerometerProbeBroadcastFilter);
 	}
 
 
 	@Override
 	protected void onDisable() {
-		// TODO Auto-generated method stub
-		
+		unregisterReceiver(accelerometerProbeListener);
+		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerProbe.class);
+		probe.unregisterDataRequest(getClass().getName());
 	}
 	
 	@Override
 	public void onRun(Bundle params) {
-		if (!running) {
-			running = true;
-			registerReceiver(accelerometerProbeListener, accelerometerProbeBroadcastFilter);
-		}
 		long newDuration = params.getLong(SystemParameter.DURATION.name, DEFAULT_DURATION);
 		duration = Math.max(newDuration, duration);
 		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerProbe.class);
 		probe.registerDataRequest(getClass().getName(), params);
+		stop();
 	}
 
 	@Override
 	public void onStop() {
-		if (running) {
-			unregisterReceiver(accelerometerProbeListener);
-			running = false;
-			ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerProbe.class);
-			probe.unregisterDataRequest(getClass().getName());
-		}
 	}
 
 	@Override

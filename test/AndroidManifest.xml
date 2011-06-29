@@ -9,7 +9,45 @@
          which is needed when building test cases. -->
     <application>
         <uses-library android:name="android.test.runner" />
+    	<service android:name="edu.mit.media.hd.funf.probe.ProbeController"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.LocationProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.WifiProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.AccelerometerProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.ActivityProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.ScreenProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.BatteryProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.BluetoothProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.ApplicationsProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.RunningApplicationsProbe"></service>
+        
+        <service android:name="edu.mit.media.hd.funf.configured.ConfiguredDatabaseService"></service>
+        <service android:name="edu.mit.media.hd.funf.configured.ConfiguredArchiverService"></service>
+        <service android:name="edu.mit.media.hd.funf.configured.ConfiguredRemoteArchiverService"></service>
     </application>
+    
+    <!-- All probes -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    
+    <!-- Location probe -->
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>   
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> 
+    
+    <!-- Wifi probe -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/> 
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/> 
+    
+    <!-- Bluetooth probe -->
+    <uses-permission android:name="android.permission.BLUETOOTH"/> 
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/> 
+    
+    <!-- Running applications probe -->
+    <uses-permission android:name="android.permission.GET_TASKS"/> 
+    
+    <!-- Backing up database to SD card -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/> 
+    
+    <!-- Backing up to the web -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!--
     This declares that this application uses the instrumentation test runner targeting
     the package of edu.mit.media.hd.funf.  To run the tests use the command:

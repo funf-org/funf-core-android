@@ -57,12 +57,12 @@ public abstract class Probe extends Service {
 	private Set<Nonce> nonces;
 	
 	// TODO: keep list of all active requests to this probe
-	private ProbeRequests requests;
+	private ProbeRequests allRequests;
 	
 	@Override
 	public final void onCreate() {
 		prefs = getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE);
-		requests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
+		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
 		mostRecentTimeDataSent = prefs.getLong(MOST_RECENT_KEY, 0);
 		mostRecentTimeRun = prefs.getLong(MOST_RECENT_RUN_KEY, 0);
 		mostRecentParameters = Utils.getBundleFromPrefs(prefs, MOST_RECENT_PARAMS_KEY);
@@ -95,19 +95,46 @@ public abstract class Probe extends Service {
 	public final int onStartCommand(Intent intent, int flags, int startId) {
 		Bundle extras = intent.getExtras();
 		String requester = extras.getString(OppProbe.ReservedParamaters.REQUESTER.name);
+		if (requester != null) {
+			updateRequests(intent);
+		}
+		run();
+		return START_STICKY;
+	}
+	
+	private void updateRequests(Intent requestIntent) {
+		Bundle extras = requestIntent.getExtras();
+		String requester = extras.getString(OppProbe.ReservedParamaters.REQUESTER.name);
 		String requestId = extras.getString(OppProbe.ReservedParamaters.REQUEST_ID.name);
 		requestId = (requestId == null) ? "" : requestId;
 		long nonce = extras.getLong(OppProbe.ReservedParamaters.NONCE.name, -1L);
 		if (redeemNonce(nonce)) {
+			// null REQUESTER is internal (ProbeController does not allow null REQUESTER)
 			// TODO: may need to handle default top level bundle parameters
 			Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray(OppProbe.ReservedParamaters.REQUESTS.name));
+			
 			if (requests.length == 0) {
-				this.requests.remove(requester, requestId);
+				allRequests.remove(requester, requestId);
 			} else {
-				run(requester, requestId, requests);
+				if (!allRequests.put(requester, requestId, requests)) {
+					Log.w(TAG, "Unable to store requests for probe.");
+				}
 			}
 		}
-		return START_STICKY;
+	}
+	
+	/**
+	 * Resets all of the run data information
+	 */
+	public void reset() {
+		//stop();
+		this.mostRecentParameters = new Bundle();
+		this.mostRecentTimeDataSent = 0;
+		this.mostRecentTimeRun = 0;
+		this.nextRunTime = 0;
+		this.nonces = new HashSet<Nonce>();
+		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
+		cancelNextRun();
 	}
 
 	/**
@@ -232,40 +259,41 @@ public abstract class Probe extends Service {
 	 * Depending on the probe implementation, the probe may stop automatically after it runs.
 	 * @param params
 	 */
-	public final void run(String requester, String requestId, Bundle... params) {
-		if (!requests.put(requester, requestId, params)) {
-			Log.w(TAG, "Unable to store requests for probe.");
-			return; // Require successful storing of request
-		}
+	public final void run() {
 		Log.i(TAG, "Running probe: " + getClass().getName());
 
 		if (!enabled) {
 			enable();
 		}
-		// Merge all schedules and run if necessary
-		ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(requests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
-		Bundle completeParams = getCompleteParams(scheduleResolver.getNextRunParams());
-		if (shouldRunNow(completeParams)) {
-			running = true;
-			if (lock == null) {
-				lock = Utils.getWakeLock(this);
-			}
-			Log.i(TAG, "Started Running " + getClass().getCanonicalName());
-			mostRecentTimeRun = System.currentTimeMillis();
-			Parameter durationParam = getAvailableSystemParameter(SystemParameter.DURATION);
-			if (durationParam != null && !durationParam.isSupportedByProbe()) {
-				long duration = completeParams.getLong(SystemParameter.DURATION.name);
-				if (duration > 0) {
-					stopTimer.scheduleStop(duration);
+		Log.i(TAG, "Is Running: " + running);
+		if (!running) {
+			// Merge all schedules and run if necessary
+			ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
+			Bundle completeParams = getCompleteParams(scheduleResolver.getNextRunParams());
+			Log.i(TAG, "Should run: " + shouldRunNow(completeParams));
+			if (shouldRunNow(completeParams)) {
+				running = true;
+				if (lock == null) {
+					lock = Utils.getWakeLock(this);
 				}
+				Log.i(TAG, "Started Running " + getClass().getCanonicalName());
+				mostRecentTimeRun = System.currentTimeMillis();
+				Parameter durationParam = getAvailableSystemParameter(SystemParameter.DURATION);
+				if (durationParam != null && !durationParam.isSupportedByProbe()) {
+					long duration = completeParams.getLong(SystemParameter.DURATION.name) * 1000;
+					if (duration > 0) {
+						stopTimer.scheduleStop(duration);
+					}
+				}
+				Log.i(TAG, "Calling onRun for probe: " + getClass().getName());
+				onRun(completeParams); // call onRun to update parameters
+			} else if (allRequests.getAll().size() > 0) {
+				Log.i(TAG, "Scheduling");
+				scheduleNextRun(scheduleResolver.getNextRunParams());
+			} else {
+				Log.i(TAG, "Disabling");
+				disable();
 			}
-			Log.i(TAG, "Calling onRun for probe: " + getClass().getName());
-			onRun(completeParams); // call onRun to update parameters
-		} 
-		if (requests.getAll().size() > 0) {
-			scheduleNextRun(scheduleResolver.getNextRunParams());
-		} else {
-			disable();
 		}
 		// TODO: clear out all unneeded requests (expired, no period, etc.)
 	}
@@ -350,6 +378,7 @@ public abstract class Probe extends Service {
 		long startTime = getLong(params, SystemParameter.START.name, 0L) * 1000;
 		long endTime = getLong(params, SystemParameter.END.name, 0L) * 1000;
 		long currentTime = System.currentTimeMillis();
+		Log.i(TAG, Utils.join(Arrays.asList(period, startTime, endTime, currentTime, mostRecentTimeRun), ", "));
 		return (startTime == 0 || startTime <= currentTime) // After start time (if exists)
 			&& (endTime == 0 || currentTime <= endTime)   // Before end time (if exists)
 			&& (period == 0 || (mostRecentTimeRun + period) <= currentTime); // At least one period since last run
@@ -361,7 +390,7 @@ public abstract class Probe extends Service {
 		if (periodParam == null || periodParam.isSupportedByProbe()) {
 			return;
 		}
-		ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(requests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
+		ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
 		Intent nextRunIntent = new Intent(this, getClass());
 		nextRunIntent.putExtras(scheduleResolver.getNextRunParams());
 		AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
@@ -402,6 +431,12 @@ public abstract class Probe extends Service {
 			Log.i(TAG, "Stopping probe: " + getClass().getName());
 			onStop();
 			running = false;
+			if (allRequests.getAll().size() > 0) {
+				ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
+				scheduleNextRun(scheduleResolver.getNextRunParams());
+			} else {
+				disable();
+			}
 			if (lock != null && lock.isHeld()) {
 				lock.release();
 				lock = null;

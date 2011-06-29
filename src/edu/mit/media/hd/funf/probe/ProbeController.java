@@ -76,9 +76,12 @@ public class ProbeController extends Service  {
 	private class ProbeMessageReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(final Context context, final Intent intent) {
-			Log.i(TAG, "Receiving action " + intent.getAction());
+			final String requestingPackage = intent.getStringExtra(OppProbe.ReservedParamaters.REQUESTER.name);
 			final String action = intent.getAction();
-			if (OppProbe.isPollAction(action)) {
+			Log.i(TAG, "Receiving action " + action);
+			if (requestingPackage == null) {
+				Log.i(TAG, "No requester package specified.  Ignoring.");
+			} else if (OppProbe.isPollAction(action)) {
 				for (Class<? extends Probe> probeClass : getAvailableProbeClasses()) {
 					if (action.equals(OppProbe.getGlobalPollAction()) 
 							|| probeClass.getName().equals(OppProbe.getProbeName(action))) {
@@ -86,7 +89,6 @@ public class ProbeController extends Service  {
 							@Override
 							public void runCommand() {
 								// TODO: verify the sender is on the white list of packages
-								String requestingPackage = intent.getStringExtra(OppProbe.ReservedParamaters.REQUESTER.name);
 								boolean includeNonce = intent.getBooleanExtra(OppProbe.ReservedParamaters.NONCE.name, false);
 								getProbe().sendProbeStatus(requestingPackage, includeNonce);
 							}

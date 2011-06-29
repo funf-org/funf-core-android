@@ -23,14 +23,16 @@ public class ProbeUtils {
 		Set<Class<? extends Probe>> probes = new HashSet<Class<? extends Probe>>();
 		try {
 			PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_SERVICES);
-			for (ServiceInfo serviceInfo : info.services) {
-				try {
-					Class<?> probeServiceClass = Class.forName(serviceInfo.name);
-					if (Probe.class.isAssignableFrom(probeServiceClass)) {
-						probes.add((Class<? extends Probe>) probeServiceClass);
+			if (info.services != null) {
+				for (ServiceInfo serviceInfo : info.services) {
+					try {
+						Class<?> probeServiceClass = Class.forName(serviceInfo.name);
+						if (Probe.class.isAssignableFrom(probeServiceClass)) {
+							probes.add((Class<? extends Probe>) probeServiceClass);
+						}
+					} catch (ClassNotFoundException e) {
+						Log.e(Utils.TAG, e.getLocalizedMessage());
 					}
-				} catch (ClassNotFoundException e) {
-					Log.e(Utils.TAG, e.getLocalizedMessage());
 				}
 			}
 		} catch (NameNotFoundException e) {

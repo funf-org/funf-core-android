@@ -108,15 +108,23 @@ public class ProbeRequests {
 	 * @param bundle
 	 * @return true if request was succesfully stored, false otherwise
 	 */
-	public boolean put(final String requester, final String requestId, final Bundle... bundles) {
+	public boolean put(final String requester, String requestId, final Bundle... bundles) {
 		if (requester == null) {
 			return false;
 		}
+		requestId = (requestId==null) ? "" : requestId;
+		
+		// Remove existing first
+		remove(requester, requestId);
 
 		SharedPreferences.Editor editor = this.prefs.edit();
 		// TODO: what to do with no requester attribute?  Should it be required in OPP?
+		// TODO: what about empty bundle requests?
 		for (int i = 0; i < bundles.length; i++) {
 			Bundle bundle = bundles[i];
+			if (bundle.isEmpty()) {
+				Utils.putInPrefs(editor, getKey(requester, requestId, "", i), "");
+			}
 			for (String paramName : bundle.keySet()) {
 				Object value = bundle.get(paramName);
 				Log.i(TAG, paramName + " = " + value.toString());
@@ -175,7 +183,9 @@ public class ProbeRequests {
 					bundles.put(key, bundle);
 				}
 				try {
-					Utils.putInBundle(bundle, paramName, entry.getValue());
+					if (paramName.length() > 0) { // Ignore parameters that exist for empty bundles
+						Utils.putInBundle(bundle, paramName, entry.getValue());
+					}
 				} catch (UnstorableTypeException e) {
 					Log.e("Funf.Schedule", "Unsupported type stored in preferences.");
 				}

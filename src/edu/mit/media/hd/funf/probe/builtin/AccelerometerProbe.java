@@ -53,7 +53,7 @@ public class AccelerometerProbe extends Probe {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-				// TODO: insert parameters
+				new Parameter(SystemParameter.DURATION, 5L)
 		};
 	}
 

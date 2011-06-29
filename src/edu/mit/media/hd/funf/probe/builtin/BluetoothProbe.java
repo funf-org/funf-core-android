@@ -97,10 +97,10 @@ public class BluetoothProbe extends Probe {
 		if (adapter.isDiscovering()) {
 			adapter.cancelDiscovery();
 		}
-		reset();
+		resetDiscoveries();
 	}
 	
-	private void reset() {
+	private void resetDiscoveries() {
 		deviceDiscoveries = null;
 	}
 
@@ -128,7 +128,7 @@ public class BluetoothProbe extends Probe {
 				if (isRunning()) {
 					stop();
 				} else {
-					reset();
+					resetDiscoveries();
 				}
 			}
 		}
