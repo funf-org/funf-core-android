@@ -11,7 +11,10 @@ package edu.mit.media.hd.funf.probe;
 
 import java.util.Set;
 
+import edu.mit.media.hd.funf.Utils;
+
 import android.os.Bundle;
+import android.util.Log;
 
 /**
  * Resolves all requests for data for a given probe, to provide the next run time and parameters.
@@ -30,10 +33,11 @@ public class ProbeScheduleResolver {
 			Bundle completeRequest = new Bundle();
 			completeRequest.putAll(defaults);
 			completeRequest.putAll(request);
-			long period = 1000* completeRequest.getLong(Probe.SystemParameter.PERIOD.name, 0L);
+			long period = 1000* Utils.getLong(request, Probe.SystemParameter.PERIOD.name, 0L);
+			Log.i("ProbeScheduleResolver", "" + " Period:" + period);
 			if (period != 0L) {
-				long start = completeRequest.getLong(Probe.SystemParameter.START.name, Long.MIN_VALUE);
-				long end = completeRequest.getLong(Probe.SystemParameter.END.name, Long.MAX_VALUE);
+				long start = Utils.getLong(completeRequest, Probe.SystemParameter.START.name, Long.MIN_VALUE);
+				long end = Utils.getLong(completeRequest, Probe.SystemParameter.END.name, Long.MAX_VALUE);
 				long scheduleNextTime = lastRunTime == 0 ? System.currentTimeMillis() : lastRunTime + period;
 				if (scheduleNextTime > start && scheduleNextTime < end && scheduleNextTime < nextRunTime) {
 					nextRunTime = scheduleNextTime;

@@ -39,7 +39,7 @@ import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 public abstract class Probe extends Service {
 
 	
-	private static final String TAG = Probe.class.getName();
+	private String TAG = getClass().getName();
 	private static final String MOST_RECENT_RUN_KEY = "mostRecentTimeRun";
 	private static final String MOST_RECENT_KEY = "mostRecentTimeDataSent";
 	private static final String MOST_RECENT_PARAMS_KEY = "mostRecentTimeDataSent";
@@ -61,6 +61,7 @@ public abstract class Probe extends Service {
 	
 	@Override
 	public final void onCreate() {
+		Log.i(TAG, "CREATED");
 		prefs = getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE);
 		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
 		mostRecentTimeDataSent = prefs.getLong(MOST_RECENT_KEY, 0);
@@ -74,6 +75,7 @@ public abstract class Probe extends Service {
 
 	@Override
 	public final void onDestroy() {
+		Log.i(TAG, "DESTROYED");
 		if (prefs != null) {
 			SharedPreferences.Editor editor = prefs.edit();
 			editor.putLong(MOST_RECENT_KEY, mostRecentTimeDataSent);
@@ -99,7 +101,7 @@ public abstract class Probe extends Service {
 			updateRequests(intent);
 		}
 		run();
-		return START_STICKY;
+		return START_REDELIVER_INTENT;
 	}
 	
 	private void updateRequests(Intent requestIntent) {
@@ -280,7 +282,7 @@ public abstract class Probe extends Service {
 				mostRecentTimeRun = System.currentTimeMillis();
 				Parameter durationParam = getAvailableSystemParameter(SystemParameter.DURATION);
 				if (durationParam != null && !durationParam.isSupportedByProbe()) {
-					long duration = completeParams.getLong(SystemParameter.DURATION.name) * 1000;
+					long duration = Utils.getLong(completeParams, SystemParameter.DURATION.name, 0L) * 1000;
 					if (duration > 0) {
 						stopTimer.scheduleStop(duration);
 					}
@@ -359,24 +361,13 @@ public abstract class Probe extends Service {
 		return completeParams;
 	}
 	
-	private static long getLong(Bundle bundle, String key, long defaultValue) {
-		long value = bundle.getLong(key, defaultValue);
-		if (value == defaultValue) {
-			int valueInt = bundle.getInt(key, -1);
-			if (valueInt != -1) {
-				value = valueInt;
-			}
-		}
-		return value;
-	}
-	
 	private boolean shouldRunNow(Bundle params) {
 		if (params == null) {
 			return false;
 		}
-		long period = getLong(params, SystemParameter.PERIOD.name, 0L) * 1000;
-		long startTime = getLong(params, SystemParameter.START.name, 0L) * 1000;
-		long endTime = getLong(params, SystemParameter.END.name, 0L) * 1000;
+		long period = Utils.getLong(params, SystemParameter.PERIOD.name, 0L) * 1000;
+		long startTime = Utils.getLong(params, SystemParameter.START.name, 0L) * 1000;
+		long endTime = Utils.getLong(params, SystemParameter.END.name, 0L) * 1000;
 		long currentTime = System.currentTimeMillis();
 		Log.i(TAG, Utils.join(Arrays.asList(period, startTime, endTime, currentTime, mostRecentTimeRun), ", "));
 		return (startTime == 0 || startTime <= currentTime) // After start time (if exists)
@@ -388,6 +379,7 @@ public abstract class Probe extends Service {
 		// TODO: need to be smarter about this.  Probe may handle period, but not start or end times.
 		Parameter periodParam = getAvailableSystemParameter(SystemParameter.PERIOD);
 		if (periodParam == null || periodParam.isSupportedByProbe()) {
+			Log.i(TAG, "PERIOD parameter not supported by  " + getClass().getName());
 			return;
 		}
 		ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
@@ -397,6 +389,7 @@ public abstract class Probe extends Service {
 		PendingIntent pendingIntent = PendingIntent.getService(this, 0, nextRunIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 		long nextRunTime = scheduleResolver.getNextRunTime();
 		this.nextRunTime = nextRunTime;
+		Log.i(TAG, "Next run time: " + nextRunTime);
 		if (nextRunTime != 0L) {
 			Log.i(TAG, "LAST_TIME: " + mostRecentTimeRun);
 			Log.i(TAG, "NEXT_TIME: " + nextRunTime);
@@ -472,7 +465,6 @@ public abstract class Probe extends Service {
 	public final void disable() {
 		if (enabled) {
 			Log.i(TAG, "Disabling probe: " + getClass().getName());
-			cancelNextRun();
 			if (running) {
 				stop();
 			}

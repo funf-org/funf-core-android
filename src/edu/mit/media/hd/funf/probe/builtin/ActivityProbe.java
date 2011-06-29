@@ -16,6 +16,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import edu.mit.media.hd.funf.OppProbe;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.client.ProbeCommunicator;
 import edu.mit.media.hd.funf.probe.Probe;
 
@@ -139,7 +140,7 @@ public class ActivityProbe extends Probe {
 	
 	@Override
 	public void onRun(Bundle params) {
-		long newDuration = params.getLong(SystemParameter.DURATION.name, DEFAULT_DURATION);
+		long newDuration = Utils.getLong(params, SystemParameter.DURATION.name, DEFAULT_DURATION);
 		duration = Math.max(newDuration, duration);
 		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerProbe.class);
 		probe.registerDataRequest(getClass().getName(), params);

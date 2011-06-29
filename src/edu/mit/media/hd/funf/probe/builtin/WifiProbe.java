@@ -65,8 +65,6 @@ public class WifiProbe extends Probe {
 		sendProbeData(System.currentTimeMillis(), new Bundle(), data);
 	}
 	
-
-
 	@Override
 	protected void onEnable() {
 		wifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);

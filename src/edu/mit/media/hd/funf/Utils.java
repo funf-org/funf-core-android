@@ -199,4 +199,28 @@ public final class Utils {
 		lock.acquire();
 		return lock;
 	}
+
+
+	/**
+	 * Useful function to coerce value to a long, no matter what type of object is in the bundle
+	 * @param bundle
+	 * @param key
+	 * @param defaultValue
+	 * @return
+	 */
+	public static long getLong(Bundle bundle, String key, long defaultValue) {
+		Object value = bundle.get(key);
+		if (value instanceof Long) {
+			return (Long)value;
+		} else if (value instanceof Integer) {
+			return ((Integer)value).longValue();
+		} else if (value instanceof String) {
+			try {
+				return Long.valueOf((String)value);
+			} catch (NumberFormatException e) {
+				// We did our best, value is not a long
+			}
+		}
+		return defaultValue;
+	}
 }
