@@ -8,7 +8,9 @@ import android.util.Log;
 import edu.mit.media.hd.funf.OppProbe;
 
 public class ProbeDataListener extends BroadcastReceiver {
-
+	
+	private static final String TAG = ProbeDataListener.class.getName();
+	
 	private final String databaseName;
 	private final Class<? extends DatabaseService> databaseServiceClass;
 	private final BundleSerializer bundleSerializer;
@@ -23,6 +25,7 @@ public class ProbeDataListener extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
 		if (OppProbe.isDataAction(action)) {
+			Log.i(TAG, "Recording data: " + action);
 			String dataJson = bundleSerializer.serialize(intent.getExtras());
 			String probeName = OppProbe.getProbeName(action);
 			long timestamp = intent.getLongExtra("TIMESTAMP", 0L);
@@ -33,7 +36,7 @@ public class ProbeDataListener extends BroadcastReceiver {
 			b.putString(DatabaseService.VALUE_KEY, dataJson);
 			Intent i = new Intent(context, databaseServiceClass);
 			i.putExtras(b);
-			Log.i(getClass().getName(), "Starting db service: " + probeName);
+			Log.i(TAG, "Starting db service: " + probeName);
 			context.startService(i);
 		}
 	}
