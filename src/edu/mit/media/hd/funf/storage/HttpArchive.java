@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -120,7 +121,7 @@ public class HttpArchive implements RemoteArchive {
 
 			dos = new DataOutputStream( conn.getOutputStream() ); 
 			dos.writeBytes(twoHyphens + boundary + lineEnd); 
-			dos.writeBytes("Content-Disposition: form-data; name=\"uploadedfile\";filename=\"" + file +"\"" + lineEnd); 
+			dos.writeBytes("Content-Disposition: form-data; name=\"uploadedfile\";filename=\"" + file.getName() +"\"" + lineEnd); 
 			dos.writeBytes(lineEnd); 
 
 			//Log.i("FNF","UploadService Runnable:Headers are written"); 
@@ -157,24 +158,14 @@ public class HttpArchive implements RemoteArchive {
 		} 
 
 		//------------------ read the SERVER RESPONSE 
-		try { 
-			inStream = new DataInputStream ( conn.getInputStream() ); 
-			String str;
-			String response="";
-
-			while (( str = inStream.readLine()) != null) 
-			{ 
-				response = response + str; 
-			} 
-			Log.i("FNF","UploadService Runable: Service Response="+response);
-			if (!response.contains("success")) isSuccess = false;
-			inStream.close(); 
-
-		} 
-		catch (Exception e){ 
-			Log.e("FNF", "UploadService Runnable: server response error", e); 
+		try {
+			if (conn.getResponseCode() != 200) {
+				isSuccess = false;
+			}
+		} catch (IOException e) {
+			Log.e("FNF", "Connection error", e);
 			isSuccess = false;
-		} 
+		}
 
 		return isSuccess;
 	}
