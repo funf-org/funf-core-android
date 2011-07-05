@@ -70,12 +70,14 @@ public class AccelerometerProbe extends Probe {
 	
 	@Override
 	public void sendProbeData() {
-		Bundle data = new Bundle();
-		data.putLong("ACCURACY", mostRecentEvent.accuracy);
-		data.putFloat("X", mostRecentEvent.values[0]);
-		data.putFloat("Y", mostRecentEvent.values[1]);
-		data.putFloat("Z", mostRecentEvent.values[2]);
-		sendProbeData(mostRecentEvent.timestamp/1000000, new Bundle(), data); // Convert from nano to milli seconds
+		if (mostRecentEvent != null) {
+			Bundle data = new Bundle();
+			data.putLong("ACCURACY", mostRecentEvent.accuracy);
+			data.putFloat("X", mostRecentEvent.values[0]);
+			data.putFloat("Y", mostRecentEvent.values[1]);
+			data.putFloat("Z", mostRecentEvent.values[2]);
+			sendProbeData(mostRecentEvent.timestamp/1000000, new Bundle(), data); // Convert from nano to milli seconds
+		}
 	}
 
 	@Override
