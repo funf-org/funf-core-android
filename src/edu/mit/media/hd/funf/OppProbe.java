@@ -196,7 +196,7 @@ public class OppProbe {
 	public static final String ACTION_DATA = "DATA";
 	
 	// TODO: make this an OPP namespace
-	public static final String OPP_NAMESPACE = "edu.mit.hd.funf";
+	public static final String OPP_NAMESPACE = "edu.mit.media.hd.funf";
 
 	
 	/**
@@ -263,14 +263,14 @@ public class OppProbe {
 	 * @return OPP status action
 	 */
 	public static String getStatusAction(String probeName) {
-		return probeName + ACTION_SEPERATOR + ACTION_STATUS;
+		return getStatusAction();
 	}
 	
 	/**
 	 * @return OPP status action
 	 */
 	public static String getStatusAction(Class<?> probeClass) {
-		return getStatusAction(probeClass.getName());
+		return getStatusAction();
 	}
 	
 	public static String getStatusAction() {
@@ -278,7 +278,7 @@ public class OppProbe {
 	}
 	
 	public static boolean isStatusAction(final String action) {
-		return ACTION_STATUS.equals(getOppAction(action));
+		return getStatusAction().equals(action);
 	}
 
 

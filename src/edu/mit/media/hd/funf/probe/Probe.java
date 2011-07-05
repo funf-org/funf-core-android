@@ -23,6 +23,7 @@ import java.util.TimerTask;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
@@ -157,7 +158,7 @@ public abstract class Probe extends Service {
 	 * Sends a STATUS broadcast for the probe.
 	 */
 	public void sendProbeStatus(final String packageName, final boolean includeNonce) {
-		Intent statusBroadcast = new Intent(OppProbe.getStatusAction(getClass()));
+		Intent statusBroadcast = new Intent(OppProbe.getStatusAction());
 		String name = getClass().getName();
 		String displayName = getClass().getName().replace(getClass().getPackage().getName() + ".", "");
 		
@@ -189,6 +190,7 @@ public abstract class Probe extends Service {
 				statusBroadcast.putExtra(OppProbe.ReservedParamaters.NONCE.name, createNonce());
 			}
 		}
+		Log.i(TAG, "Sending probe status to '" + statusBroadcast.getPackage() + '"');
 		sendBroadcast(statusBroadcast);
 	}
 	

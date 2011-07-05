@@ -23,9 +23,24 @@ public abstract class ConfigurationUpdaterService extends Service {
 	public IBinder onBind(Intent bindIntent) {
 		return null;
 	}
+	
+	private Thread updateThread;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		if (updateThread == null) {
+			updateThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					update();
+					updateThread = null;
+				}
+			});
+		}
+		return START_STICKY;
+	}
+		
+	private void update() {
 		// TODO: detect whether wifi is available, etc.
 		try {
 			FunfConfig config = getConfig();
@@ -72,7 +87,6 @@ public abstract class ConfigurationUpdaterService extends Service {
 		}
 		scheduleNextRun();
 		stopSelf();
-		return START_STICKY;
 	}
 	
 	protected void scheduleNextRun() {
