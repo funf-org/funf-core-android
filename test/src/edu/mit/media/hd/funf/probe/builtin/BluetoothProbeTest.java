@@ -21,7 +21,6 @@ public class BluetoothProbeTest extends ProbeTestCase<BluetoothProbe> {
 
 	public void testBluetoothProbe() {
 		Bundle params = new Bundle();
-		params.putString(OppProbe.ReservedParamaters.REQUESTER.name, getTestRequester());
 		startProbe(params);
 		Bundle data = getData(20);
 		assertNotNull(data.get("DEVICES"));

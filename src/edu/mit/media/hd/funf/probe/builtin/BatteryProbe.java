@@ -24,8 +24,7 @@ public class BatteryProbe extends Probe {
 	
 	@Override
 	public Parameter[] getAvailableParameters() {
-		return new Parameter[] {
-		};
+		return null;
 	}
 
 	@Override

@@ -27,19 +27,18 @@ public class ApplicationsProbe extends Probe {
 	
 	@Override
 	public Parameter[] getAvailableParameters() {
-		// TODO Auto-generated method stub
-		return null;
+		return new Parameter[] {
+			new Parameter(SystemParameter.PERIOD, 3600L)
+		};
 	}
 
 	@Override
 	public String[] getRequiredFeatures() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String[] getRequiredPermissions() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

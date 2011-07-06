@@ -30,8 +30,8 @@ public class BluetoothProbe extends Probe {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-			new Parameter(SystemParameter.PERIOD, 0L),
-			new Parameter(SystemParameter.DURATION, 0L),
+			new Parameter(SystemParameter.PERIOD, 300L),
+			new Parameter(SystemParameter.DURATION, 30L),
 		};
 	}
 
