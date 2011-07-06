@@ -9,8 +9,10 @@
  */
 package edu.mit.media.hd.funf.probe.builtin;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -20,6 +22,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import edu.mit.media.hd.funf.probe.Probe;
 
 public class AccelerometerProbe extends Probe {
@@ -28,7 +31,7 @@ public class AccelerometerProbe extends Probe {
 	private SensorEventListener sensorListener;
 	
 	private BlockingQueue<SensorEvent> recentEvents;
-	private Thread dataSenderThread;
+	private Timer senderTimer;
 
 
 	@Override
@@ -76,6 +79,7 @@ public class AccelerometerProbe extends Probe {
 	
 	@Override
 	public void sendProbeData() {
+		Log.i(TAG, "RecentEvents before send:" + recentEvents.size());
 		if (!recentEvents.isEmpty()) {
 			Bundle data = new Bundle();
 			List<SensorEvent> events = new ArrayList<SensorEvent>();
@@ -99,34 +103,34 @@ public class AccelerometerProbe extends Probe {
 			data.putFloatArray("Y", y);
 			data.putFloatArray("Z", z);
 			sendProbeData(System.currentTimeMillis(), new Bundle(), data);
+		} else {
+			Log.i(TAG, "Recent events is empty.");
 		}
 	}
 
 	@Override
 	public void onRun(Bundle params) {
+		Log.i(TAG, "Sensor listener:" + sensorListener + " Sensor:" + sensor + " SensorManager:" + sensorManager);
 		sensorManager.registerListener(sensorListener,sensor, SensorManager.SENSOR_DELAY_NORMAL);
+		Log.i(TAG, "RecentEvents before clear:" + recentEvents.size());
 		recentEvents.clear();
-		dataSenderThread = new Thread(new Runnable() {
+		Log.i(TAG, "Creating thread");
+		senderTimer = new Timer();
+		senderTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				while (dataSenderThread != null) {
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-					}
-					sendProbeData();
-				}
+				sendProbeData();
 			}
-		});
-		dataSenderThread.run();
+		}, 1000L, 1000L);
 	}
 
 	@Override
 	public void onStop() {
 		sensorManager.unregisterListener(sensorListener);
-		Thread oldThread = dataSenderThread;
-		dataSenderThread = null;
-		oldThread.interrupt();
+		senderTimer.cancel();
+		if (!recentEvents.isEmpty()) {
+			sendProbeData();
+		}
 	}
 
 }

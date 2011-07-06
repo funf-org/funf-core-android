@@ -9,8 +9,10 @@
  */
 package edu.mit.media.hd.funf.probe;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +21,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
+import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 /**
@@ -164,34 +167,92 @@ public class ProbeRequests {
 		editor.commit();
 	}
 	
+	private static <V> V getOrCreate(List<V> list, int index, Class<? extends V> defaultType) {
+		while(list.size() <= index) {
+			list.add(null);
+		}
+		V value = list.get(index);
+		if (value == null) {
+			try {
+				value = defaultType.newInstance();
+			} catch (Exception e) {
+				throw new RuntimeException("Unable to create instance of type: " + defaultType.getName(), e);
+			}
+			list.set(index, value);
+		}
+		return value;
+	}
+	
+	private static <K,V> V getOrCreate(Map<K,V> map, K key, Class<? extends V> defaultType) {
+		V value = map.get(key);
+		if (value == null) {
+			try {
+				value = (V) defaultType.newInstance();
+			} catch (Exception e) {
+				throw new RuntimeException("Unable to create instance of type: " + defaultType.getName(), e);
+			}
+			map.put(key, value);
+		}
+		return value;
+	}
+	
+	// The following classes are used to get around the limitations of generics
+	// You cannot specify HashMap<String,List<Bundle>>.class due to type erasure
+	static class RequestsById extends HashMap<String,List<Bundle>> {}
+	static class RequestList extends ArrayList<Bundle> {}
+	
+	public Map<String,Map<String,List<Bundle>>> getByRequesterByRequestId() {
+		Map<String,Map<String,List<Bundle>>> requests = new HashMap<String, Map<String,List<Bundle>>>();
+		for(Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
+			if (isRequesterKey(entry.getKey())) {
+				final String requester = getRequester(entry.getKey());
+				final String requestId = getRequestId(entry.getKey());
+				final int index = Integer.parseInt(getIndex(entry.getKey()));
+				final String paramName = getParamName(entry.getKey());
+				Map<String,List<Bundle>> requestsForRequester = getOrCreate(requests, requester, RequestsById.class);
+				List<Bundle> requestsForId = getOrCreate(requestsForRequester, requestId, RequestList.class);
+				Bundle bundle = getOrCreate(requestsForId, index, Bundle.class);
+					/*
+					Map<String,List<Bundle>> requestsForRequester = requests.get(requester);
+					if (requestsForRequester == null) {
+						requestsForRequester = new HashMap<String, List<Bundle>>();
+						requests.put(requester, requestsForRequester);
+					}
+					List<Bundle> requestsForId = requestsForRequester.get(requestId);
+					if (requestsForId == null) {
+						requestsForId = new ArrayList<Bundle>();
+						requestsForRequester.put(requestId, requestsForId);
+					}
+					while(requestsForId.size() < index) {
+						requestsForId.add(null);
+					}
+					Bundle bundle = requestsForId.get(index);
+					if (bundle == null) {
+						bundle = new Bundle();
+						requestsForId.set(index, bundle);
+					}*/ 
+
+				// Ignore parameters that exist for empty bundles
+				if (paramName.length() > 0) {
+					Utils.putInBundle(bundle, paramName, entry.getValue());
+				}
+			}
+		}
+		return requests;
+	}
+	
 	/**
 	 * Get all stored requests for the probe
 	 * @return
 	 */
 	public Set<Bundle> getAll() {
-		Map<String,Bundle> bundles = new HashMap<String,Bundle>();
-		for(Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
-			if (isRequesterKey(entry.getKey())) {
-				final String requester = getRequester(entry.getKey());
-				final String requestId = getRequestId(entry.getKey());
-				final String index = getIndex(entry.getKey());
-				final String paramName = getParamName(entry.getKey());
-				final String key = requester + "__" + requestId + "__" + index;
-				Bundle bundle =  bundles.get(key);
-				if (bundle == null) {
-					bundle = new Bundle();
-					bundles.put(key, bundle);
-				}
-				try {
-					if (paramName.length() > 0) { // Ignore parameters that exist for empty bundles
-						Utils.putInBundle(bundle, paramName, entry.getValue());
-					}
-				} catch (UnstorableTypeException e) {
-					Log.e("Funf.Schedule", "Unsupported type stored in preferences.");
-				}
+		Set<Bundle> allBundles = new HashSet<Bundle>();
+		for (Map<String,List<Bundle>> requestIdToBundles : getByRequesterByRequestId().values()) {
+			for (List<Bundle> bundles : requestIdToBundles.values()) {
+				allBundles.addAll(bundles);
 			}
 		}
-		return new HashSet<Bundle>(bundles.values());
+		return allBundles;
 	}
 	
 }

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
@@ -23,7 +24,6 @@ import java.util.TimerTask;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
@@ -40,7 +40,10 @@ import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 public abstract class Probe extends Service {
 
 	
-	private String TAG = getClass().getName();
+	protected final String TAG = getClass().getName();
+	
+	public static final String TIMESTAMP = "TIMESTAMP";
+	
 	private static final String MOST_RECENT_RUN_KEY = "mostRecentTimeRun";
 	private static final String MOST_RECENT_KEY = "mostRecentTimeDataSent";
 	private static final String MOST_RECENT_PARAMS_KEY = "mostRecentTimeDataSent";
@@ -139,6 +142,34 @@ public abstract class Probe extends Service {
 		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
 		cancelNextRun();
 	}
+	
+
+	private void cleanRequests() {
+		final long currentTime = System.currentTimeMillis();
+		for (Map.Entry<String, Map<String,List<Bundle>>> requesterTorRequestIdToBundles : allRequests.getByRequesterByRequestId().entrySet()) {
+			final String requester = requesterTorRequestIdToBundles.getKey();
+			final Map<String,List<Bundle>> requestIdsToBundles = requesterTorRequestIdToBundles.getValue();
+			for (Map.Entry<String, List<Bundle>> requestIdToBundles : requestIdsToBundles.entrySet()) {
+				final String requestId = requestIdToBundles.getKey();
+				final List<Bundle> bundles = requestIdToBundles.getValue();
+				Set<Bundle> bundlesToRemove = new HashSet<Bundle>();
+				for (Bundle bundle : bundles) {
+					Bundle params = getCompleteParams(bundle);
+					long period = Utils.getLong(params, SystemParameter.PERIOD.name, 0L) * 1000;
+					long endTime = Utils.getLong(params, SystemParameter.END.name, 0L) * 1000;
+					if (period == 0L || endTime > currentTime) {
+						bundlesToRemove.add(bundle);
+					}
+				}
+				if (!bundlesToRemove.isEmpty()) {
+					bundles.removeAll(bundlesToRemove);
+					Bundle[] cleanedBundles = new Bundle[bundles.size()];
+					bundles.toArray(cleanedBundles);
+					allRequests.put(requester, requestId, cleanedBundles);
+				}
+			}
+		}
+	}
 
 	/**
 	 * @return a timestamp (in millis since epoch) of the most recent time this probe was run 
@@ -219,7 +250,7 @@ public abstract class Probe extends Service {
 		Log.i(TAG, getClass().getName() + " sent probe data at " + timestamp);
 		mostRecentTimeDataSent = timestamp;
 		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
-		dataBroadcast.putExtra("TIMESTAMP", timestamp);
+		dataBroadcast.putExtra(TIMESTAMP, timestamp);
 		// TODO: should we send parameters with data broadcast?
 		dataBroadcast.putExtras(data);
 		sendBroadcast(dataBroadcast); // TODO: send with permission required
@@ -293,7 +324,7 @@ public abstract class Probe extends Service {
 				onRun(completeParams); // call onRun to update parameters
 			} else if (allRequests.getAll().size() > 0) {
 				Log.i(TAG, "Scheduling");
-				scheduleNextRun(scheduleResolver.getNextRunParams());
+				scheduleNextRun();
 			} else {
 				Log.i(TAG, "Disabling");
 				disable();
@@ -377,7 +408,8 @@ public abstract class Probe extends Service {
 			&& (period == 0 || (mostRecentTimeRun + period) <= currentTime); // At least one period since last run
 	}	
 	
-	private void scheduleNextRun(Bundle params) {
+	private void scheduleNextRun() {
+		cleanRequests();
 		// TODO: need to be smarter about this.  Probe may handle period, but not start or end times.
 		Parameter periodParam = getAvailableSystemParameter(SystemParameter.PERIOD);
 		if (periodParam == null || periodParam.isSupportedByProbe()) {
@@ -427,8 +459,7 @@ public abstract class Probe extends Service {
 			onStop();
 			running = false;
 			if (allRequests.getAll().size() > 0) {
-				ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
-				scheduleNextRun(scheduleResolver.getNextRunParams());
+				scheduleNextRun();
 			} else {
 				disable();
 			}

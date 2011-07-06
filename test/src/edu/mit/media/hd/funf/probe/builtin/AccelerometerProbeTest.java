@@ -21,10 +21,10 @@ public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerProbe> {
 	
 	public void testAccelerometerData() throws InterruptedException {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 5L);
+		params.putLong(SystemParameter.DURATION.name, 3L);
 		startProbe(params);
-		for (int i=0; i<5; i++) {
-			Bundle data = getData(100);
+		for (int i=0; i<3; i++) {
+			Bundle data = getData(10);
 			assertTrue(data.containsKey("EVENT_TIMESTAMP"));
 			assertTrue(data.containsKey("ACCURACY"));
 			assertTrue(data.containsKey("X"));
@@ -52,6 +52,7 @@ public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerProbe> {
 	
 	public void testBroadcast() throws InterruptedException {
 		Bundle params = new Bundle();
+		params.putLong(SystemParameter.PERIOD.name, 2L);
 		sendDataRequestBroadcast(params);
 		Bundle data = getData(10);
 		assertNotNull(data);

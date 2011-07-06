@@ -23,9 +23,13 @@ import android.util.Log;
  */
 public class ProbeScheduleResolver {
 	
+	private static final long NO_PERIOD = 0L;
+	
 	private long nextRunTime;
 	private Bundle nextRunParams;
 
+	
+	
 	public ProbeScheduleResolver(final Set<Bundle> requests, final Bundle defaults, final long lastRunTime, final Bundle lastRunParams) {
 		this.nextRunTime = Long.MAX_VALUE;
 		this.nextRunParams = new Bundle();
@@ -33,16 +37,14 @@ public class ProbeScheduleResolver {
 			Bundle completeRequest = new Bundle();
 			completeRequest.putAll(defaults);
 			completeRequest.putAll(request);
-			long period = 1000* Utils.getLong(request, Probe.SystemParameter.PERIOD.name, 0L);
+			long period = 1000* Utils.getLong(request, Probe.SystemParameter.PERIOD.name, NO_PERIOD);
 			Log.i("ProbeScheduleResolver", "" + " Period:" + period);
-			if (period != 0L) {
-				long start = Utils.getLong(completeRequest, Probe.SystemParameter.START.name, Long.MIN_VALUE);
-				long end = Utils.getLong(completeRequest, Probe.SystemParameter.END.name, Long.MAX_VALUE);
-				long scheduleNextTime = lastRunTime == 0 ? System.currentTimeMillis() : lastRunTime + period;
-				if (scheduleNextTime > start && scheduleNextTime < end && scheduleNextTime < nextRunTime) {
-					nextRunTime = scheduleNextTime;
-					nextRunParams = request; // Dumb implementation which just takes parameters for that run
-				}
+			long start = Utils.getLong(completeRequest, Probe.SystemParameter.START.name, Long.MIN_VALUE);
+			long end = Utils.getLong(completeRequest, Probe.SystemParameter.END.name, Long.MAX_VALUE);
+			long scheduleNextTime = (lastRunTime == 0) ? System.currentTimeMillis() : lastRunTime + period;
+			if (scheduleNextTime > start && scheduleNextTime < end && scheduleNextTime < nextRunTime) {
+				nextRunTime = scheduleNextTime;
+				nextRunParams = request; // Dumb implementation which just takes parameters for that run
 			}
 		}
 	}
