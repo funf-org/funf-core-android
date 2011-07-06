@@ -23,6 +23,7 @@ import edu.mit.media.hd.funf.probe.Probe;
 public class ActivityProbe extends Probe {
 
 	private static long DEFAULT_DURATION = 5L;
+	private static long DEFAULT_PERIOD = 60L;
 	private static long INTERVAL = 1000L;  // Interval over which we calculate activity
 	
 	private long duration;
@@ -38,7 +39,7 @@ public class ActivityProbe extends Probe {
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
 			new Parameter(Probe.SystemParameter.DURATION, DEFAULT_DURATION, true),
-			new Parameter(Probe.SystemParameter.PERIOD, 10L, true)	
+			new Parameter(Probe.SystemParameter.PERIOD, DEFAULT_PERIOD, true)	
 		};
 	}
 
@@ -112,7 +113,10 @@ public class ActivityProbe extends Probe {
 			
 			@Override
 			public void onReceive(Context context, Intent intent) {
+				Bundle data = intent.getExtras();
+
 				long timestamp = intent.getLongExtra("TIMESTAMP", 0);
+
 				if (timestamp > startTime + duration * 1000
 						|| timestamp >= intervalStartTime + 2 * INTERVAL) {
 					reset(timestamp);
@@ -120,11 +124,14 @@ public class ActivityProbe extends Probe {
 					intervalReset();
 				}
 				
-				float x = intent.getFloatExtra("X", 0.0f);
-				float y = intent.getFloatExtra("Y", 0.0f);
-				float z = intent.getFloatExtra("Z", 0.0f);
-				
-				update(x, y, z);
+				long[] eventTimestamp = data.getLongArray("EVENT_TIMESTAMP");
+				int[] accuracy = data.getIntArray("ACCURACY");
+				float[] x = data.getFloatArray("X");
+				float[] y = data.getFloatArray("Y");
+				float[] z = data.getFloatArray("Z");
+				for (int i=0; i<eventTimestamp.length; i++) {
+					update(x[i], y[i], z[i]);
+				}
 			}
 		};
 		registerReceiver(accelerometerProbeListener, accelerometerProbeBroadcastFilter);
