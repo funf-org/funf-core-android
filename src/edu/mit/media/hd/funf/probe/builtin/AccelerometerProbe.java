@@ -9,6 +9,11 @@
  */
 package edu.mit.media.hd.funf.probe.builtin;
 
+import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -22,19 +27,20 @@ public class AccelerometerProbe extends Probe {
 	private Sensor sensor;
 	private SensorEventListener sensorListener;
 	
-	private SensorEvent mostRecentEvent;
+	private BlockingQueue<SensorEvent> recentEvents;
+	private Thread dataSenderThread;
 
 
 	@Override
 	protected void onEnable() {
 		sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
 		sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+		recentEvents = new LinkedBlockingQueue<SensorEvent>();
 		sensorListener = new SensorEventListener() {
 			
 			@Override
 			public void onSensorChanged(SensorEvent event) {
-				mostRecentEvent = event;
-				sendProbeData();
+				recentEvents.offer(event);
 			}
 			
 			@Override
@@ -46,14 +52,14 @@ public class AccelerometerProbe extends Probe {
 
 	@Override
 	protected void onDisable() {
-		// TODO Auto-generated method stub
-		
+		// Nothing to do
 	}
 
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-				new Parameter(SystemParameter.DURATION, 5L)
+				new Parameter(SystemParameter.DURATION, 5L),
+				new Parameter(SystemParameter.PERIOD, 60L)
 		};
 	}
 
@@ -70,25 +76,57 @@ public class AccelerometerProbe extends Probe {
 	
 	@Override
 	public void sendProbeData() {
-		if (mostRecentEvent != null) {
+		if (!recentEvents.isEmpty()) {
 			Bundle data = new Bundle();
-			data.putLong("ACCURACY", mostRecentEvent.accuracy);
-			data.putFloat("X", mostRecentEvent.values[0]);
-			data.putFloat("Y", mostRecentEvent.values[1]);
-			data.putFloat("Z", mostRecentEvent.values[2]);
-			sendProbeData(mostRecentEvent.timestamp/1000000, new Bundle(), data); // Convert from nano to milli seconds
+			List<SensorEvent> events = new ArrayList<SensorEvent>();
+			recentEvents.drainTo(events);
+			long[] timestamp = new long[events.size()];
+			int[] accuracy = new int[events.size()];
+			float[] x = new float[events.size()];
+			float[] y = new float[events.size()];
+			float[] z = new float[events.size()];
+			for (int i=0; i<events.size(); i++) {
+				SensorEvent event = events.get(i);
+				timestamp[i] = event.timestamp;
+				accuracy[i] = event.accuracy;
+				x[i] = event.values[0];
+				y[i] = event.values[1];
+				z[i] = event.values[2];
+			}
+ 			data.putLongArray("EVENT_TIMESTAMP", timestamp);
+			data.putIntArray("ACCURACY", accuracy);
+			data.putFloatArray("X", x);
+			data.putFloatArray("Y", y);
+			data.putFloatArray("Z", z);
+			sendProbeData(System.currentTimeMillis(), new Bundle(), data);
 		}
 	}
 
 	@Override
 	public void onRun(Bundle params) {
 		sensorManager.registerListener(sensorListener,sensor, SensorManager.SENSOR_DELAY_NORMAL);
+		recentEvents.clear();
+		dataSenderThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (dataSenderThread != null) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+					}
+					sendProbeData();
+				}
+			}
+		});
+		dataSenderThread.run();
 	}
 
 	@Override
 	public void onStop() {
 		sensorManager.unregisterListener(sensorListener);
-		mostRecentEvent = null;
+		Thread oldThread = dataSenderThread;
+		dataSenderThread = null;
+		oldThread.interrupt();
 	}
 
 }

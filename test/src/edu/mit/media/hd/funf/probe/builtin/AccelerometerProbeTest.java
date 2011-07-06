@@ -10,6 +10,7 @@
 package edu.mit.media.hd.funf.probe.builtin;
 
 import android.os.Bundle;
+import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 
 public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerProbe> {
 
@@ -20,13 +21,26 @@ public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerProbe> {
 	
 	public void testAccelerometerData() throws InterruptedException {
 		Bundle params = new Bundle();
+		params.putLong(SystemParameter.DURATION.name, 5L);
 		startProbe(params);
-		for (int i=0; i<10; i++) {
+		for (int i=0; i<5; i++) {
 			Bundle data = getData(100);
+			assertTrue(data.containsKey("EVENT_TIMESTAMP"));
+			assertTrue(data.containsKey("ACCURACY"));
 			assertTrue(data.containsKey("X"));
 			assertTrue(data.containsKey("Y"));
 			assertTrue(data.containsKey("Z"));
 			assertTrue(data.containsKey("TIMESTAMP"));
+			long[] eventTimestamp = data.getLongArray("EVENT_TIMESTAMP");
+			int[] accuracy = data.getIntArray("ACCURACY");
+			float[] x = data.getFloatArray("X");
+			float[] y = data.getFloatArray("Y");
+			float[] z = data.getFloatArray("Z");
+			int numEvents = eventTimestamp.length;
+			assertEquals(numEvents, accuracy.length);
+			assertEquals(numEvents, x.length);
+			assertEquals(numEvents, y.length);
+			assertEquals(numEvents, z.length);
 //			System.out.println("@" + data.getLong("TIMESTAMP") + " - " +
 //					"X:" + data.getFloat("X") +
 //					"Y:" + data.getFloat("Y") +
