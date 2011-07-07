@@ -170,6 +170,10 @@ public abstract class Probe extends Service {
 			}
 		}
 	}
+	
+	public long getPreviousDataSentTime() {
+		return mostRecentTimeDataSent;
+	}
 
 	/**
 	 * @return a timestamp (in millis since epoch) of the most recent time this probe was run 

@@ -4,10 +4,10 @@ import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.Probe;
 import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 
-public class BrowserProbeTest extends ProbeTestCase<BrowserProbe> {
+public class BrowserSearchesProbeTest extends ProbeTestCase<BrowserSearchesProbe> {
 
-	public BrowserProbeTest() {
-		super(BrowserProbe.class);
+	public BrowserSearchesProbeTest() {
+		super(BrowserSearchesProbe.class);
 	}
 
 	public void testProbe() {
@@ -16,8 +16,7 @@ public class BrowserProbeTest extends ProbeTestCase<BrowserProbe> {
 		startProbe(params);
 		Bundle data = getData(5);
 		assertNotNull(data.get(Probe.TIMESTAMP));
-		assertNotNull(data.get(BrowserProbe.BOOKMARKS));
-		assertNotNull(data.get(BrowserProbe.SEARCHES));
+		assertNotNull(data.get(BrowserSearchesProbe.SEARCHES));
 	}
 	
 }

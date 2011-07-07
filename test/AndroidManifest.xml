@@ -44,8 +44,11 @@
     <uses-permission android:name="android.permission.GET_TASKS"/> 
     
     
-    <!-- Browser probe -->
+    <!-- Browser probes -->
     <uses-permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS" />
+    
+    <!-- Call Log probe -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
     
     <!-- Backing up database to SD card -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/> 

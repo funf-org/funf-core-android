@@ -16,6 +16,7 @@ import java.util.Map;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.PowerManager;
@@ -222,5 +223,24 @@ public final class Utils {
 			}
 		}
 		return defaultValue;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T getCursorData(Cursor cursor, int columnIndex, Class<T> dataType) {
+		if (dataType.equals(String.class)) {
+			return (T)cursor.getString(columnIndex);
+		} else if (dataType.equals(Short.class)) {
+			return (T) Short.valueOf(cursor.getShort(columnIndex));
+		} else if (dataType.equals(Integer.class)) {
+			return (T) Integer.valueOf(cursor.getInt(columnIndex));
+		} else if (dataType.equals(Long.class)) {
+			return (T) Long.valueOf(cursor.getLong(columnIndex));
+		} else if (dataType.equals(Float.class)) {
+			return (T) Float.valueOf(cursor.getFloat(columnIndex));
+		} else if (dataType.equals(Double.class)) {
+			return (T) Double.valueOf(cursor.getDouble(columnIndex));
+		} else {
+			return null;
+		}
 	}
 }
