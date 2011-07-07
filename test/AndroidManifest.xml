@@ -28,9 +28,12 @@
     <!-- All probes -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     
+    <!-- Location probe, Cell probe -->
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> 
+    
     <!-- Location probe -->
-	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>   
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>   
+    
     
     <!-- Wifi probe -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/> 
