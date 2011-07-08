@@ -3,15 +3,13 @@ package edu.mit.media.hd.funf.probe.builtin;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CallLog;
 import android.provider.CallLog.Calls;
-import edu.mit.media.hd.funf.HashUtil;
 import edu.mit.media.hd.funf.probe.CursorCell;
 import edu.mit.media.hd.funf.probe.DatedContentProviderProbe;
 import edu.mit.media.hd.funf.probe.CursorCell.HashedCell;
-import edu.mit.media.hd.funf.probe.CursorCell.StringCell;
+import edu.mit.media.hd.funf.probe.CursorCell.PhoneNumberCell;
 
 public class CallLogProbe extends DatedContentProviderProbe {
 
@@ -24,13 +22,6 @@ public class CallLogProbe extends DatedContentProviderProbe {
 		};
 	}
 
-	
-	static class PhoneNumberCell extends StringCell {
-		@Override
-		public String getData(Cursor cursor, int columnIndex) {
-			return HashUtil.formatPhoneNumber(super.getData(cursor, columnIndex));
-		}
-	}
 	
 	protected Map<String,CursorCell<?>> getProjectionMap() {
 		Map<String,CursorCell<?>> projectionKeyToType = new HashMap<String, CursorCell<?>>();

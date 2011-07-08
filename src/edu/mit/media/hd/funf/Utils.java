@@ -115,13 +115,17 @@ public final class Utils {
 		Class<?> valueClass = value.getClass();
 		if (Boolean.class.isAssignableFrom(valueClass)) {
 			bundle.putBoolean(key, ((Boolean)value).booleanValue());
+		} else if (Short.class.isAssignableFrom(valueClass)) {
+				bundle.putShort(key, ((Short) value).shortValue());
 		} else if (Integer.class.isAssignableFrom(valueClass)) {
 			bundle.putInt(key, ((Integer) value).intValue());
-		} else if (Float.class.isAssignableFrom(valueClass)) {
-			bundle.putFloat(key, ((Float) value).floatValue());
 		} else if (Long.class.isAssignableFrom(valueClass)) {
 			bundle.putLong(key, ((Long) value).longValue());
-		} else if (String.class.isAssignableFrom(valueClass)) {
+		} else if (Float.class.isAssignableFrom(valueClass)) {
+			bundle.putFloat(key, ((Float) value).floatValue());
+		} else if (Double.class.isAssignableFrom(valueClass)) {
+			bundle.putDouble(key, ((Double) value).doubleValue());
+		}  else if (String.class.isAssignableFrom(valueClass)) {
 			bundle.putString(key, ((String) value));
 		} else {
 			throw new UnstorableTypeException(valueClass);

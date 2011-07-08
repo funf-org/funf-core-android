@@ -50,7 +50,7 @@
     <!-- Browser probes -->
     <uses-permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS" />
     
-    <!-- Call Log probe -->
+    <!-- Call Log and Contact probes -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     
     <!-- Backing up database to SD card -->

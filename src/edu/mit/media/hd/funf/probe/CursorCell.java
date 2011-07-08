@@ -1,8 +1,5 @@
 package edu.mit.media.hd.funf.probe;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import android.content.Context;
 import android.database.Cursor;
 import edu.mit.media.hd.funf.HashUtil;
@@ -45,6 +42,44 @@ public abstract class CursorCell<T> {
 	public static class DoubleCell extends CursorCell<Double> {
 		public Double getData(Cursor cursor, int columnIndex) {
 			return cursor.getDouble(columnIndex);
+		}
+	}
+	
+	/**
+	 * Always return null.  Used to block data from being returned.
+	 */
+	public static class NullCell extends CursorCell<Object> {
+		@Override
+		public Object getData(Cursor cursor, int columnIndex) {
+			return null;
+		}
+	}
+	
+	/**
+	 * Try every type until success
+	 */
+	public static class AnyCell extends CursorCell<Object> {
+		@Override
+		public Object getData(Cursor cursor, int columnIndex) {
+			if (cursor.isNull(columnIndex)) {
+				return null;
+			}
+			try { return cursor.getShort(columnIndex); } catch (Exception e) {}
+			try { return cursor.getInt(columnIndex); } catch (Exception e) {}
+			try { return cursor.getLong(columnIndex); } catch (Exception e) {}
+			try { return cursor.getFloat(columnIndex); } catch (Exception e) {}
+			try { return cursor.getDouble(columnIndex); } catch (Exception e) {}
+			try { return cursor.getString(columnIndex); } catch (Exception e) {}
+			// Not returning blobs to contain size of bundles and prevent FAILED BINDER TRANSACTION
+			//try { return cursor.getBlob(columnIndex); } catch (Exception e) {}
+			return null;
+		}
+	}
+	
+	public static class PhoneNumberCell extends StringCell {
+		@Override
+		public String getData(Cursor cursor, int columnIndex) {
+			return HashUtil.formatPhoneNumber(super.getData(cursor, columnIndex));
 		}
 	}
 	
