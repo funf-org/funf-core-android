@@ -7,10 +7,10 @@ import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 import android.os.Bundle;
 import android.os.Parcelable;
 
-public class AudioFilesProbeTest extends ProbeTestCase<AudioFilesProbe> {
+public class VideosProbeTest extends ProbeTestCase<VideosProbe> {
 
-	public AudioFilesProbeTest() {
-		super(AudioFilesProbe.class);
+	public VideosProbeTest() {
+		super(VideosProbe.class);
 	}
 	
 	public void testData() {
@@ -18,16 +18,16 @@ public class AudioFilesProbeTest extends ProbeTestCase<AudioFilesProbe> {
 		params.putLong(SystemParameter.PERIOD.name, 0L);
 		startProbe(params);
 		Bundle data = getData(10);
-		ArrayList<Parcelable> audioFiles = data.getParcelableArrayList(AudioFilesProbe.AUDIO_FILES);
-		assertNotNull(audioFiles);
-		assertTrue(audioFiles.size() > 0);
+		ArrayList<Parcelable> videos = data.getParcelableArrayList(VideosProbe.VIDEOS);
+		assertNotNull(videos);
+		assertTrue(videos.size() > 0);
 		
 		// Running again should return an empty result
 		startProbe(params);
 		data = getData(10);
-		audioFiles = data.getParcelableArrayList(AudioFilesProbe.AUDIO_FILES);
-		assertNotNull(audioFiles);
-		assertTrue(audioFiles.isEmpty());
+		videos = data.getParcelableArrayList(VideosProbe.VIDEOS);
+		assertNotNull(videos);
+		assertTrue(videos.isEmpty());
 	}
 
 }
