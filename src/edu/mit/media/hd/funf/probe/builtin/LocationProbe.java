@@ -11,28 +11,36 @@ package edu.mit.media.hd.funf.probe.builtin;
 
 import java.lang.reflect.Field;
 import java.util.Timer;
-import java.util.TimerTask;
 
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.os.Bundle;
+import android.util.Log;
 import edu.mit.media.hd.funf.probe.Probe;
 
 public class LocationProbe extends Probe {
 
+	public static final String LOCATION = "LOCATION";
+	public static final long SIGNIFICANT_TIME_DIFFERENCE = 2*60*1000; // 2 minutes
+	// TODO: May turn MAX_DURATION into duration parameter
+	public static final long DEFAULT_DURATION = 2*60; // 2 minutes
+	// TODO: Turn GOOD_ENOUGH_ACCURACY into a parameter
+	public static final float GOOD_ENOUGH_ACCURACY = 80.0f;
+	
 	private LocationManager mLocationManager;
 	private ProbeLocationListener listener;
 	private ProbeLocationListener passiveListener;
 	private Location latestLocation;
-	private Timer timer;
-
+	
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-			new Parameter(SystemParameter.START, 0L),  // No start by default
-			new Parameter(SystemParameter.PERIOD, 0L),//*60L),	// Run every 30 min by default
+			new Parameter(SystemParameter.PERIOD, 0L),
+			new Parameter(SystemParameter.DURATION, DEFAULT_DURATION)
+			// TODO: come back to configuration parameters such as desiredAccuracy or duration
 		};
 	}
 
@@ -50,16 +58,28 @@ public class LocationProbe extends Probe {
 		return new String[]{};
 	}
 	
+	private Location bestCachedLocation() {
+		Location lastKnownGpsLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		Location lastKnownNetLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+		Location bestCachedLocation = lastKnownGpsLocation;
+		if (bestCachedLocation == null || 
+				(lastKnownNetLocation != null && lastKnownNetLocation.getTime() > bestCachedLocation.getTime())) {
+			bestCachedLocation = lastKnownNetLocation;
+		}
+		return bestCachedLocation;
+	}
 
 	@Override
 	protected void onEnable() {
 		mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		latestLocation = bestCachedLocation();
 		listener = new ProbeLocationListener();
 		passiveListener = new ProbeLocationListener();
 		String passiveProvider = getPassiveProvider();
 		if (passiveProvider != null) {
 			mLocationManager.requestLocationUpdates(getPassiveProvider(), 0, 0, passiveListener);
 		}
+		
 	}
 	
 	/**
@@ -84,34 +104,22 @@ public class LocationProbe extends Probe {
 	}
 
 	public void onRun(Bundle params) {
-		if (timer == null) {
-			timer = new Timer();
-			// Stop after 10 seconds
-			timer.schedule(new TimerTask() {
-				@Override
-				public void run() {
-					stop();
-				}
-			}, 10000);
-			mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, listener);
-			mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, listener);
-		}
+		mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, listener);
+		mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, listener);
 	}
 	
 
 	@Override
 	public void onStop() {
-		timer.cancel();
 		mLocationManager.removeUpdates(listener);
 		sendProbeData();
-		timer = null;
 	}
 
 	@Override
 	public void sendProbeData() {
 		if (latestLocation != null) {
 			Bundle data = new Bundle();
-			data.putParcelable("LOCATION", latestLocation);
+			data.putParcelable(LOCATION, latestLocation);
 			sendProbeData(latestLocation.getTime(), new Bundle(), data);
 		}
 	}
@@ -123,10 +131,37 @@ public class LocationProbe extends Probe {
 			// Hack to filter out 0.0,0.0 locations 
 			    return; 
 			} 
-			newLocation.setTime(System.currentTimeMillis());
-			// Ignorant version that just takes the latest
-			latestLocation = newLocation;
+			Log.i(TAG, "New location to be evaluated: " + newLocation.getAccuracy() + "m @ " + newLocation.getTime() );
+			if (isBetterThanCurrent(newLocation)) {
+				Log.i(TAG, "New location better than: " +  latestLocation.getAccuracy() + "m @ " + latestLocation.getTime());
+				
+				latestLocation = newLocation;
+				// If not running then start a timer to send out the best location get in the next default duration
+				Log.i(TAG, "Is Running: " + isRunning());
+				if (latestLocation.hasAccuracy() && latestLocation.getAccuracy() < GOOD_ENOUGH_ACCURACY) {
+					if (isRunning()) {
+						Log.i(TAG, "Good enough stop");
+						stop();
+					} else {
+						// TODO: set a timer for passive listened locations so they have a DURATION aspect like active scans
+						Log.i(TAG, "Passive location data send");
+						sendProbeData();
+					}
+				}
+			}
+			
 		} 
+		
+		private boolean isBetterThanCurrent(Location newLocation) {
+			if (latestLocation == null) {
+				return true;
+			}
+			long timeDiff = newLocation.getTime() - latestLocation.getTime();
+			Log.i(TAG, "TIME DIFFERENCE: " + timeDiff);
+			Log.i(TAG, "Old accuracy: " + latestLocation + " New Accuracy: " + newLocation.getAccuracy());
+			return timeDiff > SIGNIFICANT_TIME_DIFFERENCE || 
+				(newLocation.getAccuracy() <= latestLocation.getAccuracy());
+		}
 		
 		public void onProviderEnabled(String provider) { 
 		} 
@@ -135,6 +170,11 @@ public class LocationProbe extends Probe {
 		} 
 
 		public void onStatusChanged(String provider, int status, Bundle extras){ 
+			if (status == LocationProvider.OUT_OF_SERVICE) { 
+		        Log.i(TAG, "location provider out of service: "+provider);
+		    }else if (status == LocationProvider.TEMPORARILY_UNAVAILABLE){
+		    	Log.i(TAG, "location provider temp unavailable: "+provider);
+		    } 
 		} 
 	}
 
