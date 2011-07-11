@@ -9,9 +9,9 @@
  */
 package edu.mit.media.hd.funf.probe.builtin;
 
-import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 import android.location.Location;
 import android.os.Bundle;
+import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 
 public class LocationProbeTest extends ProbeTestCase<LocationProbe> {
 

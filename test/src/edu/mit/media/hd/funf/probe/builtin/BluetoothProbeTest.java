@@ -10,8 +10,6 @@
 package edu.mit.media.hd.funf.probe.builtin;
 
 import android.os.Bundle;
-import edu.mit.media.hd.funf.OppProbe;
-import edu.mit.media.hd.funf.probe.builtin.BluetoothProbe;
 
 public class BluetoothProbeTest extends ProbeTestCase<BluetoothProbe> {
 

@@ -11,10 +11,9 @@ package edu.mit.media.hd.funf.probe;
 
 import java.util.Set;
 
-import edu.mit.media.hd.funf.Utils;
-
 import android.os.Bundle;
 import android.util.Log;
+import edu.mit.media.hd.funf.Utils;
 
 /**
  * Resolves all requests for data for a given probe, to provide the next run time and parameters.

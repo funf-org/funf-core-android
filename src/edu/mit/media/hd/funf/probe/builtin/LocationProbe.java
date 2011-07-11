@@ -10,7 +10,6 @@
 package edu.mit.media.hd.funf.probe.builtin;
 
 import java.lang.reflect.Field;
-import java.util.Timer;
 
 import android.content.Context;
 import android.location.Location;

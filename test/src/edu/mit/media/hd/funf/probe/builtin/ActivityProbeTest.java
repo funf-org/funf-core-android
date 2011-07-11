@@ -9,9 +9,7 @@
  */
 package edu.mit.media.hd.funf.probe.builtin;
 
-import android.content.Intent;
 import android.os.Bundle;
-import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 
 public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {

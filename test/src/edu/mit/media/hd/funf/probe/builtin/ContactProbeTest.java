@@ -3,7 +3,6 @@ package edu.mit.media.hd.funf.probe.builtin;
 import java.util.ArrayList;
 
 import junit.framework.AssertionFailedError;
-
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.ContactsContract.Data;

@@ -2,10 +2,9 @@ package edu.mit.media.hd.funf.probe.builtin;
 
 import java.util.ArrayList;
 
-import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
-
 import android.os.Bundle;
 import android.os.Parcelable;
+import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 
 public class AudioFilesProbeTest extends ProbeTestCase<AudioFilesProbe> {
 

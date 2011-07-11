@@ -21,7 +21,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
-import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 /**
