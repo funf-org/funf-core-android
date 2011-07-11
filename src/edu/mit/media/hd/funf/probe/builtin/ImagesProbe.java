@@ -53,7 +53,6 @@ public class ImagesProbe extends DatedContentProviderProbe {
 
 	@Override
 	public String[] getRequiredPermissions() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

@@ -16,6 +16,12 @@ public abstract class CursorCell<T> {
 		}
 	}
 	
+	public static class BooleanCell extends CursorCell<Boolean> {
+		public Boolean getData(Cursor cursor, int columnIndex) {
+			return cursor.getInt(columnIndex) != 0;
+		}
+	}
+	
 	public static class ShortCell extends CursorCell<Short> {
 		public Short getData(Cursor cursor, int columnIndex) {
 			return cursor.getShort(columnIndex);

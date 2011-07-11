@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.CursorCell.AnyCell;
+import edu.mit.media.hd.funf.probe.CursorCell.BooleanCell;
 import edu.mit.media.hd.funf.probe.CursorCell.DoubleCell;
 import edu.mit.media.hd.funf.probe.CursorCell.HashedCell;
 import edu.mit.media.hd.funf.probe.CursorCell.IntCell;
@@ -124,6 +125,10 @@ public abstract class ContentProviderProbe extends Probe {
 	}
 	
 	// Convenience methods that can be used to cache and reuse CursorCell objects
+	
+	protected static BooleanCell booleanCell() {
+		return new BooleanCell();
+	}
 	
 	protected static IntCell intCell() {
 		return new IntCell();
