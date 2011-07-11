@@ -7,6 +7,7 @@ import java.util.Map;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.CursorCell.AnyCell;
@@ -88,9 +89,12 @@ public abstract class ContentProviderProbe extends Probe {
 	protected Bundle parseDataBundle(Cursor cursor, String[] projection, Map<String,CursorCell<?>> projectionMap) {
 		Bundle b = new Bundle();
     	for (String key : projection) {
-    		Object value = projectionMap.get(key).getData(cursor, key);
-    		if (value != null) {
-    			Utils.putInBundle(b, key,value);
+    		CursorCell<?> cursorCell = projectionMap.get(key);
+    		if (cursorCell != null) {
+	    		Object value = cursorCell.getData(cursor, key);
+	    		if (value != null) {
+	    			Utils.putInBundle(b, key,value);
+	    		}
     		}
     	}
     	return b;
@@ -106,7 +110,10 @@ public abstract class ContentProviderProbe extends Probe {
     	//Save into bundles
         if (c.moveToFirst()){ //false if empty
             do{
-            	bundles.add(parseDataBundle(c, projection, projectionMap));
+            	Bundle b = parseDataBundle(c, projection, projectionMap);
+            	if (b != null) {
+            		bundles.add(b);
+            	}
             }while(c.moveToNext()); 
         }
         c.close();

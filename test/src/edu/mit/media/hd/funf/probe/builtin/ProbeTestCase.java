@@ -74,7 +74,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		// Start probe controller to listen to broadcasts
 		getContext().startService(new Intent(getContext(), ProbeController.class));
 		timer = new Timer();
-		dataBundles = new ArrayBlockingQueue<Bundle>(1000);
+		dataBundles = new ArrayBlockingQueue<Bundle>(5000);
 		getContext().registerReceiver(receiver, new IntentFilter(OppProbe.getDataAction(probeClass)));
 	}
 	

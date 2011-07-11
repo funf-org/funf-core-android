@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -28,7 +29,46 @@ import edu.mit.media.hd.funf.probe.CursorCell;
 public class ContactProbe extends ContentProviderProbe {
 
 	public static final String CONTACT_DATA = "CONTACT_DATA";
+	public static final Parameter FULL_PARAM = new Parameter("FULL", false, "FullScan", "If true, probe will return all contacts.  If false, the scan will only return contacts that have changed since the most recent scan."); 
 	
+	private static final String DATA_VERSIONS = "dataVersions";
+	private Map<Integer,Integer> dataIdToVersion;
+	private boolean isFullScan;
+	
+	
+	
+	@Override
+	public Parameter[] getAvailableParameters() {
+		return new Parameter[] {
+			new Parameter(SystemParameter.PERIOD, 3600L),
+			FULL_PARAM
+		};
+	}
+
+	@Override
+	protected void onEnable() {
+		super.onEnable();
+		SharedPreferences versionPrefs = getSharedPreferences(DATA_VERSIONS, MODE_PRIVATE);
+		dataIdToVersion = new HashMap<Integer, Integer>();
+		for (Map.Entry<String, ?> versionEntry: versionPrefs.getAll().entrySet()) {
+			dataIdToVersion.put(Integer.valueOf(versionEntry.getKey()), (Integer)versionEntry.getValue());
+		}
+		isFullScan = false;
+	}
+	
+	@Override
+	protected void onDisable() {
+		super.onDisable();
+		SharedPreferences.Editor versionPrefs = getSharedPreferences(DATA_VERSIONS, MODE_PRIVATE).edit();
+		versionPrefs.clear();
+		for (Map.Entry<Integer, Integer> idToVersion : dataIdToVersion.entrySet()) {
+			versionPrefs.putInt(String.valueOf(idToVersion.getKey()), idToVersion.getValue());
+		}
+		versionPrefs.commit();
+	}
+
+	
+
 	@Override
 	protected Cursor getCursor(String[] projection) {
 		return getContentResolver().query(
@@ -36,7 +76,7 @@ public class ContactProbe extends ContentProviderProbe {
                 projection, 
                 null, //Data.MIMETYPE + " IN ('" + Email.CONTENT_ITEM_TYPE + "')",
                 null,//new String[] {"('" + Utils.join(Arrays.asList(Email.MIMETYPE, Event.MIMETYPE), "','") +"')"}, 
-                null);//Data.CONTACT_ID + " ASC");
+                Data.CONTACT_ID + " ASC");
                 
 	}
 
@@ -163,54 +203,92 @@ public class ContactProbe extends ContentProviderProbe {
 		return contactDataCell;
 	}
 	
+	private Map<String, CursorCell<?>> dataProjectionMap;
+	private Map<String, CursorCell<?>> getDataProjectionMap() {
+		if (dataProjectionMap == null) {
+			Map<String,CursorCell<?>> projectionKeyToType = new HashMap<String, CursorCell<?>>();
+			projectionKeyToType.put(Data._ID, intCell());
+			projectionKeyToType.put(Data.RAW_CONTACT_ID, longCell());
+			projectionKeyToType.put(Data.MIMETYPE, stringCell());
+			projectionKeyToType.put(Data.IS_PRIMARY, intCell());
+			projectionKeyToType.put(Data.IS_SUPER_PRIMARY, intCell());
+			projectionKeyToType.put(Data.DATA_VERSION, intCell());
+			projectionKeyToType.put(Data.DATA1, contactDataCell());
+			projectionKeyToType.put(Data.DATA2, contactDataCell());
+			projectionKeyToType.put(Data.DATA3, contactDataCell());
+			projectionKeyToType.put(Data.DATA4, contactDataCell());
+			projectionKeyToType.put(Data.DATA5, contactDataCell());
+			projectionKeyToType.put(Data.DATA6, contactDataCell());
+			projectionKeyToType.put(Data.DATA7, contactDataCell());
+			projectionKeyToType.put(Data.DATA8, contactDataCell());
+			projectionKeyToType.put(Data.DATA9, contactDataCell());
+			projectionKeyToType.put(Data.DATA10, contactDataCell());
+			projectionKeyToType.put(Data.DATA11, contactDataCell());
+			projectionKeyToType.put(Data.DATA12, contactDataCell());
+			projectionKeyToType.put(Data.DATA13, contactDataCell());
+			projectionKeyToType.put(Data.DATA14, contactDataCell());
+			projectionKeyToType.put(Data.DATA15, contactDataCell());
+			dataProjectionMap = projectionKeyToType;
+		}
+		return dataProjectionMap;
+	}
+	
+	private Map<String, CursorCell<?>> contactProjectionMap;
+	private Map<String, CursorCell<?>> getContactProjectionMap() {
+		if (contactProjectionMap == null) {
+			Map<String,CursorCell<?>> projectionKeyToType = new HashMap<String, CursorCell<?>>();
+			projectionKeyToType.put(Data.CONTACT_ID, longCell());
+			//projectionKeyToType.put(Data.AGGREGATION_MODE, intCell());  Doesn't exist for some reason
+			//projectionKeyToType.put(Data.DELETED, intCell());  Doesn't exist for some reason
+			projectionKeyToType.put(Data.LOOKUP_KEY, stringCell());
+			projectionKeyToType.put(Data.DISPLAY_NAME, hashedStringCell());
+			projectionKeyToType.put(Data.PHOTO_ID, longCell());
+			projectionKeyToType.put(Data.IN_VISIBLE_GROUP, intCell());
+			projectionKeyToType.put(Data.TIMES_CONTACTED, intCell());
+			projectionKeyToType.put(Data.LAST_TIME_CONTACTED, intCell());
+			projectionKeyToType.put(Data.STARRED, intCell());
+			projectionKeyToType.put(Data.CUSTOM_RINGTONE, hashedStringCell());
+			projectionKeyToType.put(Data.SEND_TO_VOICEMAIL, intCell());
+			contactProjectionMap = projectionKeyToType;
+		}
+		return contactProjectionMap;
+	}
 	
 	
 	@Override
 	protected Map<String, CursorCell<?>> getProjectionMap() {
 		Map<String,CursorCell<?>> projectionKeyToType = new HashMap<String, CursorCell<?>>();
-		projectionKeyToType.put(Data._ID, intCell());
-		projectionKeyToType.put(Data.MIMETYPE, stringCell());
-		projectionKeyToType.put(Data.RAW_CONTACT_ID, longCell());
-		projectionKeyToType.put(Data.IS_PRIMARY, intCell());
-		projectionKeyToType.put(Data.IS_SUPER_PRIMARY, intCell());
-		projectionKeyToType.put(Data.DATA_VERSION, intCell());
-		projectionKeyToType.put(Data.DATA1, contactDataCell());
-		projectionKeyToType.put(Data.DATA2, contactDataCell());
-		projectionKeyToType.put(Data.DATA3, contactDataCell());
-		projectionKeyToType.put(Data.DATA4, contactDataCell());
-		projectionKeyToType.put(Data.DATA5, contactDataCell());
-		projectionKeyToType.put(Data.DATA6, contactDataCell());
-		projectionKeyToType.put(Data.DATA7, contactDataCell());
-		projectionKeyToType.put(Data.DATA8, contactDataCell());
-		projectionKeyToType.put(Data.DATA9, contactDataCell());
-		projectionKeyToType.put(Data.DATA10, contactDataCell());
-		projectionKeyToType.put(Data.DATA11, contactDataCell());
-		projectionKeyToType.put(Data.DATA12, contactDataCell());
-		projectionKeyToType.put(Data.DATA13, contactDataCell());
-		projectionKeyToType.put(Data.DATA14, contactDataCell());
-		projectionKeyToType.put(Data.DATA15, contactDataCell());
-		projectionKeyToType.put(Data.CONTACT_ID, longCell());
-		//projectionKeyToType.put(Data.AGGREGATION_MODE, intCell());
-		//projectionKeyToType.put(Data.DELETED, intCell());
-		//projectionKeyToType.put(Data.DISPLAY_NAME, hashedStringCell());
-		//projectionKeyToType.put(Data.PHOTO_ID, longCell());
-		//projectionKeyToType.put(Data.IN_VISIBLE_GROUP, intCell());
-		//projectionKeyToType.put(Data.TIMES_CONTACTED, intCell());
-		//projectionKeyToType.put(Data.LAST_TIME_CONTACTED, intCell());
-		//projectionKeyToType.put(Data.STARRED, intCell());
+		projectionKeyToType.putAll(getDataProjectionMap());
+		projectionKeyToType.putAll(getContactProjectionMap());
 		return projectionKeyToType;
 	}
 	
+	
+	
+	@Override
+	protected void onRun(Bundle params) {
+		isFullScan = params.getBoolean(FULL_PARAM.getName(), (Boolean)FULL_PARAM.getValue());
+		super.onRun(params);
+	}
+
 	@Override
 	protected Bundle parseDataBundle(Cursor cursor, String[] projection, Map<String, CursorCell<?>> projectionMap) {
-		Bundle contactBundle = new Bundle();
+		Bundle contactBundle = super.parseDataBundle(cursor, projection, getContactProjectionMap());
 		ArrayList<Bundle> dataBundles = new ArrayList<Bundle>();
 		long originalContactId = cursor.getLong(cursor.getColumnIndex(Data.CONTACT_ID));
-		contactBundle.putLong(Data.CONTACT_ID, originalContactId);
 		long contactId = originalContactId;
 		boolean hasNext = true;
+		boolean hasChanged = isFullScan;
 		do {
-			dataBundles.add(super.parseDataBundle(cursor, projection, projectionMap));
+			Bundle dataBundle = super.parseDataBundle(cursor, projection, getDataProjectionMap());
+			dataBundles.add(dataBundle);
+			int id = dataBundle.getInt(Data._ID);
+			int version = dataBundle.getInt(Data.DATA_VERSION);
+			Integer oldVersion = dataIdToVersion.get(id);
+			if (oldVersion == null || !oldVersion.equals(version)) {
+				hasChanged = true;
+				dataIdToVersion.put(id, version);
+			}
 			hasNext = cursor.moveToNext();
 			if (hasNext) {
 				contactId = cursor.getLong(cursor.getColumnIndex(Data.CONTACT_ID));
@@ -220,12 +298,12 @@ public class ContactProbe extends ContentProviderProbe {
 			cursor.moveToPrevious();
 		}
 		contactBundle.putParcelableArrayList(CONTACT_DATA, dataBundles);
-		return contactBundle;
+		return hasChanged ? contactBundle : null;
 	}
 	
 	@Override
 	public void sendProbeData() {
-		// Send individually
+		// Send individually, because sending all at once is too large
 		if (mostRecentScan != null ) {
 			long timestamp = getTimestamp(mostRecentScan);
 			for (Bundle contactBundle : mostRecentScan) {

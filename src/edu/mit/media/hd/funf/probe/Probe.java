@@ -622,6 +622,10 @@ public abstract class Probe extends Service {
 		
 		private boolean supportedByProbe = true;
 		
+		public Parameter(final String name, final Object defaultValue, final String displayName, final String description) {
+			super(name, defaultValue, displayName, description);
+		}
+		
 		/**
 		 * System parameter constructor, to be handled by system
 		 * @param paramType
