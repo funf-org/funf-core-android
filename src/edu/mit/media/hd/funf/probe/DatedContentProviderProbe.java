@@ -7,6 +7,7 @@ import java.util.List;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 
 public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 

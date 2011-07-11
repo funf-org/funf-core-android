@@ -52,6 +52,7 @@ public abstract class ContentProviderProbe extends Probe {
 					mostRecentScan = parseCursorResults();
 					sendProbeData();
 					onRunThread = null;
+					stop();
 				}
 			});
 			onRunThread.start();
@@ -67,6 +68,7 @@ public abstract class ContentProviderProbe extends Probe {
 				Log.e(TAG, "Didn't finish sending before probe was stopped");
 			}
 		}
+		stopSelf();
 	}
 
 	@Override

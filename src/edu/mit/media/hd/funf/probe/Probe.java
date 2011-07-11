@@ -46,7 +46,7 @@ public abstract class Probe extends Service {
 	
 	private static final String MOST_RECENT_RUN_KEY = "mostRecentTimeRun";
 	private static final String MOST_RECENT_KEY = "mostRecentTimeDataSent";
-	private static final String MOST_RECENT_PARAMS_KEY = "mostRecentTimeDataSent";
+	private static final String MOST_RECENT_PARAMS_KEY = "mostRecentParamsSent";
 	private static final String NONCES_KEY = "nonces";
 	
 	private PowerManager.WakeLock lock;

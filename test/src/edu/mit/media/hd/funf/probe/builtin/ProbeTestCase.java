@@ -45,6 +45,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		super(probeClass);
 		this.probeClass = probeClass;
 		receiver = new DataReceiver();
+		probeControllerStarted = false;
 	}
 
 	private void clean() throws InterruptedException {
@@ -70,9 +71,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 	protected  void setUp() throws Exception {
 		super.setUp();
 		clean();
-
-		// Start probe controller to listen to broadcasts
-		getContext().startService(new Intent(getContext(), ProbeController.class));
+		probeControllerStarted = false;
 		timer = new Timer();
 		dataBundles = new ArrayBlockingQueue<Bundle>(5000);
 		getContext().registerReceiver(receiver, new IntentFilter(OppProbe.getDataAction(probeClass)));
@@ -110,15 +109,23 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		return TEST_ID;
 	}
 	
+	private boolean probeControllerStarted;
 	protected void sendDataRequestBroadcast(final Bundle... params) {
+		long timeToWait = 0;
+		if (!probeControllerStarted) {
+			timeToWait = 3000;
+			// Start probe controller to listen to broadcasts
+			getContext().startService(new Intent(getContext(), ProbeController.class));
+		}
 		// Wait for probe controller to startup
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
+				probeControllerStarted = true;
 				ProbeCommunicator probe = new ProbeCommunicator(getContext(), probeClass);
 				probe.registerDataRequest(TEST_ID, params);
 			}
-		}, 3000);
+		}, timeToWait);
 	}
 	
 	protected void startProbe(final Bundle... params) {
@@ -145,9 +152,13 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 	
 	public class DataReceiver extends BroadcastReceiver {
 
+		private String probeDataAction = OppProbe.getDataAction(probeClass);
+		
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			dataBundles.add(intent.getExtras());
+			if (probeDataAction.equals(intent.getAction())) {
+				dataBundles.add(intent.getExtras());
+			}
 		}
 		
 	}
