@@ -7,10 +7,10 @@ import java.util.Map;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.CursorCell.AnyCell;
+import edu.mit.media.hd.funf.probe.CursorCell.DoubleCell;
 import edu.mit.media.hd.funf.probe.CursorCell.HashedCell;
 import edu.mit.media.hd.funf.probe.CursorCell.IntCell;
 import edu.mit.media.hd.funf.probe.CursorCell.LongCell;
@@ -129,6 +129,10 @@ public abstract class ContentProviderProbe extends Probe {
 	
 	protected static LongCell longCell() {
 		return new LongCell();
+	}
+	
+	protected static DoubleCell doubleCell() {
+		return new DoubleCell();
 	}
 	
 	protected static StringCell stringCell() {

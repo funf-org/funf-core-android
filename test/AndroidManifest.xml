@@ -10,15 +10,21 @@
     <application>
         <uses-library android:name="android.test.runner" />
     	<service android:name="edu.mit.media.hd.funf.probe.ProbeController"></service>
-        <service android:name="edu.mit.media.hd.funf.probe.builtin.LocationProbe"></service>
-        <service android:name="edu.mit.media.hd.funf.probe.builtin.WifiProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.AccelerometerProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ActivityProbe"></service>
-        <service android:name="edu.mit.media.hd.funf.probe.builtin.ScreenProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.ApplicationsProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.BatteryProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.BluetoothProbe"></service>
-        <service android:name="edu.mit.media.hd.funf.probe.builtin.ApplicationsProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.BrowserBookmarksProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.BrowserSearchesProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.CallLogProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.CellProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.ContactProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.ImagesProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.LocationProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.RunningApplicationsProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.ScreenProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.WifiProbe"></service>
         
         <service android:name="edu.mit.media.hd.funf.configured.ConfiguredDatabaseService"></service>
         <service android:name="edu.mit.media.hd.funf.configured.ConfiguredArchiverService"></service>
