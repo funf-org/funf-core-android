@@ -28,11 +28,10 @@ public class WifiProbe extends Probe {
 	
 	private static final String TAG = WifiProbe.class.getName();
 	
-	private boolean running;
 	private WifiManager wifiManager;
 	private int numberOfAttempts;
 	private int previousWifiState;  // TODO: should this be persisted to disk?
-	
+	private BroadcastReceiver scanResultsReceiver;
 	
 	@Override
 	public Parameter[] getAvailableParameters() {
@@ -69,20 +68,28 @@ public class WifiProbe extends Probe {
 	protected void onEnable() {
 		wifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
 		numberOfAttempts = 0;
-		running = false;
+		scanResultsReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				if (WifiManager.SCAN_RESULTS_AVAILABLE_ACTION.equals(intent.getAction())) {
+					sendProbeData();
+					if (isRunning()) {
+						stop();
+					}
+				}
+			}
+		};
+		registerReceiver(scanResultsReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 	}
 	
 	@Override
 	protected void onDisable() {
-
+		unregisterReceiver(scanResultsReceiver);
 	}
 
 	@Override
 	public void onRun(Bundle params) {
-		if (!running) {
-			running = true;
-			saveWifiStateAndRunScan();
-		}
+		saveWifiStateAndRunScan();
 	}
 	
 	private void saveWifiStateAndRunScan() {
@@ -117,8 +124,6 @@ public class WifiProbe extends Probe {
 				Log.e(TAG, "WIFI scan failed.");
 			}
 			numberOfAttempts = 0;
-			sendProbeData();
-			stop();
 		} else if (numberOfAttempts <= 3) { 
 			// Prevent infinite recursion by keeping track of number of attempts to change wifi state
 			// TODO: investigate what is needed to keep Service alive while waiting for wifi state
@@ -139,10 +144,7 @@ public class WifiProbe extends Probe {
 
 	@Override
 	public void onStop() {
-		if (running) {
-			running = false;
-			loadPreviousWifiState();
-		}
+		loadPreviousWifiState();
 	}
 
 
