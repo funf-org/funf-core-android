@@ -18,6 +18,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.WifiLock;
 import android.os.Bundle;
 import android.util.Log;
 import edu.mit.media.hd.funf.probe.Probe;
@@ -32,6 +33,7 @@ public class WifiProbe extends Probe {
 	private int numberOfAttempts;
 	private int previousWifiState;  // TODO: should this be persisted to disk?
 	private BroadcastReceiver scanResultsReceiver;
+	private WifiLock wifiLock;
 	
 	@Override
 	public Parameter[] getAvailableParameters() {
@@ -89,6 +91,7 @@ public class WifiProbe extends Probe {
 
 	@Override
 	public void onRun(Bundle params) {
+		acquireWifiLock();
 		saveWifiStateAndRunScan();
 	}
 	
@@ -144,8 +147,23 @@ public class WifiProbe extends Probe {
 
 	@Override
 	public void onStop() {
+		releaseWifiLock();
 		loadPreviousWifiState();
 	}
 
+	private void acquireWifiLock() {
+		wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_SCAN_ONLY, TAG);
+		wifiLock.setReferenceCounted(false);
+		wifiLock.acquire();
+	}
+	
+	private void releaseWifiLock() {
+		if (wifiLock != null) {
+			if (wifiLock.isHeld()) {
+				wifiLock.release();
+			}
+			wifiLock = null;
+		}
+	}
 
 }
