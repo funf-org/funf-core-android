@@ -65,6 +65,9 @@
     <!-- Backing up to the web -->
     <uses-permission android:name="android.permission.INTERNET" />
     
+    <!--  SMS Probe -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    
     <!--
     This declares that this application uses the instrumentation test runner targeting
     the package of edu.mit.media.hd.funf.  To run the tests use the command:

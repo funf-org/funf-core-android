@@ -133,7 +133,6 @@ public abstract class Probe extends Service {
 	 * Resets all of the run data information
 	 */
 	public void reset() {
-		//stop();
 		this.mostRecentParameters = new Bundle();
 		this.mostRecentTimeDataSent = 0;
 		this.mostRecentTimeRun = 0;
