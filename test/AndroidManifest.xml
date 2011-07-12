@@ -10,7 +10,6 @@
     <application>
         <uses-library android:name="android.test.runner" />
     	<service android:name="edu.mit.media.hd.funf.probe.ProbeController"></service>
-        <service android:name="edu.mit.media.hd.funf.probe.builtin.AccelerometerProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ActivityProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ApplicationsProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.BatteryProbe"></service>
@@ -25,6 +24,17 @@
         <service android:name="edu.mit.media.hd.funf.probe.builtin.RunningApplicationsProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ScreenProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.WifiProbe"></service>
+        
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.AccelerometerSensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.GravitySensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.GyroscopeSensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.LightSensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.MagneticFieldSensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.OrientationSensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.PressureSensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.ProximitySensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.RotationVectorSensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.TemperatureSensorProbe"></service>
         
         <service android:name="edu.mit.media.hd.funf.configured.ConfiguredDatabaseService"></service>
         <service android:name="edu.mit.media.hd.funf.configured.ConfiguredArchiverService"></service>

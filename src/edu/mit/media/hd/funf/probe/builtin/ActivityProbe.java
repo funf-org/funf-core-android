@@ -58,7 +58,7 @@ public class ActivityProbe extends Probe {
 	@Override
 	protected void onEnable() {
 		handler = new Handler();
-		accelerometerProbeBroadcastFilter = new IntentFilter(OppProbe.getDataAction(AccelerometerProbe.class));
+		accelerometerProbeBroadcastFilter = new IntentFilter(OppProbe.getDataAction(AccelerometerSensorProbe.class));
 		accelerometerProbeListener = new BroadcastReceiver() {
 
 			private long intervalStartTime;
@@ -141,7 +141,7 @@ public class ActivityProbe extends Probe {
 	@Override
 	protected void onDisable() {
 		unregisterReceiver(accelerometerProbeListener);
-		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerProbe.class);
+		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerSensorProbe.class);
 		probe.unregisterDataRequest(getClass().getName());
 	}
 	
@@ -149,7 +149,7 @@ public class ActivityProbe extends Probe {
 	public void onRun(Bundle params) {
 		long newDuration = Utils.getLong(params, SystemParameter.DURATION.name, DEFAULT_DURATION);
 		duration = Math.max(newDuration, duration);
-		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerProbe.class);
+		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerSensorProbe.class);
 		probe.registerDataRequest(getClass().getName(), params);
 		stop();
 	}

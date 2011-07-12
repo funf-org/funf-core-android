@@ -12,14 +12,14 @@ package edu.mit.media.hd.funf.probe.builtin;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 
-public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerSensorProbe> {
+public class GravitySensorProbeTest extends ProbeTestCase<GravitySensorProbe> {
 
-	public AccelerometerProbeTest() {
-		super(AccelerometerSensorProbe.class);
+	public GravitySensorProbeTest() {
+		super(GravitySensorProbe.class);
 	}
 	
 	
-	public void testAccelerometerData() throws InterruptedException {
+	public void testData() throws InterruptedException {
 		Bundle params = new Bundle();
 		params.putLong(SystemParameter.DURATION.name, 3L);
 		params.putLong(SystemParameter.PERIOD.name, 10L);
@@ -49,16 +49,7 @@ public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerSensorPro
 //					"Z:" + data.getFloat("Z")
 //			);
 		}
-		stopProbe();
 	}
 	
-	public void testBroadcast() throws InterruptedException {
-		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 3L);
-		params.putLong(SystemParameter.PERIOD.name, 3L);
-		sendDataRequestBroadcast(params);
-		Bundle data = getData(10);
-		assertNotNull(data);
-	}
 
 }
