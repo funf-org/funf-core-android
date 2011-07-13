@@ -82,6 +82,7 @@ public class ActivityProbe extends Probe {
 						public void run() {
 							sendProbeData();
 							sendRunnable = null;
+							stop();
 						}
 					};
 					handler.postDelayed(sendRunnable, duration*1000);
@@ -151,11 +152,15 @@ public class ActivityProbe extends Probe {
 		duration = Math.max(newDuration, duration);
 		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerSensorProbe.class);
 		probe.registerDataRequest(getClass().getName(), params);
-		stop();
+		// TODO: temporary solution to fix 0 PERIOD one shot requests from getting removed before data is sent
+		if (Utils.getLong(params, SystemParameter.PERIOD.name, DEFAULT_PERIOD) != 0L) {
+			stop();
+		}
 	}
 
 	@Override
 	public void onStop() {
+		// Nothing
 	}
 
 	@Override

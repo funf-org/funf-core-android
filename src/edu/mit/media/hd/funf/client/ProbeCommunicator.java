@@ -82,6 +82,7 @@ public class ProbeCommunicator {
 				public void run() {
 					try {
 						context.unregisterReceiver(DataResponder.this);
+						Log.e(TAG, "Probe never responded with nonce.  Does the apk have the necessary permissions?");
 					} catch (IllegalArgumentException e) {
 						// already removed;
 					}

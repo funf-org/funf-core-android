@@ -11,6 +11,7 @@ package edu.mit.media.hd.funf.probe;
 
 import static edu.mit.media.hd.funf.Utils.nonNullStrings;
 
+import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -24,8 +25,13 @@ import java.util.TimerTask;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -84,6 +90,7 @@ public abstract class Probe extends Service {
 			SharedPreferences.Editor editor = prefs.edit();
 			editor.putLong(MOST_RECENT_KEY, mostRecentTimeDataSent);
 			editor.putLong(MOST_RECENT_RUN_KEY, mostRecentTimeRun);
+			Log.i(TAG, "Most recent run onDestroy: " + mostRecentTimeRun);
 			editor.putString(NONCES_KEY, Nonce.serializeNonces(nonces));
 			try {
 				Utils.putInPrefs(editor, MOST_RECENT_PARAMS_KEY, mostRecentParameters);
@@ -101,7 +108,9 @@ public abstract class Probe extends Service {
 	public final int onStartCommand(Intent intent, int flags, int startId) {
 		Bundle extras = intent.getExtras();
 		String requester = extras.getString(OppProbe.ReservedParamaters.REQUESTER.name);
-		if (requester != null) {
+		Log.i(TAG, "Requester: " + String.valueOf(requester));
+		if (requester != null && packageHasRequiredPermissions(requester)) {
+			Log.i(TAG, "Updating requests");
 			updateRequests(intent);
 		}
 		run();
@@ -136,6 +145,7 @@ public abstract class Probe extends Service {
 		this.mostRecentParameters = new Bundle();
 		this.mostRecentTimeDataSent = 0;
 		this.mostRecentTimeRun = 0;
+		Log.i(TAG, "Most recent run reset: " + mostRecentTimeRun);
 		this.nextRunTime = 0;
 		this.nonces = new HashSet<Nonce>();
 		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
@@ -220,12 +230,41 @@ public abstract class Probe extends Service {
 		statusBroadcast.putExtras(status.getBundle());
 		if (packageName != null) {
 			statusBroadcast.setPackage(packageName);
-			if (includeNonce) {
+			if (includeNonce && packageHasRequiredPermissions(packageName)) {
 				statusBroadcast.putExtra(OppProbe.ReservedParamaters.NONCE.name, createNonce());
 			}
 		}
 		Log.i(TAG, "Sending probe status to '" + statusBroadcast.getPackage() + '"');
 		sendBroadcast(statusBroadcast);
+	}
+	
+	private static PackageInfo getPackageInfo(Context context, String packageName) {
+		List<PackageInfo> apps = context.getPackageManager().getInstalledPackages(PackageManager.GET_PERMISSIONS);
+		for (PackageInfo info : apps) {
+			if (info.packageName.equals(packageName)) {
+				return info;
+			}
+		}
+		return null;
+	}
+	
+	private boolean packageHasRequiredPermissions(String packageName) {
+		//Log.i(TAG, "Getting package info for '" + packageName + "'");
+		PackageInfo info = getPackageInfo(this, packageName);
+		if (info == null) {
+			Log.i(TAG, "Package '" + packageName + "' is not installed.");
+			return false;
+		}
+		
+		Set<String> packagePermissions = new HashSet<String>(Arrays.asList(info.requestedPermissions));
+		//Log.i(TAG, "Package permissions for '" + packageName + "': " + Utils.join(packagePermissions, ", "));
+		for (String permission :  nonNullStrings(getRequiredPermissions())) {
+			if (!packagePermissions.contains(permission)) {
+				Log.i(TAG, "Package '" + packageName + "' does not have the required permission '" + permission + "' to run this probe.");
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	private void removeInvalidNonces() {
@@ -249,14 +288,18 @@ public abstract class Probe extends Service {
 	 * Sends a DATA broadcast for the probe, and records the time.
 	 */
 	protected void sendProbeData(long timestamp, Bundle params, Bundle data) {
-		// TODO: enable sending directly to packages
 		Log.i(TAG, getClass().getName() + " sent probe data at " + timestamp);
 		mostRecentTimeDataSent = timestamp;
 		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
 		dataBroadcast.putExtra(TIMESTAMP, timestamp);
 		// TODO: should we send parameters with data broadcast?
 		dataBroadcast.putExtras(data);
-		sendBroadcast(dataBroadcast); // TODO: send with permission required
+		Set<String> requestingPackages = allRequests.getByRequesterByRequestId().keySet();
+		for (String requestingPackage : requestingPackages) {
+			Intent scopedDataBroadcast = new Intent(dataBroadcast);
+			scopedDataBroadcast.setPackage(requestingPackage);
+			sendBroadcast(dataBroadcast);
+		}
 	}
 	
 	/**
@@ -333,7 +376,6 @@ public abstract class Probe extends Service {
 				disable();
 			}
 		}
-		// TODO: clear out all unneeded requests (expired, no period, etc.)
 	}
 	
 	/**
@@ -388,6 +430,9 @@ public abstract class Probe extends Service {
 	}
 	
 	private Bundle getCompleteParams(Bundle params) {
+		if (params == null) {
+			return null;
+		}
 		Bundle completeParams = getDefaultParameters();
 		// TODO: only use parameters that are specified
 		// for (Parameter param : probe.getAvailableParameters()) {
@@ -412,7 +457,7 @@ public abstract class Probe extends Service {
 	}	
 	
 	private void scheduleNextRun() {
-		cleanRequests();
+		cleanRequests(); // Cleaning currently removes any existing 0 period requests
 		// TODO: need to be smarter about this.  Probe may handle period, but not start or end times.
 		Parameter periodParam = getAvailableSystemParameter(SystemParameter.PERIOD);
 		if (periodParam == null || periodParam.isSupportedByProbe()) {
@@ -420,19 +465,22 @@ public abstract class Probe extends Service {
 			return;
 		}
 		ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
-		Intent nextRunIntent = new Intent(this, getClass());
-		nextRunIntent.putExtras(scheduleResolver.getNextRunParams());
-		AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
-		PendingIntent pendingIntent = PendingIntent.getService(this, 0, nextRunIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-		long nextRunTime = scheduleResolver.getNextRunTime();
-		this.nextRunTime = nextRunTime;
-		Log.i(TAG, "Next run time: " + nextRunTime);
-		if (nextRunTime != 0L) {
-			Log.i(TAG, "LAST_TIME: " + mostRecentTimeRun);
-			Log.i(TAG, "NEXT_TIME: " + nextRunTime);
-			Log.i(TAG, "CURRENT_TIME: " + System.currentTimeMillis());
-			Log.i(TAG, "DIFFERENCE: " + (nextRunTime - System.currentTimeMillis()));
-			am.set(AlarmManager.RTC_WAKEUP, nextRunTime, pendingIntent);
+		Bundle nextRunParams = scheduleResolver.getNextRunParams();
+		if (nextRunParams != null) {
+			Intent nextRunIntent = new Intent(this, getClass());
+			nextRunIntent.putExtras(nextRunParams);
+			AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
+			PendingIntent pendingIntent = PendingIntent.getService(this, 0, nextRunIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+			long nextRunTime = scheduleResolver.getNextRunTime();
+			this.nextRunTime = nextRunTime;
+			Log.i(TAG, "Next run time: " + nextRunTime);
+			if (nextRunTime != 0L) {
+				Log.i(TAG, "LAST_TIME: " + mostRecentTimeRun);
+				Log.i(TAG, "NEXT_TIME: " + nextRunTime);
+				Log.i(TAG, "CURRENT_TIME: " + System.currentTimeMillis());
+				Log.i(TAG, "DIFFERENCE: " + (nextRunTime - System.currentTimeMillis()));
+				am.set(AlarmManager.RTC_WAKEUP, nextRunTime, pendingIntent);
+			}
 		}
 	}
 	

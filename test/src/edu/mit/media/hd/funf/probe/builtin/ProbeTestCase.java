@@ -33,7 +33,6 @@ import edu.mit.media.hd.funf.probe.ProbeUtils;
 
 public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T> {
 
-	private static final String TEST_REQUESTER = "test.requester";
 	private static final String TEST_ID = "test.id";
 	
 	private final Class<T> probeClass;
@@ -103,7 +102,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 	}
 	
 	protected String getTestRequester() {
-		return TEST_REQUESTER;
+		return getContext().getPackageName();
 	}
 	protected String getTestRequestId() {
 		return TEST_ID;

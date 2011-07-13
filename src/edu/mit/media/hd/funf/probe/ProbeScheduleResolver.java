@@ -31,19 +31,21 @@ public class ProbeScheduleResolver {
 	
 	public ProbeScheduleResolver(final Set<Bundle> requests, final Bundle defaults, final long lastRunTime, final Bundle lastRunParams) {
 		this.nextRunTime = Long.MAX_VALUE;
-		this.nextRunParams = new Bundle();
-		for (Bundle request : requests) {
-			Bundle completeRequest = new Bundle();
-			completeRequest.putAll(defaults);
-			completeRequest.putAll(request);
-			long period = 1000* Utils.getLong(request, Probe.SystemParameter.PERIOD.name, NO_PERIOD);
-			Log.i("ProbeScheduleResolver", "" + " Period:" + period);
-			long start = Utils.getLong(completeRequest, Probe.SystemParameter.START.name, Long.MIN_VALUE);
-			long end = Utils.getLong(completeRequest, Probe.SystemParameter.END.name, Long.MAX_VALUE);
-			long scheduleNextTime = (lastRunTime == 0) ? System.currentTimeMillis() : lastRunTime + period;
-			if (scheduleNextTime > start && scheduleNextTime < end && scheduleNextTime < nextRunTime) {
-				nextRunTime = scheduleNextTime;
-				nextRunParams = request; // Dumb implementation which just takes parameters for that run
+		if (!requests.isEmpty()) {
+			this.nextRunParams = new Bundle();
+			for (Bundle request : requests) {
+				Bundle completeRequest = new Bundle();
+				completeRequest.putAll(defaults);
+				completeRequest.putAll(request);
+				long period = 1000* Utils.getLong(request, Probe.SystemParameter.PERIOD.name, NO_PERIOD);
+				Log.i("ProbeScheduleResolver", "" + " Period:" + period);
+				long start = Utils.getLong(completeRequest, Probe.SystemParameter.START.name, Long.MIN_VALUE);
+				long end = Utils.getLong(completeRequest, Probe.SystemParameter.END.name, Long.MAX_VALUE);
+				long scheduleNextTime = (lastRunTime == 0) ? System.currentTimeMillis() : lastRunTime + period;
+				if (scheduleNextTime > start && scheduleNextTime < end && scheduleNextTime < nextRunTime) {
+					nextRunTime = scheduleNextTime;
+					nextRunParams = request; // Dumb implementation which just takes parameters for that run
+				}
 			}
 		}
 	}
@@ -59,7 +61,7 @@ public class ProbeScheduleResolver {
 	}
 	
 	/**
-	 * Calculates the parameters to configure the probe for the next run.
+	 * Calculates the parameters to configure the probe for the next run.  Returns null if no schedules are available.
 	 * @return
 	 */
 	public Bundle getNextRunParams() {

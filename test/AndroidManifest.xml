@@ -12,6 +12,7 @@
     	<service android:name="edu.mit.media.hd.funf.probe.ProbeController"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ActivityProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ApplicationsProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.AudioFilesProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.BatteryProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.BluetoothProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.BrowserBookmarksProbe"></service>
@@ -23,12 +24,15 @@
         <service android:name="edu.mit.media.hd.funf.probe.builtin.LocationProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.RunningApplicationsProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ScreenProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.SMSProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.VideosProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.WifiProbe"></service>
         
         <service android:name="edu.mit.media.hd.funf.probe.builtin.AccelerometerSensorProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.GravitySensorProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.GyroscopeSensorProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.LightSensorProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.LinearAccelerationSensorProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.MagneticFieldSensorProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.OrientationSensorProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.PressureSensorProbe"></service>
@@ -77,6 +81,9 @@
     
     <!--  SMS Probe -->
     <uses-permission android:name="android.permission.READ_SMS" />
+    
+    <!-- Battery Probe -->
+    <uses-permission android:name="android.permission.BATTERY_STATS" />
     
     <!--
     This declares that this application uses the instrumentation test runner targeting
