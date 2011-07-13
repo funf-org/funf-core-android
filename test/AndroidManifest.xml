@@ -27,6 +27,7 @@
         <service android:name="edu.mit.media.hd.funf.probe.builtin.RunningApplicationsProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ScreenProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.SMSProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.TelephonyProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.VideosProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.WifiProbe"></service>
         
