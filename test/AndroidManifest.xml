@@ -56,17 +56,20 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>   
     
     
-    <!-- Wifi probe -->
+    <!-- Wifi and Hardware Info probes -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/> 
+    
+     <!-- Wifi probe -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/> 
     
     <!-- Bluetooth probe -->
-    <uses-permission android:name="android.permission.BLUETOOTH"/> 
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/> 
+    
+    <!-- Bluetooth and Hardware Info probes -->
+    <uses-permission android:name="android.permission.BLUETOOTH"/> 
     
     <!-- Running applications probe -->
     <uses-permission android:name="android.permission.GET_TASKS"/> 
-    
     
     <!-- Browser probes -->
     <uses-permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS" />

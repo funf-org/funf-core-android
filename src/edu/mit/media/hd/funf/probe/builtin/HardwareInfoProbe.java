@@ -13,7 +13,8 @@ public class HardwareInfoProbe extends SynchronousProbe {
 	@Override
 	public String[] getRequiredPermissions() {
 		return new String[] {
-				
+				android.Manifest.permission.ACCESS_WIFI_STATE,
+				android.Manifest.permission.BLUETOOTH
 		};
 	}
 
