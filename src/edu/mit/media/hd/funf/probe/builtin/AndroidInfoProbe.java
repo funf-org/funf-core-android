@@ -12,7 +12,7 @@ public class AndroidInfoProbe extends SynchronousProbe {
 	}
 
 	@Override
-	public void sendProbeData() {
+	public Bundle getData() {
 		Bundle data = new Bundle();
 		data.putString("FIRMWARE_VERSION", Build.VERSION.RELEASE);
 		data.putString("BUILD_NUMBER",  
@@ -22,7 +22,7 @@ public class AndroidInfoProbe extends SynchronousProbe {
 				+ " " + Build.VERSION.INCREMENTAL
 				+ " " + Build.TAGS);
 		data.putInt("SDK", Integer.parseInt(Build.VERSION.SDK, 10));
-		sendProbeData(System.currentTimeMillis(), new Bundle(), data);
+		return data;
 	}
 
 }

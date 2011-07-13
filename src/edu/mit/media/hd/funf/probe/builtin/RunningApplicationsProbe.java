@@ -14,25 +14,10 @@ import java.util.ArrayList;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningTaskInfo;
 import android.os.Bundle;
-import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.SynchronousProbe;
 
-public class RunningApplicationsProbe extends Probe {
-
-	private ArrayList<RunningTaskInfo> mostRecentRunningTaks;
-	private long mostRecentScanTime;
+public class RunningApplicationsProbe extends SynchronousProbe {
 	
-	@Override
-	public Parameter[] getAvailableParameters() {
-		return new Parameter[] {
-			new Parameter(SystemParameter.PERIOD, 0L),	
-		};
-	}
-
-	@Override
-	public String[] getRequiredFeatures() {
-		return null;
-	}
-
 	@Override
 	public String[] getRequiredPermissions() {
 		return new String[] {
@@ -41,36 +26,12 @@ public class RunningApplicationsProbe extends Probe {
 	}
 
 	@Override
-	protected void onEnable() {
-		// Nothing, only active
-	}
-
-	@Override
-	protected void onDisable() {
-		// Nothing, only active
-	}
-
-	@Override
-	protected void onRun(Bundle params) {
+	protected Bundle getData() {
 		ActivityManager am = (ActivityManager)this.getApplicationContext().getSystemService(ACTIVITY_SERVICE);
-		mostRecentRunningTaks = new ArrayList<RunningTaskInfo>(am.getRunningTasks(100000000));
-		mostRecentScanTime = System.currentTimeMillis();
-		sendProbeData();
-		stop();
-	}
-
-	@Override
-	protected void onStop() {
-		stopSelf(); // No need of service after stop
-	}
-
-	@Override
-	public void sendProbeData() {
-		if (mostRecentRunningTaks != null) {
-			Bundle data = new Bundle();
-			data.putParcelableArrayList("RUNNING_TASKS", mostRecentRunningTaks);
-			sendProbeData(mostRecentScanTime, new Bundle(), data);
-		}
+		ArrayList<RunningTaskInfo> mostRecentRunningTaks = new ArrayList<RunningTaskInfo>(am.getRunningTasks(100000000));
+		Bundle data = new Bundle();
+		data.putParcelableArrayList("RUNNING_TASKS", mostRecentRunningTaks);
+		return data;
 	}
 
 }

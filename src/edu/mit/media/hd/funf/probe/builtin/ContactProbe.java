@@ -300,22 +300,6 @@ public class ContactProbe extends ContentProviderProbe {
 		contactBundle.putParcelableArrayList(CONTACT_DATA, dataBundles);
 		return hasChanged ? contactBundle : null;
 	}
-	
-	@Override
-	public void sendProbeData() {
-		// Send individually, because sending all at once is too large
-		if (mostRecentScan != null ) {
-			long timestamp = getTimestamp(mostRecentScan);
-			for (Bundle contactBundle : mostRecentScan) {
-				sendProbeData(timestamp, new Bundle(), contactBundle);
-			}
-		}
-	}
-
-	@Override
-	protected long getTimestamp(List<Bundle> results) {
-		return System.currentTimeMillis();
-	}
 
 	@Override
 	public String[] getRequiredPermissions() {
@@ -323,6 +307,22 @@ public class ContactProbe extends ContentProviderProbe {
 			android.Manifest.permission.READ_CONTACTS
 		};
 	}
+	
+	@Override
+	protected long getTimestamp(List<Bundle> results) {
+		return System.currentTimeMillis();
+	}
+
+	@Override
+	protected long getTimestamp(Bundle result) {
+		return System.currentTimeMillis();
+	}
+
+	@Override
+	protected boolean sendEachRowSeparately() {
+		return true;
+	}
 
 
+	
 }

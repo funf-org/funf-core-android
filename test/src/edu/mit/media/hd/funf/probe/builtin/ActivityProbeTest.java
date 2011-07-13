@@ -24,21 +24,20 @@ public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 		params.putLong(SystemParameter.PERIOD.name, 0L);
 		sendDataRequestBroadcast(params);
 		Bundle data = getData(20);
-		System.out.println("I: " + data.getInt("TOTAL_INTERVALS") + " A:" + data.getInt("ACTIVE_INTERVALS"));
+		assertTrue(data.containsKey("TOTAL_INTERVALS"));
+		assertTrue(data.containsKey("ACTIVE_INTERVALS"));
+		//System.out.println("I: " + data.getInt("TOTAL_INTERVALS") + " A:" + data.getInt("ACTIVE_INTERVALS"));
 	}
 	
 	public void testWithAccelerometerBroadcast() throws InterruptedException {
-//		Intent i = new Intent(getContext(), AccelerometerProbe.class);
-//		i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, getTestRequester());
-//		i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, getTestRequestId());
-//		i.putExtra(OppProbe.ReservedParamaters.REQUESTS.name, new Bundle[] { new Bundle() });
-//		startService(i);
-		//Thread.sleep(10000);
+		sendDataRequestBroadcast(AccelerometerSensorProbe.class, new Bundle());
+		
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 5L);
+		params.putLong(SystemParameter.DURATION.name, 2L);
 		params.putLong(SystemParameter.PERIOD.name, 0L);
 		sendDataRequestBroadcast(params);
 		Bundle data = getData(10);
-		assertNotNull(data);
+		assertTrue(data.containsKey("TOTAL_INTERVALS"));
+		assertTrue(data.containsKey("ACTIVE_INTERVALS"));
 	}
 }

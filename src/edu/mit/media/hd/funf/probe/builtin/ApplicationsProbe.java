@@ -17,39 +17,13 @@ import java.util.Set;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.SynchronousProbe;
 
-public class ApplicationsProbe extends Probe {
-
-	private long mostRecentScanTimestamp;
-	private ArrayList<ApplicationInfo> installedApplications;
-	private ArrayList<ApplicationInfo> uninstalledApplications;
+public class ApplicationsProbe extends SynchronousProbe {
 	
-	@Override
-	public Parameter[] getAvailableParameters() {
-		return new Parameter[] {
-			new Parameter(SystemParameter.PERIOD, 3600L)
-		};
-	}
-
-	@Override
-	public String[] getRequiredFeatures() {
-		return null;
-	}
-
 	@Override
 	public String[] getRequiredPermissions() {
 		return null;
-	}
-
-	@Override
-	protected void onEnable() {
-		// Active only, nothing to do 
-	}
-	
-	@Override
-	protected void onDisable() {
-		// Active only, nothing to do 
 	}
 	
 	private static Set<String> getInstalledAppPackageNames(List<ApplicationInfo> installedApps) {
@@ -72,29 +46,14 @@ public class ApplicationsProbe extends Probe {
 	}
 
 	@Override
-	protected void onRun(Bundle params) {
+	protected Bundle getData() {
+		Bundle data = new Bundle();
 		PackageManager pm = this.getApplicationContext().getPackageManager();
 		List<ApplicationInfo> allApplications = pm.getInstalledApplications(PackageManager.GET_UNINSTALLED_PACKAGES);
-		installedApplications = new ArrayList<ApplicationInfo>(pm.getInstalledApplications(0));
-		uninstalledApplications = getUninstalledApps(allApplications, installedApplications);
-		mostRecentScanTimestamp = System.currentTimeMillis();
-		sendProbeData();
-		stop();
-	}
-
-	@Override
-	protected void onStop() {
-		// Nothing to do
-	}
-
-	@Override
-	public void sendProbeData() {
-		if (installedApplications != null & uninstalledApplications != null) {
-			Bundle data = new Bundle();
-			data.putParcelableArrayList("INSTALLED_APPLICATIONS", installedApplications);
-			data.putParcelableArrayList("UNINSTALLED_APPLICATIONS", uninstalledApplications);
-			sendProbeData(mostRecentScanTimestamp, new Bundle(), data);
-		}
+		ArrayList<ApplicationInfo> installedApplications = new ArrayList<ApplicationInfo>(pm.getInstalledApplications(0));
+		data.putParcelableArrayList("INSTALLED_APPLICATIONS", installedApplications);
+		data.putParcelableArrayList("UNINSTALLED_APPLICATIONS", getUninstalledApps(allApplications, installedApplications));
+		return data;
 	}
 
 }

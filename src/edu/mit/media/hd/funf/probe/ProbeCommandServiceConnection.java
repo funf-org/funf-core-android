@@ -39,7 +39,7 @@ public abstract class ProbeCommandServiceConnection implements ServiceConnection
 		return probe;
 	}
 	public void onServiceConnected(ComponentName className, IBinder service) {
-		Log.i(TAG, "Binding: " + className);
+		Log.v(TAG, "Binding: " + className);
         probe = ((Probe.LocalBinder)service).getService();
         if (probe != null) {
         	runCommand();
@@ -69,6 +69,6 @@ public abstract class ProbeCommandServiceConnection implements ServiceConnection
 	}
 	
     public void onServiceDisconnected(ComponentName className) {
-    	Log.i(TAG, "Unbinding: " + className);
+    	Log.v(TAG, "Unbinding: " + className);
     }
 }

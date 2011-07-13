@@ -22,19 +22,19 @@ public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 		params.putLong(SystemParameter.PERIOD.name, 0L);
 		params.putBoolean(ContactProbe.FULL_PARAM.getName(), true);
 		startProbe(params);
-		Bundle data = getData(30);
+		Bundle data = getData(10);
 		assertNotNull(data.get(Probe.TIMESTAMP));
-		ArrayList<Parcelable> contacts = data.getParcelableArrayList(ContactProbe.CONTACT_DATA);
-		assertNotNull(contacts);
+		ArrayList<Parcelable> contactData = data.getParcelableArrayList(ContactProbe.CONTACT_DATA);
+		assertNotNull(contactData);
 		int count = 1;
 		while(data != null) {
 			try {
-				data = getData(1);
+				data = getData(2);
 				count ++;
 			} catch (AssertionFailedError e) {
-				assertTrue(contacts.size() > 0);
+				assertTrue(contactData.size() > 0);
 				Log.i("ContactProbeTest", "Contact keys: " + Utils.join(Utils.getValues(data).keySet(), ", "));
-				for (Parcelable dataRow : contacts) {
+				for (Parcelable dataRow : contactData) {
 					Bundle b = (Bundle)dataRow;
 					Log.i("ContactProbeTest", "Data keys: " + b.getString(Data.MIMETYPE) + ":" + String.valueOf(b.get(Data.DATA1)) + " - Others: " + Utils.join(Utils.getValues(b).keySet(), ", "));
 				}
@@ -50,7 +50,7 @@ public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 		params.putLong(SystemParameter.PERIOD.name, 0L);
 		params.putBoolean(ContactProbe.FULL_PARAM.getName(), true);
 		startProbe(params);
-		Bundle data = getData(30);
+		Bundle data = getData(10);
 		boolean hasAtLeastTwo = false;
 		while (data != null) {
 			// Get the rest of the data
@@ -67,7 +67,7 @@ public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 		params.putBoolean(ContactProbe.FULL_PARAM.getName(), false);
 		startProbe(params);
 		try {
-			getData(30);  // Unfortunately we have to wait, since full scans take a while to return anything
+			getData(10);  // Unfortunately we have to wait, since full scans take a while to return anything
 			fail("Should not get any contacts for a non-full scan after a full scan");
 		} catch (AssertionFailedError e) {
 			// Success

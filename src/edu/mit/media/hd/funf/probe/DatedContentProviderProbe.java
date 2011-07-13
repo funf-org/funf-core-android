@@ -36,8 +36,12 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 		if (results == null || results.isEmpty()) {
 			return System.currentTimeMillis();
 		} else {
-			return results.get(0).getLong(getDateColumnName());
+			return getTimestamp(results.get(0));
 		}
+	}
+	
+	protected long getTimestamp(Bundle result) {
+		return result.getLong(getDateColumnName());
 	}
 
 

@@ -11,7 +11,6 @@ package edu.mit.media.hd.funf.probe;
 
 import static edu.mit.media.hd.funf.Utils.nonNullStrings;
 
-import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -28,10 +27,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PermissionInfo;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -71,7 +68,7 @@ public abstract class Probe extends Service {
 	
 	@Override
 	public final void onCreate() {
-		Log.i(TAG, "CREATED");
+		Log.v(TAG, "CREATED");
 		prefs = getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE);
 		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
 		mostRecentTimeDataSent = prefs.getLong(MOST_RECENT_KEY, 0);
@@ -85,12 +82,12 @@ public abstract class Probe extends Service {
 
 	@Override
 	public final void onDestroy() {
-		Log.i(TAG, "DESTROYED");
+		Log.v(TAG, "DESTROYED");
 		if (prefs != null) {
 			SharedPreferences.Editor editor = prefs.edit();
 			editor.putLong(MOST_RECENT_KEY, mostRecentTimeDataSent);
 			editor.putLong(MOST_RECENT_RUN_KEY, mostRecentTimeRun);
-			Log.i(TAG, "Most recent run onDestroy: " + mostRecentTimeRun);
+			Log.v(TAG, "Most recent run onDestroy: " + mostRecentTimeRun);
 			editor.putString(NONCES_KEY, Nonce.serializeNonces(nonces));
 			try {
 				Utils.putInPrefs(editor, MOST_RECENT_PARAMS_KEY, mostRecentParameters);
@@ -108,9 +105,9 @@ public abstract class Probe extends Service {
 	public final int onStartCommand(Intent intent, int flags, int startId) {
 		Bundle extras = intent.getExtras();
 		String requester = extras.getString(OppProbe.ReservedParamaters.REQUESTER.name);
-		Log.i(TAG, "Requester: " + String.valueOf(requester));
+		Log.v(TAG, "Requester: " + String.valueOf(requester));
 		if (requester != null && packageHasRequiredPermissions(requester)) {
-			Log.i(TAG, "Updating requests");
+			Log.v(TAG, "Updating requests");
 			updateRequests(intent);
 		}
 		run();
@@ -145,7 +142,7 @@ public abstract class Probe extends Service {
 		this.mostRecentParameters = new Bundle();
 		this.mostRecentTimeDataSent = 0;
 		this.mostRecentTimeRun = 0;
-		Log.i(TAG, "Most recent run reset: " + mostRecentTimeRun);
+		Log.v(TAG, "Most recent run reset: " + mostRecentTimeRun);
 		this.nextRunTime = 0;
 		this.nonces = new HashSet<Nonce>();
 		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
@@ -249,18 +246,18 @@ public abstract class Probe extends Service {
 	}
 	
 	private boolean packageHasRequiredPermissions(String packageName) {
-		//Log.i(TAG, "Getting package info for '" + packageName + "'");
+		//Log.v(TAG, "Getting package info for '" + packageName + "'");
 		PackageInfo info = getPackageInfo(this, packageName);
 		if (info == null) {
-			Log.i(TAG, "Package '" + packageName + "' is not installed.");
+			Log.w(TAG, "Package '" + packageName + "' is not installed.");
 			return false;
 		}
 		
 		Set<String> packagePermissions = new HashSet<String>(Arrays.asList(info.requestedPermissions));
-		//Log.i(TAG, "Package permissions for '" + packageName + "': " + Utils.join(packagePermissions, ", "));
+		//Log.v(TAG, "Package permissions for '" + packageName + "': " + Utils.join(packagePermissions, ", "));
 		for (String permission :  nonNullStrings(getRequiredPermissions())) {
 			if (!packagePermissions.contains(permission)) {
-				Log.i(TAG, "Package '" + packageName + "' does not have the required permission '" + permission + "' to run this probe.");
+				Log.w(TAG, "Package '" + packageName + "' does not have the required permission '" + permission + "' to run this probe.");
 				return false;
 			}
 		}
@@ -288,7 +285,7 @@ public abstract class Probe extends Service {
 	 * Sends a DATA broadcast for the probe, and records the time.
 	 */
 	protected void sendProbeData(long timestamp, Bundle params, Bundle data) {
-		Log.i(TAG, getClass().getName() + " sent probe data at " + timestamp);
+		Log.i(TAG, "Sent probe data at " + timestamp);
 		mostRecentTimeDataSent = timestamp;
 		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
 		dataBroadcast.putExtra(TIMESTAMP, timestamp);

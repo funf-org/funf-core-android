@@ -38,7 +38,7 @@ public class TelephonyProbeTest extends ProbeTestCase<TelephonyProbe> {
 			assertNotNull(data.getString(key));
 		}
 		for (String key : otherKeys) {
-			assertNotNull(data.getInt(key));
+			assertNotNull(data.get(key));
 		}
 	}
 

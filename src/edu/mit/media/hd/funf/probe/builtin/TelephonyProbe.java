@@ -13,7 +13,7 @@ public class TelephonyProbe extends SynchronousProbe {
 	}
 
 	@Override
-	public void sendProbeData() {
+	public Bundle getData() {
 		Bundle data = new Bundle();
 		TelephonyManager telephony = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 		// TODO: Belongs with CellProbe, or separate probe, these are volatile values
@@ -40,7 +40,7 @@ public class TelephonyProbe extends SynchronousProbe {
 		data.putString("VOICEMAIL_ALPHA_TAG", telephony.getVoiceMailAlphaTag());
 		data.putString("VOICEMAIL_NUMBER", telephony.getVoiceMailNumber());
 		data.putBoolean("HAS_ICC_CARD", telephony.hasIccCard());
-		sendProbeData(System.currentTimeMillis(), new Bundle(), data);
+		return data;
 	}
 
 }

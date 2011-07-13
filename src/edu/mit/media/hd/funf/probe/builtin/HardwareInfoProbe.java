@@ -18,9 +18,7 @@ public class HardwareInfoProbe extends SynchronousProbe {
 		};
 	}
 
-	
-	@Override
-	public void sendProbeData() {
+	protected Bundle getData() {
 		Bundle data = new Bundle();
 		data.putString("WIFI_MAC", ((WifiManager) getSystemService(WIFI_SERVICE)).getConnectionInfo().getMacAddress());
 		String bluetoothMac = getBluetoothMac();
@@ -31,7 +29,7 @@ public class HardwareInfoProbe extends SynchronousProbe {
 		data.putString("BRAND", Build.BRAND);
 		data.putString("MODEL", Build.MODEL);
 		data.putString("DEVICE_ID", ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId());
-		sendProbeData(System.currentTimeMillis(), new Bundle(), data);
+		return data;
 	}
 
 	private String getBluetoothMac() {

@@ -109,7 +109,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 	}
 	
 	private boolean probeControllerStarted;
-	protected void sendDataRequestBroadcast(final Bundle... params) {
+	protected void sendDataRequestBroadcast(final Class<? extends Probe> aProbeClass, final Bundle... params) {
 		long timeToWait = 0;
 		if (!probeControllerStarted) {
 			timeToWait = 3000;
@@ -121,10 +121,14 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 			@Override
 			public void run() {
 				probeControllerStarted = true;
-				ProbeCommunicator probe = new ProbeCommunicator(getContext(), probeClass);
+				ProbeCommunicator probe = new ProbeCommunicator(getContext(), aProbeClass);
 				probe.registerDataRequest(TEST_ID, params);
 			}
 		}, timeToWait);
+	}
+	
+	protected void sendDataRequestBroadcast(final Bundle... params) {
+		sendDataRequestBroadcast(probeClass, params);
 	}
 	
 	protected void startProbe(final Bundle... params) {

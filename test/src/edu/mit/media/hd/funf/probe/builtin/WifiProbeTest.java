@@ -18,7 +18,7 @@ import edu.mit.media.hd.funf.OppProbe;
 
 public class WifiProbeTest extends ProbeTestCase<WifiProbe> {
 
-	private static final int FUDGE_FACTOR = 3;
+	private static final int FUDGE_FACTOR = 20;
 	
 	public WifiProbeTest() {
 		super(WifiProbe.class);
