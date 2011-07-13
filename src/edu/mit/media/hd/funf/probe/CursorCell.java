@@ -7,6 +7,10 @@ import edu.mit.media.hd.funf.HashUtil;
 public abstract class CursorCell<T> {
 	public abstract T getData(Cursor cursor, int columnIndex);
 	public T getData(Cursor cursor, String columnName) {
+		int index = cursor.getColumnIndex(columnName);
+		if (index < 0) {
+			return null; // Different devices have different columns available
+		}
 		return getData(cursor, cursor.getColumnIndex(columnName));
 	}
 	

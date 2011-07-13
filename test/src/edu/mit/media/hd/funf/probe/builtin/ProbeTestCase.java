@@ -33,6 +33,8 @@ import edu.mit.media.hd.funf.probe.ProbeUtils;
 
 public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T> {
 
+	public static final String TAG = "FunfTest";
+	
 	private static final String TEST_ID = "test.id";
 	
 	private final Class<T> probeClass;
@@ -136,7 +138,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, getTestRequester());
 		i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, getTestRequestId());
 		i.putExtra(OppProbe.ReservedParamaters.REQUESTS.name, params);
-		startService(i);
+		getContext().startService(i);
 	}
 	
 	protected void stopProbe() {

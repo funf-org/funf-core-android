@@ -10,6 +10,7 @@
 package edu.mit.media.hd.funf.probe.builtin;
 
 import android.os.Bundle;
+import android.util.Log;
 
 public class ApplicationsProbeTest extends ProbeTestCase<ApplicationsProbe> {
 
@@ -19,7 +20,9 @@ public class ApplicationsProbeTest extends ProbeTestCase<ApplicationsProbe> {
 
 	public void testProbe() {
 		Bundle params = new Bundle();
+		Log.i(TAG, "1");
 		startProbe(params);
+		Log.i(TAG, "2");
 		Bundle data = getData(20);
 		assertNotNull(data.get("INSTALLED_APPLICATIONS"));
 		assertNotNull(data.get("UNINSTALLED_APPLICATIONS"));

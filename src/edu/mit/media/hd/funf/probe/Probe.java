@@ -470,12 +470,11 @@ public abstract class Probe extends Service {
 			PendingIntent pendingIntent = PendingIntent.getService(this, 0, nextRunIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 			long nextRunTime = scheduleResolver.getNextRunTime();
 			this.nextRunTime = nextRunTime;
-			Log.i(TAG, "Next run time: " + nextRunTime);
+			Log.d(TAG, "Next run time: " + nextRunTime);
 			if (nextRunTime != 0L) {
-				Log.i(TAG, "LAST_TIME: " + mostRecentTimeRun);
-				Log.i(TAG, "NEXT_TIME: " + nextRunTime);
-				Log.i(TAG, "CURRENT_TIME: " + System.currentTimeMillis());
-				Log.i(TAG, "DIFFERENCE: " + (nextRunTime - System.currentTimeMillis()));
+				Log.d(TAG, "LAST_TIME: " + mostRecentTimeRun);
+				Log.d(TAG, "CURRENT_TIME: " + System.currentTimeMillis());
+				Log.d(TAG, "DIFFERENCE: " + (nextRunTime - System.currentTimeMillis()));
 				am.set(AlarmManager.RTC_WAKEUP, nextRunTime, pendingIntent);
 			}
 		}

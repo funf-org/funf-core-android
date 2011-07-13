@@ -57,7 +57,7 @@ public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerSensorPro
 		params.putLong(SystemParameter.DURATION.name, 3L);
 		params.putLong(SystemParameter.PERIOD.name, 3L);
 		sendDataRequestBroadcast(params);
-		Bundle data = getData(10);
+		Bundle data = getData(15);
 		assertNotNull(data);
 	}
 

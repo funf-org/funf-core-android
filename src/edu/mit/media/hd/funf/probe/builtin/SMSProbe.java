@@ -45,7 +45,7 @@ public class SMSProbe extends DatedContentProviderProbe {
 		projectionMap.put(Sms.REPLY_PATH_PRESENT, booleanCell());
 		projectionMap.put(Sms.SERVICE_CENTER, stringCell());
 		projectionMap.put(Sms.LOCKED, booleanCell());
-		projectionMap.put(Sms.ERROR_CODE, intCell());
+		projectionMap.put(Sms.ERROR_CODE, intCell());  //Not Supported on all devices
 		//projectionMap.put(Sms.META_DATA, hashedStringCell());  Doesn't exist for some reason
 		return projectionMap;
 	}
