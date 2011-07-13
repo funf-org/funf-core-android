@@ -11,6 +11,7 @@
         <uses-library android:name="android.test.runner" />
     	<service android:name="edu.mit.media.hd.funf.probe.ProbeController"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ActivityProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.AndroidInfoProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ApplicationsProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.AudioFilesProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.BatteryProbe"></service>
