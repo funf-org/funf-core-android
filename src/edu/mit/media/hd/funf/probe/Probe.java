@@ -292,6 +292,7 @@ public abstract class Probe extends Service {
 		// TODO: should we send parameters with data broadcast?
 		dataBroadcast.putExtras(data);
 		Set<String> requestingPackages = allRequests.getByRequesterByRequestId().keySet();
+		Log.i(TAG, "Sending probe data to: " + Utils.join(requestingPackages, ", "));
 		for (String requestingPackage : requestingPackages) {
 			Intent scopedDataBroadcast = new Intent(dataBroadcast);
 			scopedDataBroadcast.setPackage(requestingPackage);
@@ -470,11 +471,11 @@ public abstract class Probe extends Service {
 			PendingIntent pendingIntent = PendingIntent.getService(this, 0, nextRunIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 			long nextRunTime = scheduleResolver.getNextRunTime();
 			this.nextRunTime = nextRunTime;
-			Log.d(TAG, "Next run time: " + nextRunTime);
+			Log.i(TAG, "Next run time: " + nextRunTime);
 			if (nextRunTime != 0L) {
-				Log.d(TAG, "LAST_TIME: " + mostRecentTimeRun);
-				Log.d(TAG, "CURRENT_TIME: " + System.currentTimeMillis());
-				Log.d(TAG, "DIFFERENCE: " + (nextRunTime - System.currentTimeMillis()));
+				Log.i(TAG, "LAST_TIME: " + mostRecentTimeRun);
+				Log.i(TAG, "CURRENT_TIME: " + System.currentTimeMillis());
+				Log.i(TAG, "DIFFERENCE: " + (nextRunTime - System.currentTimeMillis()));
 				am.set(AlarmManager.RTC_WAKEUP, nextRunTime, pendingIntent);
 			}
 		}

@@ -2,10 +2,10 @@ package edu.mit.media.hd.funf.probe.builtin;
 
 import android.os.Bundle;
 
-public class AndroidInfoProbeTest extends ProbeTestCase<HardwareInfoProbe> {
+public class AndroidInfoProbeTest extends ProbeTestCase<AndroidInfoProbe> {
 
 	public AndroidInfoProbeTest() {
-		super(HardwareInfoProbe.class);
+		super(AndroidInfoProbe.class);
 	}
 
 	public void testData() {
@@ -13,16 +13,13 @@ public class AndroidInfoProbeTest extends ProbeTestCase<HardwareInfoProbe> {
 		startProbe(params);
 		Bundle data = getData(5);
 		String[] keysToCheck = new String[] {
-				"WIFI_MAC",
-				"ANDROID_ID",
-				"BLUETOOTH_MAC",
-				"BRAND",
-				"MODEL",
-				"DEVICE_ID"
+				"FIRMWARE_VERSION",
+				"BUILD_NUMBER",
+				"SDK",
 		};
 		for (String key : keysToCheck) {
-			assertNotNull(data.getString(key));
-			System.out.println(key + ": " + data.getString(key));
+			assertNotNull(data.get(key));
+			System.out.println(key + ": " + String.valueOf(data.get(key)));
 		}
 	}
 	

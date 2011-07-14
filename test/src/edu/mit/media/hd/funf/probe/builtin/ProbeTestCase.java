@@ -15,6 +15,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import android.content.BroadcastReceiver;
@@ -23,6 +24,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.test.ServiceTestCase;
+import android.util.Log;
 import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.client.ProbeCommunicator;
 import edu.mit.media.hd.funf.probe.Probe;
@@ -74,7 +76,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		clean();
 		probeControllerStarted = false;
 		timer = new Timer();
-		dataBundles = new ArrayBlockingQueue<Bundle>(5000);
+		dataBundles = new LinkedBlockingQueue<Bundle>();
 		getContext().registerReceiver(receiver, new IntentFilter(OppProbe.getDataAction(probeClass)));
 	}
 	
@@ -161,8 +163,10 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		
 		@Override
 		public void onReceive(Context context, Intent intent) {
+			Log.i(TAG, "Recieved: " + intent.getAction());
 			if (probeDataAction.equals(intent.getAction())) {
-				dataBundles.add(intent.getExtras());
+				Log.i(TAG, "Adding data:" + intent.getExtras());
+				dataBundles.offer(intent.getExtras());
 			}
 		}
 		
