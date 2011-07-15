@@ -33,7 +33,7 @@ public class HashUtil {
 		ONE_WAY_HASH, INTERMEDIATE_HASH_ENC, RSA_ENC
 	}
 
-	private static String oneWayHashString(String msg) {
+	public static String oneWayHashString(String msg) {
 		if ((msg != null) || (msg != "")) {
 			if (md == null) {
 				try {
@@ -71,6 +71,7 @@ public class HashUtil {
 		}
 	}
 
+	
 	public static String hashString(Context context, String msg) {
 		return hashString(context, msg, HashingType.ONE_WAY_HASH);
 	}

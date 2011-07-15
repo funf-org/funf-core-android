@@ -36,11 +36,13 @@ public abstract class ConfigurationUpdaterService extends Service {
 					updateThread = null;
 				}
 			});
+			updateThread.start();
 		}
 		return START_STICKY;
 	}
 		
 	private void update() {
+		Log.d(TAG, "Upating");
 		// TODO: detect whether wifi is available, etc.
 		try {
 			FunfConfig config = getConfig();
@@ -91,7 +93,8 @@ public abstract class ConfigurationUpdaterService extends Service {
 	
 	protected void scheduleNextRun() {
 		FunfConfig config = FunfConfig.getFunfConfig(this);
-		long updatePeriod = (config == null) ? 1 * 60 * 60 * 1000 : config.getUpdatePeriod();
+		long updatePeriod = (config == null) ? 1 * 60 * 1000 : config.getUpdatePeriod();
+		Log.d(TAG, "Setting alarm to run Config Update in " + (updatePeriod / 1000) + " seconds.");
 		AndroidUtils.configureAlarm(this, getClass(), updatePeriod);
 	}
 

@@ -12,6 +12,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import edu.mit.media.hd.funf.storage.NameGenerator.CompositeNameGenerator;
+import edu.mit.media.hd.funf.storage.NameGenerator.RequiredSuffixNameGenerator;
+import edu.mit.media.hd.funf.storage.NameGenerator.SystemUniqueTimestampNameGenerator;
 
 /**
  * Simple database service that is able to write timestamp, name, value tuples.  
@@ -30,6 +33,8 @@ public abstract class DatabaseService extends Service {
 	public static final String NAME_KEY = "NAME";
 	public static final String VALUE_KEY = "VALUE";
 	public static final String TIMESTAMP_KEY = "TIMESTAMP";
+	
+	public static final String DB_SUFFIX = ".db";
 	
 	private Thread writeThread;
 	private LinkedBlockingQueue<Message> dataQueue;
@@ -142,14 +147,19 @@ public abstract class DatabaseService extends Service {
 		return getDefaultArchive(this, databaseName);
 	}
 	
-	public static Archive<File> getDefaultArchive(Context contex, String databaseName) {
-		String rootSdCardPath = "/sdcard/" + contex.getPackageName() + "/" + databaseName + "/";
+	public static Archive<File> getDefaultArchive(Context context, String databaseName) {
+		String rootSdCardPath = "/sdcard/" + context.getPackageName() + "/" + databaseName + "/";
 		Archive<File> backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
 		Archive<File> mainArchive = new CompositeFileArchive(
-				FileDirectoryArchive.getTimestampedFileArchive(new File(rootSdCardPath + "archive")),
-				FileDirectoryArchive.getTimestampedFileArchive(contex.getDir("funf_" + databaseName + "_archive", Context.MODE_PRIVATE))
+				getTimestampedDbFileArchive(new File(rootSdCardPath + "archive"), context),
+				getTimestampedDbFileArchive(context.getDir("funf_" + databaseName + "_archive", Context.MODE_PRIVATE), context)
 				);
 		return new BackedUpArchive(mainArchive, backupArchive);
+	}
+	
+	public static FileDirectoryArchive getTimestampedDbFileArchive(File archiveDir, Context context) {
+		NameGenerator nameGenerator = new CompositeNameGenerator(new SystemUniqueTimestampNameGenerator(context), new RequiredSuffixNameGenerator(".db"));
+		return new FileDirectoryArchive(archiveDir, nameGenerator, new FileCopier.SimpleFileCopier(), new DirectoryCleaner.KeepAll());
 	}
 	
 	

@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
@@ -20,7 +21,7 @@ import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 public class FunfConfig {
 	public static final String VERSION_KEY = "version";
 	public static final String CONFIG_URL_KEY = "configUrl";
-	public static final String UPDATE_PERIOD_KEY = "updatePeriod";
+	public static final String UPDATE_PERIOD_KEY = "configUpdatePeriod";
 	public static final String ARCHIVE_PERIOD_KEY = "archivePeriod";
 	public static final String REMOTE_ARCHIVE_PERIOD_KEY = "remoteArchivePeriod";
 	public static final String DATABASES_KEY = "databases";
@@ -84,10 +85,12 @@ public class FunfConfig {
 	
 	static boolean setFunfConfig(Context context, String appPackage, FunfConfig funfConfig) {
 		try {
+			Log.d(FunfConfig.class.getName(),"Config set");
 			context.getSharedPreferences("FUNF_CONFIG", Context.MODE_PRIVATE).edit().putString(appPackage, funfConfig.toJson()).commit();
 			cachedConfig = null;
 			return true;
 		} catch (JSONException e) {
+			Log.e(FunfConfig.class.getName(),"Malformed configuration!!", e);
 			return false;
 		}
 	}
@@ -100,8 +103,10 @@ public class FunfConfig {
 		if (cachedConfig == null) {
 			String configJson = context.getSharedPreferences("FUNF_CONFIG", Context.MODE_PRIVATE).getString(appPackage, null);
 			try {
+				if (configJson == null) Log.i(FunfConfig.class.getName(),"Config does not exist");
 				cachedConfig = configJson == null ? null : new FunfConfig(configJson);
 			} catch (JSONException e) {
+				Log.e(FunfConfig.class.getName(),"Malformed configuration!!", e);
 				return null;
 			}
 		}

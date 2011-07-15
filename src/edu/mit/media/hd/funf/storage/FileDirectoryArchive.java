@@ -28,14 +28,6 @@ public class FileDirectoryArchive implements Archive<File> {
 		return new FileDirectoryArchive(archiveDir, new NameGenerator.IdentityNameGenerator(), new FileCopier.SimpleFileCopier(), new DirectoryCleaner.KeepAll());
 	}
 	
-	public static FileDirectoryArchive getTimestampedFileArchive(File archiveDir) {
-		return new FileDirectoryArchive(archiveDir, new NameGenerator.TimestampNameGenerator(), new FileCopier.SimpleFileCopier(), new DirectoryCleaner.KeepAll());
-	}
-	
-	public static FileDirectoryArchive getEncryptedTimestampedFileArchive(File archiveDir) {
-		return new FileDirectoryArchive(archiveDir, new NameGenerator.TimestampNameGenerator(), new FileCopier.EncryptedFileCopier(), new DirectoryCleaner.KeepAll());
-	}
-	
 	public static FileDirectoryArchive getRollingFileArchive(File archiveDir) {
 		return new FileDirectoryArchive(archiveDir, new NameGenerator.IdentityNameGenerator(), new FileCopier.SimpleFileCopier(), new DirectoryCleaner.KeepMostRecent(50));
 	}
