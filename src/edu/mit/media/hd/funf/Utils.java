@@ -20,6 +20,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.PowerManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
@@ -246,5 +247,14 @@ public final class Utils {
 		} else {
 			return null;
 		}
+	}
+	
+	private static String hashedDeviceId;
+	public static String getDeviceId(Context context) {
+		if (hashedDeviceId == null) {
+			String deviceId = ((TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
+			hashedDeviceId = HashUtil.oneWayHashString(deviceId);
+		}
+		return hashedDeviceId;
 	}
 }

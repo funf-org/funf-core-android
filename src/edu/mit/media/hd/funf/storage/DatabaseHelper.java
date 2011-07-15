@@ -3,6 +3,7 @@ package edu.mit.media.hd.funf.storage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -18,14 +19,34 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			Arrays.asList(new Column(COLUMN_NAME, "TEXT"), // ACTION from data broadcast
 					      new Column(COLUMN_TIMESTAMP, "INTEGER"), // TIMESTAMP in data broadcast
 					      new Column(COLUMN_VALUE, "TEXT"))); // JSON representing 
+	public static final String COLUMN_DEVICE = "device";
+	public static final String COLUMN_UUID = "uuid";
+	public static final String COLUMN_CREATED = "created";
+	public static final Table FILE_INFO_TABLE = new Table("file_info", 
+			Arrays.asList(new Column(COLUMN_DEVICE, "TEXT"), // Hashed device id
+				      	  new Column(COLUMN_UUID, "TEXT"), // Universally Unique Id for file 
+					      new Column(COLUMN_CREATED, "INTEGER"))); // TIMESTAMP in data broadcast
+	
+	private Context context;
 	
 	public DatabaseHelper(Context context, String name, int version) {
 		super(context, name, null, version);
+		this.context = context;
 	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL(DATA_TABLE.getCreateTableSQL());
+		db.execSQL(FILE_INFO_TABLE.getCreateTableSQL());
+		
+		// Insert file identifier information
+		String deviceIdHash = Utils.getDeviceId(context);
+		String fileUuid = UUID.randomUUID().toString();
+		long createdTime = System.currentTimeMillis();
+		db.execSQL(String.format("insert into %s (%s, %s, %s) values ('%s', '%s', %d)", 
+				FILE_INFO_TABLE.name, 
+				COLUMN_DEVICE, COLUMN_UUID, COLUMN_CREATED,
+				deviceIdHash, fileUuid, createdTime));
 	}
 
 	@Override

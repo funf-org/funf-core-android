@@ -1,6 +1,7 @@
 package edu.mit.media.hd.funf.storage;
 
 import edu.mit.media.hd.funf.HashUtil;
+import edu.mit.media.hd.funf.Utils;
 import android.content.Context;
 import android.telephony.TelephonyManager;
 
@@ -74,9 +75,7 @@ public interface NameGenerator {
 		private final NameGenerator delegate;
 		
 		public SystemUniqueTimestampNameGenerator(Context context) {
-			String deviceId = ((TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
-			String hashedDeviceId = HashUtil.oneWayHashString(deviceId);
-			delegate = new CompositeNameGenerator(new TimestampNameGenerator(), new ConstantNameGenerator(hashedDeviceId + "_", ""));		
+			delegate = new CompositeNameGenerator(new TimestampNameGenerator(), new ConstantNameGenerator(Utils.getDeviceId(context) + "_", ""));		
 		}
 		
 		
