@@ -4,9 +4,11 @@
           package="edu.mit.media.hd.funf.tests"
           android:versionCode="1"
           android:versionName="1.0">
+    <uses-sdk  android:minSdkVersion="7" android:targetSdkVersion="8" />
     <!-- We add an application tag here just so that we can indicate that
          this package needs to link against the android.test library,
-         which is needed when building test cases. -->
+         which is needed when building test cases.  
+         Also for discovering probes to clean. -->
     <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
     	<service android:name="edu.mit.media.hd.funf.probe.ProbeController"></service>
