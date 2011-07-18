@@ -1,5 +1,7 @@
 package edu.mit.media.hd.funf.probe;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import android.database.Cursor;
@@ -12,16 +14,16 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 	protected Cursor getCursor(String[] projection) {
 		String dateColumn = getDateColumnName();
 		// Used the code below when we specified projection exactly
-//		List<String> projectionList = Arrays.asList(projection);
-//		if (!Arrays.asList(projection).contains(dateColumn)) {
-//			projectionList = new ArrayList<String>(projectionList);
-//			projectionList.add(dateColumn);
-//			projection = new String[projectionList.size()];
-//			projectionList.toArray(projection);
-//		}
+		List<String> projectionList = Arrays.asList(projection);
+		if (!Arrays.asList(projection).contains(dateColumn)) {
+			projectionList = new ArrayList<String>(projectionList);
+			projectionList.add(dateColumn);
+			projection = new String[projectionList.size()];
+			projectionList.toArray(projection);
+		}
 		return getContentResolver().query(
 				getContentProviderUri(),
-                null, // No projection because different phones have different fields available
+				projection, // TODO: different platforms have different fields supported for content providers, need to resolve this
                 dateColumn + " > ?", 
                 new String[] {String.valueOf(getPreviousDataSentTime())}, 
                 dateColumn + " DESC");
