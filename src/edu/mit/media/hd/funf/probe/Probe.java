@@ -623,7 +623,7 @@ public abstract class Probe extends Service {
 			this.timestamp = timestamp;
 		}
 		public boolean isValid() {
-			return System.currentTimeMillis() < (timestamp + 1000); // 1 second expiration
+			return System.currentTimeMillis() < (timestamp + 10000); // 10 second expiration
 		}
 		@Override
 		public boolean equals(Object o) {

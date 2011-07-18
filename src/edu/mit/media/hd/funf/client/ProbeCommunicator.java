@@ -82,19 +82,22 @@ public class ProbeCommunicator {
 				public void run() {
 					try {
 						context.unregisterReceiver(DataResponder.this);
-						Log.e(TAG, "Probe never responded with nonce.  Does the apk have the necessary permissions?");
+						Log.e(TAG, "Probe '" + probeName + "' never responded with nonce.  Does the apk have the necessary permissions?");
 					} catch (IllegalArgumentException e) {
 						// already removed;
 					}
 				}
-			}, 1000);
+			}, 10000);
 			sent = false;
 		}
 		
 		@Override
 		public void onReceive(Context context, Intent intent) {
+			Log.i(TAG, "Receiving: " + intent.getAction());
 			if (intent.getAction().equals(OppProbe.getStatusAction(probeName))) {
+				Log.i(TAG, "Is a status action for " + probeName);
 				long nonce = intent.getLongExtra(OppProbe.ReservedParamaters.NONCE.name, 0L);
+				Log.i(TAG, "Nonce is " + nonce + "'");
 				if (!sent && nonce != 0L) {
 					sent = true;
 					expirationTimer.cancel();
