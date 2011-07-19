@@ -9,6 +9,8 @@
  */
 package edu.mit.media.hd.funf;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -256,5 +258,21 @@ public final class Utils {
 			hashedDeviceId = HashUtil.oneWayHashString(deviceId);
 		}
 		return hashedDeviceId;
+	}
+	
+	/**
+	 * Closes a stream, and swallows null cases our IOExceptions.
+	 * @param stream
+	 */
+	public static boolean close(Closeable stream) {
+		if(stream != null) {
+			try {
+				stream.close();
+				return true;
+			} catch (IOException e) {
+				Log.e(TAG, "Error closing stream", e);
+			}
+		}
+		return false;
 	}
 }

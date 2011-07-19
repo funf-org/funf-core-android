@@ -1,8 +1,10 @@
 package edu.mit.media.hd.funf.configured;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.mit.media.hd.funf.storage.Archive;
 import edu.mit.media.hd.funf.storage.DatabaseHelper;
 import edu.mit.media.hd.funf.storage.DatabaseService;
 
@@ -29,5 +31,9 @@ public class ConfiguredDatabaseService extends DatabaseService {
 		return databaseHelpers;
 	}
 	
+	protected Archive<File> getArchive(String databaseName) {
+		FunfConfig config = FunfConfig.getFunfConfig(this);
+		return getDefaultArchive(this, databaseName, config.getEncryptionKey());
+	}
 	
 }

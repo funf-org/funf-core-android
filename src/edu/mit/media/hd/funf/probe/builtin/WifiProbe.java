@@ -39,7 +39,7 @@ public class WifiProbe extends Probe {
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
 				new Parameter(SystemParameter.START, 0L),  // No start by default
-				new Parameter(SystemParameter.PERIOD, 5L),	// Run every 5 seconds by default
+				new Parameter(SystemParameter.PERIOD, 1800L),	// Run every 5 seconds by default
 		};
 	}
 

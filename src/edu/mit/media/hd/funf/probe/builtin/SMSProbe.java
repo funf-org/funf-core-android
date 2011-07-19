@@ -32,7 +32,7 @@ public class SMSProbe extends DatedContentProviderProbe {
 		Map<String, CursorCell<?>> projectionMap = new HashMap<String, CursorCell<?>>();
 		projectionMap.put(Sms.TYPE, intCell());
 		projectionMap.put(Sms.THREAD_ID, intCell());
-		projectionMap.put(Sms.ADDRESS, hashedStringCell());
+		projectionMap.put(Sms.ADDRESS, hashedStringCell()); // TODO: figure out if we have to normalize this first (maybe phone number)
 		projectionMap.put(Sms.PERSON_ID, longCell());
 		projectionMap.put(Sms.DATE, longCell());
 		projectionMap.put(Sms.READ, booleanCell());

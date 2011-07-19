@@ -19,6 +19,7 @@ public class ConfiguredRemoteArchiverService extends RemoteArchiverService {
 	public static final String TAG = ConfiguredRemoteArchiverService.class.getName();
 	
 	private Map<String, ProbeDatabaseConfig> databases;
+	private byte[] encryptionKey;
 	
 	@Override
 	public void onCreate() {
@@ -28,11 +29,12 @@ public class ConfiguredRemoteArchiverService extends RemoteArchiverService {
 			stopSelf();
 		} else {
 			databases = FunfConfig.getFunfConfig(this).getDatabases();
+			encryptionKey = config.getEncryptionKey();
 		}
 	}
 
 	protected Archive<File> getFileArchive(final String databaseName) {
-		return ConfiguredDatabaseService.getDefaultArchive(this, databaseName);
+		return ConfiguredDatabaseService.getDefaultArchive(this, databaseName, encryptionKey);
 	}
 
 	protected RemoteArchive getRemoteArchiver(final String databaseName) {
