@@ -101,8 +101,14 @@ public class WifiProbe extends Probe {
 			registerReceiver(new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context ctx, Intent i) {
-					unregisterReceiver(this);
-					saveWifiStateAndRunScan();				
+					if (WifiManager.WIFI_STATE_CHANGED_ACTION.equals(i.getAction())) {
+						try {
+							unregisterReceiver(this);  // TODO: sometimes this throws an IllegalArgumentException
+							saveWifiStateAndRunScan();
+						} catch (IllegalArgumentException e) {
+							Log.e(TAG, "Unregistered WIFIE_STATE_CHANGED receiver more than once.");
+						}
+					}
 				}
 			}, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
 		} else {
