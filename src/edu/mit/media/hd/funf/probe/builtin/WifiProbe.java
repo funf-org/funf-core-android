@@ -10,6 +10,7 @@
 package edu.mit.media.hd.funf.probe.builtin;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -63,7 +64,12 @@ public class WifiProbe extends Probe {
 	@Override
 	public void sendProbeData() {
 		Bundle data = new Bundle();
-		data.putParcelableArrayList(DATA_SCAN_RESULTS, new ArrayList<ScanResult>(wifiManager.getScanResults()));
+		List<ScanResult> results = wifiManager.getScanResults();
+		ArrayList<ScanResult> nonNullResults = new ArrayList<ScanResult>();
+		if (results != null) {
+			nonNullResults.addAll(results);
+		}
+		data.putParcelableArrayList(DATA_SCAN_RESULTS, nonNullResults);
 		sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 	}
 	
