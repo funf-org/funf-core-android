@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.mit.media.hd.funf.AndroidUtils;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.storage.Archive;
 import edu.mit.media.hd.funf.storage.HttpArchive;
 import edu.mit.media.hd.funf.storage.RemoteArchive;
@@ -47,10 +48,12 @@ public class ConfiguredRemoteArchiverService extends RemoteArchiverService {
 		return (databases == null) ? new HashSet<String>() : databases.keySet();
 	}
 
+	private static final long DEFAULT_PERIOD = 6 * 60 * 60;
+	
 	@Override
 	protected void scheduleNextRun() {
 		FunfConfig config = FunfConfig.getFunfConfig(this);
-		long remoteArchivePeriod = (config == null) ? 6 * 60 * 60 * 1000 : config.getRemoteArchivePeriod();
+		long remoteArchivePeriod = Utils.secondsToMillis((config == null) ? DEFAULT_PERIOD : config.getRemoteArchivePeriod());
 		AndroidUtils.configureAlarm(this, getClass(), remoteArchivePeriod);
 	}
 	

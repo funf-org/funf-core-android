@@ -161,8 +161,8 @@ public abstract class Probe extends Service {
 				Set<Bundle> bundlesToRemove = new HashSet<Bundle>();
 				for (Bundle bundle : bundles) {
 					Bundle params = getCompleteParams(bundle);
-					long period = Utils.getLong(params, SystemParameter.PERIOD.name, 0L) * 1000;
-					long endTime = Utils.getLong(params, SystemParameter.END.name, 0L) * 1000;
+					long period = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.PERIOD.name, 0L));
+					long endTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.END.name, 0L));
 					if (period == 0L || endTime > currentTime) {
 						bundlesToRemove.add(bundle);
 					}
@@ -218,8 +218,8 @@ public abstract class Probe extends Service {
 				displayName,
 				enabled,
 				isRunning(),
-				nextRunTime,
-				mostRecentTimeRun,
+				nextRunTime/1000, // millis to seconds
+				mostRecentTimeRun/1000, // millis to seconds
 				requiredPermissions,
 				nonNullStrings(getRequiredFeatures()),
 				parameters
@@ -284,11 +284,11 @@ public abstract class Probe extends Service {
 	/**
 	 * Sends a DATA broadcast for the probe, and records the time.
 	 */
-	protected void sendProbeData(long timestamp, Bundle params, Bundle data) {
-		Log.i(TAG, "Sent probe data at " + timestamp);
-		mostRecentTimeDataSent = timestamp;
+	protected void sendProbeData(long epochTimestamp, Bundle params, Bundle data) {
+		Log.i(TAG, "Sent probe data at " + epochTimestamp);
+		mostRecentTimeDataSent = epochTimestamp*1000; // seconds to millis
 		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
-		dataBroadcast.putExtra(TIMESTAMP, timestamp);
+		dataBroadcast.putExtra(TIMESTAMP, epochTimestamp);
 		// TODO: should we send parameters with data broadcast?
 		dataBroadcast.putExtras(data);
 		Set<String> requestingPackages = allRequests.getByRequesterByRequestId().keySet();
@@ -359,7 +359,7 @@ public abstract class Probe extends Service {
 				mostRecentTimeRun = System.currentTimeMillis();
 				Parameter durationParam = getAvailableSystemParameter(SystemParameter.DURATION);
 				if (durationParam != null && !durationParam.isSupportedByProbe()) {
-					long duration = Utils.getLong(completeParams, SystemParameter.DURATION.name, 0L) * 1000;
+					long duration = Utils.secondsToMillis(Utils.getLong(completeParams, SystemParameter.DURATION.name, 0L));
 					if (duration > 0) {
 						stopTimer.scheduleStop(duration);
 					}
@@ -444,11 +444,11 @@ public abstract class Probe extends Service {
 		if (params == null) {
 			return false;
 		}
-		long period = Utils.getLong(params, SystemParameter.PERIOD.name, 0L) * 1000;
-		long startTime = Utils.getLong(params, SystemParameter.START.name, 0L) * 1000;
-		long endTime = Utils.getLong(params, SystemParameter.END.name, 0L) * 1000;
+		long period = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.PERIOD.name, 0L));
+		long startTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.START.name, 0L));
+		long endTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.END.name, 0L));
 		long currentTime = System.currentTimeMillis();
-		Log.i(TAG, Utils.join(Arrays.asList(period, startTime, endTime, currentTime, mostRecentTimeRun), ", "));
+		Log.d(TAG, "Period, Start, End, Current, LastRun ->" + Utils.join(Arrays.asList(period, startTime, endTime, currentTime, mostRecentTimeRun), ", "));
 		return (startTime == 0 || startTime <= currentTime) // After start time (if exists)
 			&& (endTime == 0 || currentTime <= endTime)   // Before end time (if exists)
 			&& (period == 0 || (mostRecentTimeRun + period) <= currentTime); // At least one period since last run
@@ -469,13 +469,12 @@ public abstract class Probe extends Service {
 			nextRunIntent.putExtras(nextRunParams);
 			AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
 			PendingIntent pendingIntent = PendingIntent.getService(this, 0, nextRunIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-			long nextRunTime = scheduleResolver.getNextRunTime();
-			this.nextRunTime = nextRunTime;
-			Log.i(TAG, "Next run time: " + nextRunTime);
+			nextRunTime = scheduleResolver.getNextRunTime();
+			Log.d(TAG, "Next run time: " + nextRunTime);
 			if (nextRunTime != 0L) {
-				Log.i(TAG, "LAST_TIME: " + mostRecentTimeRun);
-				Log.i(TAG, "CURRENT_TIME: " + System.currentTimeMillis());
-				Log.i(TAG, "DIFFERENCE: " + (nextRunTime - System.currentTimeMillis()));
+				Log.d(TAG, "LAST_TIME: " + mostRecentTimeRun);
+				Log.d(TAG, "CURRENT_TIME: " + System.currentTimeMillis());
+				Log.d(TAG, "DIFFERENCE: " + (nextRunTime - System.currentTimeMillis()));
 				am.set(AlarmManager.RTC_WAKEUP, nextRunTime, pendingIntent);
 			}
 		}

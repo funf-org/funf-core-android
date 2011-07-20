@@ -42,7 +42,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		// Insert file identifier information
 		String deviceIdHash = Utils.getDeviceId(context);
 		String fileUuid = UUID.randomUUID().toString();
-		long createdTime = System.currentTimeMillis();
+		long createdTime = Utils.getTimestamp();
 		db.execSQL(String.format("insert into %s (%s, %s, %s) values ('%s', '%s', %d)", 
 				FILE_INFO_TABLE.name, 
 				COLUMN_DEVICE, COLUMN_UUID, COLUMN_CREATED,

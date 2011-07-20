@@ -21,6 +21,7 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Bundle;
 import android.util.Log;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
 
 public class WifiProbe extends Probe {
@@ -63,7 +64,7 @@ public class WifiProbe extends Probe {
 	public void sendProbeData() {
 		Bundle data = new Bundle();
 		data.putParcelableArrayList(DATA_SCAN_RESULTS, new ArrayList<ScanResult>(wifiManager.getScanResults()));
-		sendProbeData(System.currentTimeMillis(), new Bundle(), data);
+		sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 	}
 	
 	@Override

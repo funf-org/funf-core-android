@@ -1,5 +1,6 @@
 package edu.mit.media.hd.funf.probe;
 
+import edu.mit.media.hd.funf.Utils;
 import android.os.Bundle;
 
 public abstract class SynchronousProbe extends Probe {
@@ -61,7 +62,7 @@ public abstract class SynchronousProbe extends Probe {
 	 * @return
 	 */
 	protected long getTimestamp() {
-		return System.currentTimeMillis();
+		return Utils.getTimestamp();
 	}
 	
 }

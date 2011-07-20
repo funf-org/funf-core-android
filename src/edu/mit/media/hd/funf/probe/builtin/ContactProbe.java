@@ -23,6 +23,7 @@ import android.provider.ContactsContract.CommonDataKinds.Relation;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
 import android.provider.ContactsContract.CommonDataKinds.Website;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.ContentProviderProbe;
 import edu.mit.media.hd.funf.probe.CursorCell;
 
@@ -310,12 +311,12 @@ public class ContactProbe extends ContentProviderProbe {
 	
 	@Override
 	protected long getTimestamp(List<Bundle> results) {
-		return System.currentTimeMillis();
+		return Utils.getTimestamp();
 	}
 
 	@Override
 	protected long getTimestamp(Bundle result) {
-		return System.currentTimeMillis();
+		return Utils.getTimestamp();
 	}
 
 	@Override

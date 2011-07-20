@@ -28,9 +28,9 @@ public class FunfConfig {
 	public static final String DATA_REQUESTS_KEY = "dataRequests";
 	
 
-	public static final long DEFAULT_ARCHIVE_PERIOD = 3 * 60 * 60 * 1000;  // 3 hours
-	public static final long DEFAULT_REMOTE_ARCHIVE_PERIOD = 6 * 60 * 60 * 1000;  // 6 hours
-	static final int DEFAULT_UPDATE_PERIOD = 1 * 60 * 60 * 1000;
+	public static final long DEFAULT_ARCHIVE_PERIOD = 3 * 60 * 60;  // 3 hours
+	public static final long DEFAULT_REMOTE_ARCHIVE_PERIOD = 6 * 60 * 60;  // 6 hours
+	static final int DEFAULT_UPDATE_PERIOD = 1 * 60 * 60;
 	// TODO: should we add an application name to the config, so that multiple apps can co-exist?
 	// private final String appName;
 	private final int version;
@@ -39,6 +39,15 @@ public class FunfConfig {
 	private final Map<String, ProbeDatabaseConfig> databases;
 	private final Map<String,Bundle[]> dataRequests;
 	
+	/**
+	 * @param version
+	 * @param configDownloadUrl
+	 * @param configCheckPeriod in seconds
+	 * @param archivePeriod in seconds
+	 * @param remoteArchivePeriod in seconds
+	 * @param databases
+	 * @param dataRequests
+	 */
 	public FunfConfig(int version, String configDownloadUrl, long configCheckPeriod, long archivePeriod, long remoteArchivePeriod, Map<String, ProbeDatabaseConfig> databases, Map<String,Bundle[]> dataRequests) {
 		this.version = version;
 		this.configUrl = configDownloadUrl;
@@ -161,14 +170,26 @@ public class FunfConfig {
 		return configUrl;
 	}
 
-	public long getUpdatePeriod() {
+	/**
+	 * Period in which configuration should be update, in seconds.
+	 * @return
+	 */
+	public long getConfigUpdatePeriod() {
 		return updatePeriod == 0L ? DEFAULT_UPDATE_PERIOD : updatePeriod;
 	}
 	
+	/**
+	 * Period in which databases are archived, in seconds;
+	 * @return
+	 */
 	public long getArchivePeriod() {
 		return archivePeriod == 0L ? DEFAULT_ARCHIVE_PERIOD : archivePeriod;
 	}
-
+	
+	/**
+	 * Period in which databases are remotely archived, in seconds;
+	 * @return
+	 */
 	public long getRemoteArchivePeriod() {
 		return remoteArchivePeriod == 0L ? DEFAULT_REMOTE_ARCHIVE_PERIOD : remoteArchivePeriod;
 	}

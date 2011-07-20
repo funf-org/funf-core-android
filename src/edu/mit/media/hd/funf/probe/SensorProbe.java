@@ -7,6 +7,8 @@ import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import edu.mit.media.hd.funf.Utils;
+
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -146,7 +148,7 @@ public abstract class SensorProbe extends Probe {
 				data.putFloatArray(valueNames[valueIndex], values[valueIndex]);
 			}
 			
-			sendProbeData(System.currentTimeMillis(), new Bundle(), data);
+			sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 		} else {
 			Log.i(TAG, "Recent events is empty.");
 		}

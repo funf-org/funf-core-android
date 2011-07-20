@@ -168,7 +168,7 @@ public class ActivityProbe extends Probe {
 		Bundle data = new Bundle();
 		data.putInt("TOTAL_INTERVALS", intervalCount);
 		data.putInt("ACTIVE_INTERVALS", extremeIntervalCount);
-		sendProbeData(startTime, new Bundle(), data);
+		sendProbeData(Utils.millisToSeconds(startTime), new Bundle(), data); // starTime converted last minute for precision
 	}
 
 

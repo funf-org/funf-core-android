@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
 
 public class BatteryProbe extends Probe {
@@ -46,7 +47,7 @@ public class BatteryProbe extends Probe {
 		receiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
-				mostRecentTimestamp = System.currentTimeMillis();
+				mostRecentTimestamp = Utils.getTimestamp();
 				mostRecentData = intent.getExtras();
 				sendProbeData();
 			}

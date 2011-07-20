@@ -22,8 +22,8 @@ public class FunfConfigTests extends TestCase {
 		databases.put("test_db", new ProbeDatabaseConfig(new String[]{"test.probe"}, "http://test.upload.url.com", null));
 		FunfConfig config = new FunfConfig(1, 
 				"http://funf.media.mit.edu", 
-				hoursToMillis(3), 
-				hoursToMillis(5),
+				hoursToSeconds(3), 
+				hoursToSeconds(5),
 				0L,
 				databases, 
 				dataRequests);
@@ -31,8 +31,8 @@ public class FunfConfigTests extends TestCase {
 		FunfConfig parsedConfig = new FunfConfig(config.toJson());
 		assertEquals(1, parsedConfig.getVersion());
 		assertEquals("http://funf.media.mit.edu", parsedConfig.getConfigUrl());
-		assertEquals(hoursToMillis(3), parsedConfig.getUpdatePeriod());
-		assertEquals(hoursToMillis(5), parsedConfig.getArchivePeriod());
+		assertEquals(hoursToSeconds(3), parsedConfig.getConfigUpdatePeriod());
+		assertEquals(hoursToSeconds(5), parsedConfig.getArchivePeriod());
 		assertEquals(FunfConfig.DEFAULT_REMOTE_ARCHIVE_PERIOD, parsedConfig.getRemoteArchivePeriod());
 		assertTrue(parsedConfig.getDatabases().containsKey("test_db"));
 		assertEquals("http://test.upload.url.com", parsedConfig.getDatabases().get("test_db").getUploadUrl());
@@ -40,7 +40,7 @@ public class FunfConfigTests extends TestCase {
 		assertNull(parsedConfig.getDatabases().get("test_db").getEncryptionKey());
 	}
 	
-	private static long hoursToMillis(int hours) {
-		return 1000 * 60 * 60 * hours;
+	private static long hoursToSeconds(int hours) {
+		return 60 * 60 * hours;
 	}
 }

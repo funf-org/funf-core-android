@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
 
 public class ScreenProbe extends Probe {
@@ -80,7 +81,7 @@ public class ScreenProbe extends Probe {
 		if (screenOn != null) {
 			Bundle data = new Bundle();
 			data.putBoolean(SCREEN_ON_PARAM, screenOn);
-			sendProbeData(System.currentTimeMillis(), new Bundle(), data);
+			sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 		}
 	}
 	

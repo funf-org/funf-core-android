@@ -18,6 +18,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
 
 
@@ -109,7 +110,7 @@ public class BluetoothProbe extends Probe {
 		if (deviceDiscoveries != null) {
 			Bundle data = new Bundle();
 			data.putParcelableArrayList("DEVICES", deviceDiscoveries);
-			sendProbeData(System.currentTimeMillis(), new Bundle(), data);
+			sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 		}
 	}
 

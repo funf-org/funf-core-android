@@ -24,7 +24,7 @@ public interface NameGenerator {
 	public static class TimestampNameGenerator implements NameGenerator {
 		@Override
 		public String generateName(final String name) {
-			return name == null ? null : System.currentTimeMillis() + "_" + name;
+			return name == null ? null : Utils.getTimestamp() + "_" + name;
 		}
 	}
 	

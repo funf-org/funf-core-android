@@ -64,7 +64,7 @@ public class VideosProbe extends DatedContentProviderProbe {
 	}
 	
 	protected long getTimestamp(Bundle result) {
-		return result.getLong(getDateColumnName()) * 1000; // This date is in seconds, not milliseconds
+		return result.getLong(getDateColumnName()); // This date is in seconds, not milliseconds
 	}
 	
 }

@@ -29,6 +29,12 @@ public class ProbeScheduleResolver {
 
 	
 	
+	/**
+	 * @param requests
+	 * @param defaults
+	 * @param lastRunTime in milliseconds
+	 * @param lastRunParams
+	 */
 	public ProbeScheduleResolver(final Set<Bundle> requests, final Bundle defaults, final long lastRunTime, final Bundle lastRunParams) {
 		this.nextRunTime = Long.MAX_VALUE;
 		if (!requests.isEmpty()) {
@@ -37,7 +43,7 @@ public class ProbeScheduleResolver {
 				Bundle completeRequest = new Bundle();
 				completeRequest.putAll(defaults);
 				completeRequest.putAll(request);
-				long period = 1000* Utils.getLong(completeRequest, Probe.SystemParameter.PERIOD.name, NO_PERIOD);
+				long period = Utils.secondsToMillis(Utils.getLong(completeRequest, Probe.SystemParameter.PERIOD.name, NO_PERIOD));
 				Log.i("ProbeScheduleResolver", "" + " Period:" + period);
 				long start = Utils.getLong(completeRequest, Probe.SystemParameter.START.name, Long.MIN_VALUE);
 				long end = Utils.getLong(completeRequest, Probe.SystemParameter.END.name, Long.MAX_VALUE);

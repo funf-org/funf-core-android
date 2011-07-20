@@ -18,6 +18,7 @@ import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
 import android.util.Log;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
 
 public class LocationProbe extends Probe {
@@ -119,7 +120,7 @@ public class LocationProbe extends Probe {
 		if (latestLocation != null) {
 			Bundle data = new Bundle();
 			data.putParcelable(LOCATION, latestLocation);
-			sendProbeData(latestLocation.getTime(), new Bundle(), data);
+			sendProbeData(Utils.millisToSeconds(latestLocation.getTime()), new Bundle(), data);
 		}
 	}
 

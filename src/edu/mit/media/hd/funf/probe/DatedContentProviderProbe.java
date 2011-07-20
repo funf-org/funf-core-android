@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.mit.media.hd.funf.Utils;
+
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -36,14 +38,14 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 	@Override
 	protected long getTimestamp(List<Bundle> results) {
 		if (results == null || results.isEmpty()) {
-			return System.currentTimeMillis();
+			return Utils.getTimestamp();
 		} else {
 			return getTimestamp(results.get(0));
 		}
 	}
 	
 	protected long getTimestamp(Bundle result) {
-		return result.getLong(getDateColumnName());
+		return Utils.millisToSeconds(result.getLong(getDateColumnName()));
 	}
 
 

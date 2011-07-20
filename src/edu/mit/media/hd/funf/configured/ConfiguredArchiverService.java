@@ -3,6 +3,7 @@ package edu.mit.media.hd.funf.configured;
 import android.content.Intent;
 import android.os.IBinder;
 import edu.mit.media.hd.funf.AndroidUtils;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.storage.ArchiverService;
 import edu.mit.media.hd.funf.storage.DatabaseService;
 
@@ -16,11 +17,11 @@ public class ConfiguredArchiverService extends ArchiverService {
 	public IBinder onBind(Intent intent) {
 		return null;
 	}
-
 	
+	private static final long DEFAULT_PERIOD = 1 * 60 * 60; // every hour
 	protected void scheduleNextRun() {
 		FunfConfig config = FunfConfig.getFunfConfig(this);
-		long archivePeriod = (config == null) ? 1 * 60 * 60 * 1000 : config.getArchivePeriod();
+		long archivePeriod = Utils.secondsToMillis((config == null) ? DEFAULT_PERIOD : config.getArchivePeriod());
 		AndroidUtils.configureAlarm(this, getClass(), archivePeriod);
 	}
 

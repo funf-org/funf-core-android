@@ -275,4 +275,16 @@ public final class Utils {
 		}
 		return false;
 	}
+	
+	public static long getTimestamp() {
+		return millisToSeconds(System.currentTimeMillis());
+	}
+	
+	public static long millisToSeconds(long millis) {
+		return millis/1000L;
+	}
+	
+	public static long secondsToMillis(long seconds) {
+		return seconds*1000L;
+	}
 }

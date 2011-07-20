@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.util.Log;
 import edu.mit.media.hd.funf.AndroidUtils;
 import edu.mit.media.hd.funf.IOUtils;
+import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.client.ProbeCommunicator;
 import edu.mit.media.hd.funf.storage.DatabaseService;
 
@@ -91,10 +92,11 @@ public abstract class ConfigurationUpdaterService extends Service {
 		stopSelf();
 	}
 	
+	private static final long DEFAULT_PERIOD = 30 * 60; // every 30 minutes
 	protected void scheduleNextRun() {
 		FunfConfig config = FunfConfig.getFunfConfig(this);
-		long updatePeriod = (config == null) ? 1 * 60 * 1000 : config.getUpdatePeriod();
-		Log.d(TAG, "Setting alarm to run Config Update in " + (updatePeriod / 1000) + " seconds.");
+		long updatePeriod = Utils.secondsToMillis((config == null) ? DEFAULT_PERIOD : config.getConfigUpdatePeriod());
+		Log.d(TAG, "Setting alarm to run Config Update in " + Utils.millisToSeconds(updatePeriod) + " seconds.");
 		AndroidUtils.configureAlarm(this, getClass(), updatePeriod);
 	}
 
