@@ -9,20 +9,21 @@
  */
 package edu.mit.media.hd.funf.probe.builtin;
 
+import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 import android.os.Bundle;
-import android.util.Log;
 
-public class ApplicationsProbeTest extends ProbeTestCase<ApplicationsProbe> {
+public class NtpProbeTest extends ProbeTestCase<NtpProbe> {
 
-	public ApplicationsProbeTest() {
-		super(ApplicationsProbe.class);
+	public NtpProbeTest() {
+		super(NtpProbe.class);
 	}
 
 	public void testProbe() {
 		Bundle params = new Bundle();
+		params.putLong(SystemParameter.PERIOD.name, 0L);
 		startProbe(params);
 		Bundle data = getData(20);
-		assertNotNull(data.get("INSTALLED_APPLICATIONS"));
-		assertNotNull(data.get("UNINSTALLED_APPLICATIONS"));
+		assertNotNull(data.get(NtpProbe.TIME_OFFSET));
+		//System.out.println("Time Offset:" + data.getDouble(NtpProbe.TIME_OFFSET));
 	}
 }

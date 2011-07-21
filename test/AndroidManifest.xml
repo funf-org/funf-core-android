@@ -26,6 +26,7 @@
         <service android:name="edu.mit.media.hd.funf.probe.builtin.HardwareInfoProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ImagesProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.LocationProbe"></service>
+        <service android:name="edu.mit.media.hd.funf.probe.builtin.NtpProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.RunningApplicationsProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.ScreenProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.SMSProbe"></service>
