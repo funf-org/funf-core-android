@@ -472,11 +472,15 @@ public abstract class Probe extends Service {
 		cleanRequests(); // Cleaning currently removes any existing 0 period requests
 		// TODO: need to be smarter about this.  Probe may handle period, but not start or end times.
 		Parameter periodParam = getAvailableSystemParameter(SystemParameter.PERIOD);
-		if (periodParam == null || periodParam.isSupportedByProbe()) {
-			String verb = periodParam.isSupportedByProbe() ? "is supported by " : "is not valid for ";
-			Log.v(TAG, "PERIOD parameter " + verb + getClass().getName());
+		if (periodParam == null) {
+			Log.v(TAG, "PERIOD parameter is not valid for this probe");
 			return;
 		}
+		if (periodParam.isSupportedByProbe()) {
+			Log.v(TAG, "PERIOD parameter schedule is supported by probe");
+			return;
+		}
+		
 		ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
 		Bundle nextRunParams = scheduleResolver.getNextRunParams();
 		if (nextRunParams != null) {
