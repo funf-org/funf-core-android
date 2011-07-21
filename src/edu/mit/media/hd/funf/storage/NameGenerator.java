@@ -1,9 +1,7 @@
 package edu.mit.media.hd.funf.storage;
 
-import edu.mit.media.hd.funf.HashUtil;
-import edu.mit.media.hd.funf.Utils;
 import android.content.Context;
-import android.telephony.TelephonyManager;
+import edu.mit.media.hd.funf.Utils;
 
 public interface NameGenerator {
 	

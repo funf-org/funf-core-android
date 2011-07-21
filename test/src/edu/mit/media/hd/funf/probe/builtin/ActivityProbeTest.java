@@ -36,7 +36,7 @@ public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 		params.putLong(SystemParameter.DURATION.name, 2L);
 		params.putLong(SystemParameter.PERIOD.name, 0L);
 		sendDataRequestBroadcast(params);
-		Bundle data = getData(10);
+		Bundle data = getData(20);
 		assertTrue(data.containsKey("TOTAL_INTERVALS"));
 		assertTrue(data.containsKey("ACTIVE_INTERVALS"));
 	}

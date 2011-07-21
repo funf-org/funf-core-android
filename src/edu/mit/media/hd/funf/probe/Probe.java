@@ -66,6 +66,7 @@ public abstract class Probe extends Service {
 	// TODO: keep list of all active requests to this probe
 	private ProbeRequests allRequests;
 	
+
 	@Override
 	public final void onCreate() {
 		Log.v(TAG, "CREATED");
@@ -152,9 +153,9 @@ public abstract class Probe extends Service {
 
 	private void cleanRequests() {
 		final long currentTime = System.currentTimeMillis();
-		for (Map.Entry<String, Map<String,List<Bundle>>> requesterTorRequestIdToBundles : allRequests.getByRequesterByRequestId().entrySet()) {
-			final String requester = requesterTorRequestIdToBundles.getKey();
-			final Map<String,List<Bundle>> requestIdsToBundles = requesterTorRequestIdToBundles.getValue();
+		for (Map.Entry<String, Map<String,List<Bundle>>> requesterToRequestIdToBundles : allRequests.getByRequesterByRequestId().entrySet()) {
+			final String requester = requesterToRequestIdToBundles.getKey();
+			final Map<String,List<Bundle>> requestIdsToBundles = requesterToRequestIdToBundles.getValue();
 			for (Map.Entry<String, List<Bundle>> requestIdToBundles : requestIdsToBundles.entrySet()) {
 				final String requestId = requestIdToBundles.getKey();
 				final List<Bundle> bundles = requestIdToBundles.getValue();
@@ -162,8 +163,10 @@ public abstract class Probe extends Service {
 				for (Bundle bundle : bundles) {
 					Bundle params = getCompleteParams(bundle);
 					long period = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.PERIOD.name, 0L));
+					long startTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.START.name, 0L));
 					long endTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.END.name, 0L));
-					if (period == 0L || endTime > currentTime) {
+					if (((startTime == 0L || startTime < currentTime) && period == 0L) 
+							|| endTime > currentTime) {
 						bundlesToRemove.add(bundle);
 					}
 				}
@@ -177,6 +180,9 @@ public abstract class Probe extends Service {
 		}
 	}
 	
+	/**
+	 * @return a timestamp (in millis since epoch) of the most recent time this probe sent data
+	 */
 	public long getPreviousDataSentTime() {
 		return mostRecentTimeDataSent;
 	}
@@ -274,6 +280,14 @@ public abstract class Probe extends Service {
 		nonces.removeAll(noncesToRemove);
 	}
 	
+
+	/**
+	 * Access to all outstanding requests for this probe
+	 * @return
+	 */
+	public ProbeRequests getAllRequests() {
+		return allRequests;
+	}
 	
 	
 	/**
@@ -286,7 +300,7 @@ public abstract class Probe extends Service {
 	 */
 	protected void sendProbeData(long epochTimestamp, Bundle params, Bundle data) {
 		Log.i(TAG, "Sent probe data at " + epochTimestamp);
-		mostRecentTimeDataSent = epochTimestamp*1000; // seconds to millis
+		mostRecentTimeDataSent = System.currentTimeMillis();
 		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
 		dataBroadcast.putExtra(TIMESTAMP, epochTimestamp);
 		// TODO: should we send parameters with data broadcast?
@@ -459,7 +473,8 @@ public abstract class Probe extends Service {
 		// TODO: need to be smarter about this.  Probe may handle period, but not start or end times.
 		Parameter periodParam = getAvailableSystemParameter(SystemParameter.PERIOD);
 		if (periodParam == null || periodParam.isSupportedByProbe()) {
-			Log.i(TAG, "PERIOD parameter not supported by  " + getClass().getName());
+			String verb = periodParam.isSupportedByProbe() ? "is supported by " : "is not valid for ";
+			Log.v(TAG, "PERIOD parameter " + verb + getClass().getName());
 			return;
 		}
 		ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());

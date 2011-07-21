@@ -3,12 +3,13 @@ package edu.mit.media.hd.funf.probe;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import edu.mit.media.hd.funf.Utils;
+import java.util.concurrent.TimeUnit;
 
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+import edu.mit.media.hd.funf.Utils;
 
 public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 
@@ -23,11 +24,12 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 			projection = new String[projectionList.size()];
 			projectionList.toArray(projection);
 		}
+		Log.i(TAG, "Previous Date Sent Time: " + getDateColumnTimeUnit().convert(getPreviousDataSentTime(), TimeUnit.MILLISECONDS));
 		return getContentResolver().query(
 				getContentProviderUri(),
 				projection, // TODO: different platforms have different fields supported for content providers, need to resolve this
                 dateColumn + " > ?", 
-                new String[] {String.valueOf(getPreviousDataSentTime())}, 
+                new String[] {String.valueOf(getDateColumnTimeUnit().convert(getPreviousDataSentTime(), TimeUnit.MILLISECONDS))}, 
                 dateColumn + " DESC");
 	}
 	
@@ -35,6 +37,10 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 	
 	protected abstract String getDateColumnName();
 
+	protected TimeUnit getDateColumnTimeUnit() {
+		return TimeUnit.MILLISECONDS;
+	}
+	
 	@Override
 	protected long getTimestamp(List<Bundle> results) {
 		if (results == null || results.isEmpty()) {
@@ -45,8 +51,8 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 	}
 	
 	protected long getTimestamp(Bundle result) {
-		return Utils.millisToSeconds(result.getLong(getDateColumnName()));
+		return TimeUnit.SECONDS.convert(result.getLong(getDateColumnName()), getDateColumnTimeUnit());
 	}
-
+	
 
 }

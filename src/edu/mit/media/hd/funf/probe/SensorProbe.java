@@ -7,8 +7,6 @@ import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import edu.mit.media.hd.funf.Utils;
-
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -16,6 +14,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
+import edu.mit.media.hd.funf.Utils;
 
 
 public abstract class SensorProbe extends Probe {
@@ -39,7 +38,9 @@ public abstract class SensorProbe extends Probe {
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
 				new Parameter(SystemParameter.DURATION, 60L),
-				new Parameter(SystemParameter.PERIOD, 3600L)
+				new Parameter(SystemParameter.PERIOD, 3600L),
+				new Parameter(SystemParameter.START, 0L),
+				new Parameter(SystemParameter.END, 0L)
 		};
 	}
 	

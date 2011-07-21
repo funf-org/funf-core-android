@@ -27,6 +27,7 @@ public class LocationProbe extends Probe {
 	public static final long SIGNIFICANT_TIME_DIFFERENCE = 2*60*1000; // 2 minutes
 	// TODO: May turn MAX_DURATION into duration parameter
 	public static final long DEFAULT_DURATION = 2*60; // 2 minutes
+	public static final long DEFAULT_PERIOD = 60L * 30L; // 30 min;
 	// TODO: Turn GOOD_ENOUGH_ACCURACY into a parameter
 	public static final float GOOD_ENOUGH_ACCURACY = 80.0f;
 	
@@ -38,8 +39,10 @@ public class LocationProbe extends Probe {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-			new Parameter(SystemParameter.PERIOD, 0L),
-			new Parameter(SystemParameter.DURATION, DEFAULT_DURATION)
+			new Parameter(SystemParameter.PERIOD, DEFAULT_PERIOD),
+			new Parameter(SystemParameter.DURATION, DEFAULT_DURATION),
+			new Parameter(SystemParameter.START, 0L),
+			new Parameter(SystemParameter.END, 0L)
 			// TODO: come back to configuration parameters such as desiredAccuracy or duration
 		};
 	}

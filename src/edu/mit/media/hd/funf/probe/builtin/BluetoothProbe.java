@@ -33,6 +33,8 @@ public class BluetoothProbe extends Probe {
 		return new Parameter[] {
 			new Parameter(SystemParameter.PERIOD, 300L),
 			new Parameter(SystemParameter.DURATION, 30L),
+			new Parameter(SystemParameter.START, 0L),
+			new Parameter(SystemParameter.END, 0L)
 		};
 	}
 

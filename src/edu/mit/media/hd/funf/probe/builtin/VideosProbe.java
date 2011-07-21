@@ -2,6 +2,7 @@ package edu.mit.media.hd.funf.probe.builtin;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,8 +21,13 @@ public class VideosProbe extends DatedContentProviderProbe {
 
 	@Override
 	protected String getDateColumnName() {
-		return  Video.Media.DATE_MODIFIED; // This date is in seconds, not milliseconds
+		return  Video.Media.DATE_MODIFIED;
 	}
+
+	protected TimeUnit getDateColumnTimeUnit() {
+		return TimeUnit.SECONDS;
+	}
+	
 
 	@Override
 	protected String getDataName() {
@@ -61,10 +67,6 @@ public class VideosProbe extends DatedContentProviderProbe {
 	@Override
 	public String[] getRequiredPermissions() {
 		return null;
-	}
-	
-	protected long getTimestamp(Bundle result) {
-		return result.getLong(getDateColumnName()); // This date is in seconds, not milliseconds
 	}
 	
 }

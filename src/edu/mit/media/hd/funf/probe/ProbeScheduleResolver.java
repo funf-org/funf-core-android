@@ -46,7 +46,13 @@ public class ProbeScheduleResolver {
 				long period = Utils.secondsToMillis(Utils.getLong(completeRequest, Probe.SystemParameter.PERIOD.name, NO_PERIOD));
 				Log.i("ProbeScheduleResolver", "" + " Period:" + period);
 				long start = Utils.getLong(completeRequest, Probe.SystemParameter.START.name, Long.MIN_VALUE);
+				if (start == 0L) {
+					start = Long.MIN_VALUE;
+				}
 				long end = Utils.getLong(completeRequest, Probe.SystemParameter.END.name, Long.MAX_VALUE);
+				if (end == 0L) {
+					end = Long.MAX_VALUE;
+				}
 				long scheduleNextTime = (lastRunTime == 0) ? System.currentTimeMillis() : lastRunTime + period;
 				if (scheduleNextTime > start && scheduleNextTime < end && scheduleNextTime < nextRunTime) {
 					nextRunTime = scheduleNextTime;

@@ -1,7 +1,7 @@
 package edu.mit.media.hd.funf.probe;
 
-import edu.mit.media.hd.funf.Utils;
 import android.os.Bundle;
+import edu.mit.media.hd.funf.Utils;
 
 public abstract class SynchronousProbe extends Probe {
 
@@ -11,7 +11,9 @@ public abstract class SynchronousProbe extends Probe {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-			new Parameter(SystemParameter.PERIOD, 3600L)
+			new Parameter(SystemParameter.PERIOD, 3600L),
+			new Parameter(SystemParameter.START, 0L),
+			new Parameter(SystemParameter.END, 0L)
 		};
 	}
 

@@ -9,12 +9,15 @@
  */
 package edu.mit.media.hd.funf.probe.builtin;
 
+import java.util.Set;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.client.ProbeCommunicator;
@@ -26,7 +29,7 @@ public class ActivityProbe extends Probe {
 	private static long DEFAULT_PERIOD = 60L;
 	private static long INTERVAL = 1000L;  // Interval over which we calculate activity
 	
-	private long duration;
+	private long duration = 0L;
 	private IntentFilter accelerometerProbeBroadcastFilter;
 	private BroadcastReceiver accelerometerProbeListener;
 	private Handler handler;
@@ -39,7 +42,9 @@ public class ActivityProbe extends Probe {
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
 			new Parameter(Probe.SystemParameter.DURATION, DEFAULT_DURATION, true),
-			new Parameter(Probe.SystemParameter.PERIOD, DEFAULT_PERIOD, true)	
+			new Parameter(Probe.SystemParameter.PERIOD, DEFAULT_PERIOD, true),
+			new Parameter(SystemParameter.START, 0L, true),
+			new Parameter(SystemParameter.END, 0L, true)
 		};
 	}
 
@@ -70,6 +75,7 @@ public class ActivityProbe extends Probe {
 			private Runnable sendRunnable;
 			
 			private void reset(long timestamp) {
+				Log.d(TAG, "RESET:" + timestamp);
 				// If more than an INTERVAL away, start a new scan
 				startTime = intervalStartTime = timestamp;
 				varianceSum = avg = sum = count = 0;
@@ -78,18 +84,21 @@ public class ActivityProbe extends Probe {
 				
 				// start timer to send results
 				if (sendRunnable == null) {
+					Log.d(TAG, "CREATING SEND DATA RUNNABLE");
 					sendRunnable = new Runnable() {
 						public void run() {
+							Log.d(TAG, "SENDING DATA");
 							sendProbeData();
 							sendRunnable = null;
 							stop();
 						}
 					};
-					handler.postDelayed(sendRunnable, duration*1000);
+					handler.postDelayed(sendRunnable, Utils.secondsToMillis(duration));
 				}
 			}
 			
 			private void intervalReset() {
+				Log.d(TAG, "INTERVAL RESET");
 				// Calculate activity and reset
 				intervalCount++;
 				if (varianceSum >= 10.0f) {
@@ -100,6 +109,7 @@ public class ActivityProbe extends Probe {
 			}
 			
 			private void update(float x, float y, float z) {
+				Log.d(TAG, "UPDATE");
 				// Iteratively calculate variance sum
 				count++;
 				float magnitude = (float)Math.sqrt(x*x + y*y + z*z);
@@ -117,8 +127,9 @@ public class ActivityProbe extends Probe {
 				Bundle data = intent.getExtras();
 
 				long timestamp = intent.getLongExtra("TIMESTAMP", 0);
-
-				if (timestamp > startTime + duration * 1000
+				Log.d(TAG, "RECEIVED:" + timestamp);
+				if (sendRunnable == null
+						|| timestamp > startTime + duration * 1000
 						|| timestamp >= intervalStartTime + 2 * INTERVAL) {
 					reset(timestamp);
 				} else if (timestamp >= intervalStartTime + INTERVAL) {
@@ -126,7 +137,7 @@ public class ActivityProbe extends Probe {
 				}
 				
 				long[] eventTimestamp = data.getLongArray("EVENT_TIMESTAMP");
-				int[] accuracy = data.getIntArray("ACCURACY");
+				//int[] accuracy = data.getIntArray("ACCURACY");
 				float[] x = data.getFloatArray("X");
 				float[] y = data.getFloatArray("Y");
 				float[] z = data.getFloatArray("Z");
@@ -151,7 +162,10 @@ public class ActivityProbe extends Probe {
 		long newDuration = Utils.getLong(params, SystemParameter.DURATION.name, DEFAULT_DURATION);
 		duration = Math.max(newDuration, duration);
 		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerSensorProbe.class);
-		probe.registerDataRequest(getClass().getName(), params);
+		Set<Bundle> allBundleRequestSet = getAllRequests().getAll();
+		Bundle[] allBundleRequests = new Bundle[allBundleRequestSet.size()];
+		allBundleRequestSet.toArray(allBundleRequests);
+		probe.registerDataRequest(getClass().getName(), allBundleRequests);
 		// TODO: temporary solution to fix 0 PERIOD one shot requests from getting removed before data is sent
 		if (Utils.getLong(params, SystemParameter.PERIOD.name, DEFAULT_PERIOD) != 0L) {
 			stop();

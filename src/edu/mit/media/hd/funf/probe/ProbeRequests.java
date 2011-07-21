@@ -197,7 +197,9 @@ public class ProbeRequests {
 	
 	// The following classes are used to get around the limitations of generics
 	// You cannot specify HashMap<String,List<Bundle>>.class due to type erasure
+	@SuppressWarnings("serial")
 	static class RequestsById extends HashMap<String,List<Bundle>> {}
+	@SuppressWarnings("serial")
 	static class RequestList extends ArrayList<Bundle> {}
 	
 	public Map<String,Map<String,List<Bundle>>> getByRequesterByRequestId() {

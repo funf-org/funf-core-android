@@ -29,6 +29,8 @@ public class WifiProbe extends Probe {
 
 	public static final String DATA_SCAN_RESULTS = "SCAN_RESULTS";
 	
+	public static final long DEFAULT_PERIOD = 60L * 20L;
+	
 	private static final String TAG = WifiProbe.class.getName();
 	
 	private WifiManager wifiManager;
@@ -40,8 +42,9 @@ public class WifiProbe extends Probe {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-				new Parameter(SystemParameter.START, 0L),  // No start by default
-				new Parameter(SystemParameter.PERIOD, 1800L),	// Run every 5 seconds by default
+				new Parameter(SystemParameter.PERIOD, DEFAULT_PERIOD),
+				new Parameter(SystemParameter.START, 0L),
+				new Parameter(SystemParameter.END, 0L)
 		};
 	}
 

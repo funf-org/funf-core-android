@@ -15,7 +15,7 @@ import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 
 public class LocationProbeTest extends ProbeTestCase<LocationProbe> {
 
-	private static final int FUDGE_FACTOR = 5;
+	private static final int FUDGE_FACTOR = 10;
 	
 	
 	public LocationProbeTest() {

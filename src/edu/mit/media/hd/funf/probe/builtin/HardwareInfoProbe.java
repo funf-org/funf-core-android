@@ -1,12 +1,12 @@
 package edu.mit.media.hd.funf.probe.builtin;
 
-import edu.mit.media.hd.funf.probe.SynchronousProbe;
 import android.bluetooth.BluetoothAdapter;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
+import edu.mit.media.hd.funf.probe.SynchronousProbe;
 
 public class HardwareInfoProbe extends SynchronousProbe {
 
