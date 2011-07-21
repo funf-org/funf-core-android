@@ -9,7 +9,8 @@
  */
 package edu.mit.media.hd.funf.probe.builtin;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -162,10 +163,12 @@ public class ActivityProbe extends Probe {
 		long newDuration = Utils.getLong(params, SystemParameter.DURATION.name, DEFAULT_DURATION);
 		duration = Math.max(newDuration, duration);
 		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerSensorProbe.class);
-		Set<Bundle> allBundleRequestSet = getAllRequests().getAll();
-		Bundle[] allBundleRequests = new Bundle[allBundleRequestSet.size()];
-		allBundleRequestSet.toArray(allBundleRequests);
-		probe.registerDataRequest(getClass().getName(), allBundleRequests);
+		List<Bundle> rawParams = new ArrayList<Bundle>(getAllRequests().getAll());
+		Bundle[] completeParams = new Bundle[rawParams.size()];
+		for (int i=0; i<rawParams.size(); i++) {
+			completeParams[i] = getCompleteParams(rawParams.get(i));
+		}
+		probe.registerDataRequest(getClass().getName(), completeParams);
 		// TODO: temporary solution to fix 0 PERIOD one shot requests from getting removed before data is sent
 		if (Utils.getLong(params, SystemParameter.PERIOD.name, DEFAULT_PERIOD) != 0L) {
 			stop();

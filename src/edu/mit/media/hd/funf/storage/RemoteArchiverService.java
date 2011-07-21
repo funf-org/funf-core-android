@@ -68,7 +68,7 @@ public abstract class RemoteArchiverService extends Service {
 		uploadThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				while(!filesToUpload.isEmpty()) {
+				while(Thread.currentThread().equals(uploadThread) && !filesToUpload.isEmpty()) {
 					DatabaseFile dbFile = filesToUpload.poll();
 					runArchive(dbFile.databaseName, dbFile.file);
 				}
@@ -80,7 +80,6 @@ public abstract class RemoteArchiverService extends Service {
 	@Override
 	public void onDestroy() {
 		if (uploadThread != null && uploadThread.isAlive()) {
-			uploadThread.stop();
 			uploadThread = null;
 		}
 		if (lock.isHeld()) {

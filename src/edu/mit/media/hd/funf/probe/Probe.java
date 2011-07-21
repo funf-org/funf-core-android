@@ -121,7 +121,7 @@ public abstract class Probe extends Service {
 		String requestId = extras.getString(OppProbe.ReservedParamaters.REQUEST_ID.name);
 		requestId = (requestId == null) ? "" : requestId;
 		long nonce = extras.getLong(OppProbe.ReservedParamaters.NONCE.name, -1L);
-		if (redeemNonce(nonce)) {
+		if (redeemNonce(requester, nonce)) {
 			// null REQUESTER is internal (ProbeController does not allow null REQUESTER)
 			// TODO: may need to handle default top level bundle parameters
 			Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray(OppProbe.ReservedParamaters.REQUESTS.name));
@@ -234,7 +234,7 @@ public abstract class Probe extends Service {
 		if (packageName != null) {
 			statusBroadcast.setPackage(packageName);
 			if (includeNonce && packageHasRequiredPermissions(packageName)) {
-				statusBroadcast.putExtra(OppProbe.ReservedParamaters.NONCE.name, createNonce());
+				statusBroadcast.putExtra(OppProbe.ReservedParamaters.NONCE.name, createNonce(packageName));
 			}
 		}
 		Log.i(TAG, "Sending probe status to '" + statusBroadcast.getPackage() + '"');
@@ -441,7 +441,7 @@ public abstract class Probe extends Service {
 		return params;
 	}
 	
-	private Bundle getCompleteParams(Bundle params) {
+	protected Bundle getCompleteParams(Bundle params) {
 		if (params == null) {
 			return null;
 		}
@@ -600,9 +600,9 @@ public abstract class Probe extends Service {
 	 * Create a new valid nonce
 	 * @return long value of the nonce
 	 */
-	protected long createNonce() {
+	protected long createNonce(String requester) {
 		removeInvalidNonces();
-		Nonce nonce = new Nonce();
+		Nonce nonce = new Nonce(requester);
 		nonces.add(nonce);
 		return nonce.value;
 	}
@@ -612,11 +612,11 @@ public abstract class Probe extends Service {
 	 * @param nonce
 	 * @return true if valid nonce, false otherwise
 	 */
-	protected boolean redeemNonce(long nonce) {
+	protected boolean redeemNonce(String requester, long nonce) {
 		removeInvalidNonces();
 		Nonce redeemedNonce = null;
 		for (Nonce existingNonce : nonces) {
-			if (existingNonce.value == nonce) {
+			if (existingNonce.value == nonce && existingNonce.requester.equals(requester)) {
 				redeemedNonce = existingNonce;
 				break;
 			}
@@ -627,12 +627,15 @@ public abstract class Probe extends Service {
 	
 
 	private static class Nonce {
+		public final String requester;
 		public final long value;
 		public final long timestamp;
-		public Nonce() {
-			this(Math.abs(new Random().nextLong()), System.currentTimeMillis());
+		public Nonce(String requester) {
+			this(requester, Math.abs(new Random().nextLong()), System.currentTimeMillis());
 		}
-		public Nonce(long value, long timestamp) {
+		public Nonce(String requester, long value, long timestamp) {
+			assert requester != null;
+			this.requester = requester;
 			this.value = value;
 			this.timestamp = timestamp;
 		}
@@ -641,29 +644,33 @@ public abstract class Probe extends Service {
 		}
 		@Override
 		public boolean equals(Object o) {
-			return o != null && o instanceof Nonce && this.value == ((Nonce)o).value;
+			return o != null && o instanceof Nonce 
+			&& this.requester.equals(((Nonce)o).requester) 
+			&& this.value == ((Nonce)o).value;
 		}
 		@Override
 		public int hashCode() {
 			return HashCodeUtil.hash(HashCodeUtil.SEED, value);
 		}
 		
+		public static final String FIELD_SEPARATOR = "@";
+		public static final String NONCE_SEPARATOR = ",";
 
 		public static String serializeNonces(Set<Nonce> nonces) {
 			Set<String> nonceStrings = new HashSet<String>();
 			for (Nonce nonce : nonces) {
-				nonceStrings.add(nonce.value + "@" + nonce.timestamp);
+				nonceStrings.add(nonce.requester + FIELD_SEPARATOR + nonce.value + FIELD_SEPARATOR + nonce.timestamp);
 			}
-			return Utils.join(nonceStrings, ",");
+			return Utils.join(nonceStrings, NONCE_SEPARATOR);
 		}
 		
 		public static Set<Nonce> unserializeNonces(String noncesString) {
 			Set<Nonce> nonces = new HashSet<Nonce>();
 			if (noncesString != null && !noncesString.trim().equals("")) {
-				String[] nonceStrings = noncesString.split(",");
+				String[] nonceStrings = noncesString.split(NONCE_SEPARATOR);
 				for (String nonceString : nonceStrings) {
-					String[] nonceParts = nonceString.split("@");
-					nonces.add(new Nonce(Long.valueOf(nonceParts[0]), Long.valueOf(nonceParts[1])));
+					String[] nonceParts = nonceString.split(FIELD_SEPARATOR);
+					nonces.add(new Nonce(nonceParts[0], Long.valueOf(nonceParts[1]), Long.valueOf(nonceParts[2])));
 				}
 			}
 			return nonces;

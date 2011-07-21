@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.util.Log;
 import edu.mit.media.hd.funf.AndroidUtils;
 import edu.mit.media.hd.funf.IOUtils;
+import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.client.ProbeCommunicator;
 import edu.mit.media.hd.funf.storage.DatabaseService;
@@ -46,12 +47,13 @@ public abstract class ConfigurationUpdaterService extends Service {
 		Log.d(TAG, "Upating");
 		// TODO: detect whether wifi is available, etc.
 		try {
-			FunfConfig config = getConfig();
+			final FunfConfig config = getConfig();
+			final String configJson = config.toJson();
 			if (config == null) {
 				Log.e(TAG, "Unable to get config");
 			} else {
 				FunfConfig oldConfig = FunfConfig.getFunfConfig(this);
-				// TODO: re-enable (disabled for debugging)
+				// TODO: re-enable when equals method is implemented for FunfConfig and ProbeDatabaseConfig
 				//if (!config.equals(oldConfig)) {
 
 					if (oldConfig != null) {
@@ -69,6 +71,11 @@ public abstract class ConfigurationUpdaterService extends Service {
 							Log.i(TAG, "Reloading database configuration.");
 							DatabaseService dbService = ((DatabaseService.LocalBinder)service).getService();
 							dbService.reload();
+							Log.i(TAG, "Recording configuration change.");
+							String probeName = getClass().getName();
+							for (String databaseName : dbService.getDatabaseNames()) {
+								dbService.save(databaseName, probeName, configJson, Utils.getTimestamp());
+							}
 							unbindService(this);
 						}
 						@Override

@@ -2,6 +2,7 @@ package edu.mit.media.hd.funf.storage;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import android.app.Service;
@@ -189,6 +190,10 @@ public abstract class DatabaseService extends Service {
 			}
 		}
 		databaseHelpers = getDatabaseHelpers();
+	}
+	
+	public Set<String> getDatabaseNames() {
+		return databaseHelpers.keySet();
 	}
 	
 	protected abstract Map<String, DatabaseHelper> getDatabaseHelpers();
