@@ -28,6 +28,7 @@ public class ProbeCommunicator {
 	
 	public static void requestStatusFromAll(Context context) {
 		Intent i = new Intent(OppProbe.getGlobalPollAction());
+		i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, context.getPackageName());
 		context.sendBroadcast(i);
 	}
 	

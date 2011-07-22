@@ -224,8 +224,8 @@ public abstract class Probe extends Service {
 				displayName,
 				enabled,
 				isRunning(),
-				nextRunTime/1000, // millis to seconds
-				mostRecentTimeRun/1000, // millis to seconds
+				Utils.millisToSeconds(nextRunTime), // millis to seconds
+				Utils.millisToSeconds(mostRecentTimeRun), // millis to seconds
 				requiredPermissions,
 				nonNullStrings(getRequiredFeatures()),
 				parameters
