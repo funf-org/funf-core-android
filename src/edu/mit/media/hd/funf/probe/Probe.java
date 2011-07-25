@@ -207,7 +207,7 @@ public abstract class Probe extends Service {
 	public void sendProbeStatus(final String packageName, final boolean includeNonce) {
 		Intent statusBroadcast = new Intent(OppProbe.getStatusAction());
 		String name = getClass().getName();
-		String displayName = getClass().getName().replace(getClass().getPackage().getName() + ".", "");
+		String displayName = getDisplayName();
 		
 		List<String> requiredPermissionsList = new ArrayList<String>(Arrays.asList(nonNullStrings(getRequiredPermissions())));
 		if (!requiredPermissionsList.contains(android.Manifest.permission.WAKE_LOCK)) {
@@ -239,6 +239,11 @@ public abstract class Probe extends Service {
 		}
 		Log.i(TAG, "Sending probe status to '" + statusBroadcast.getPackage() + '"');
 		sendBroadcast(statusBroadcast);
+	}
+	
+	protected String getDisplayName() {
+		String className = getClass().getName().replace(getClass().getPackage().getName() + ".", "");
+		return className.replaceAll("(\\p{Ll})(\\p{Lu})","$1 $2"); // Insert spaces
 	}
 	
 	private static PackageInfo getPackageInfo(Context context, String packageName) {
