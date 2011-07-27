@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import android.net.Uri;
 import android.util.Log;
 
 /**
@@ -65,9 +66,26 @@ public class HttpArchive implements RemoteArchive {
 		}
 	    return true;
 		*/
-		return uploadFile(file, uploadUrl);
+		return isValidUrl(uploadUrl) ? uploadFile(file, uploadUrl) : false;
 	}
 	
+	public static boolean isValidUrl(String url) {
+		Log.d(TAG, "Validating url");
+		boolean isValidUrl = false;
+		if (url != null &&  !url.trim().equals("")) {
+			try {
+				Uri test = Uri.parse(url);
+				isValidUrl = test.getScheme() != null 
+				&& test.getScheme().startsWith("http") 
+				&& test.getHost() != null 
+				&& !test.getHost().trim().equals("");
+			} catch (Exception e) {
+				Log.d(TAG, "Not valid", e);
+			}
+		}
+		Log.d(TAG, "Valid url? " + isValidUrl);
+		return isValidUrl;
+	}
 	
 	/**
 	 * Copied (and slightly modified) from Friends and Family

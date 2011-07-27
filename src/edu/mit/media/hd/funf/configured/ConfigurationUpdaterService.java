@@ -112,7 +112,8 @@ public abstract class ConfigurationUpdaterService extends Service {
 	}
 	
 	protected FunfConfig getConfig() throws JSONException {
-		String configJson = IOUtils.httpGet(getRemoteConfigUrl(), null);
+		String remoteConfigUrl = getRemoteConfigUrl();
+		String configJson = (remoteConfigUrl == null) ? null : IOUtils.httpGet(getRemoteConfigUrl(), null);
 		return (configJson == null) ? null : new FunfConfig(configJson);
 	}
 	
