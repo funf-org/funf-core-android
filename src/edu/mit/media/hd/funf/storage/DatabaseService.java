@@ -148,8 +148,12 @@ public abstract class DatabaseService extends Service {
 		return getDefaultArchive(this, databaseName, null);
 	}
 	
+	public static String getSdCardPath(Context context) {
+		return "/sdcard/" + context.getPackageName() + "/";
+	}
+	
 	public static Archive<File> getDefaultArchive(Context context, String databaseName, byte[] encryptionKey) {
-		String rootSdCardPath = "/sdcard/" + context.getPackageName() + "/" + databaseName + "/";
+		String rootSdCardPath = getSdCardPath(context) + databaseName + "/";
 		Archive<File> backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
 		Archive<File> mainArchive = new CompositeFileArchive(
 				getTimestampedDbFileArchive(new File(rootSdCardPath + "archive"), context, encryptionKey),
