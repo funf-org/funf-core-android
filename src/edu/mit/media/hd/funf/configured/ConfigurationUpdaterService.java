@@ -65,6 +65,7 @@ public abstract class ConfigurationUpdaterService extends Service {
 						}
 					}
 					FunfConfig.setFunfConfig(this, config);
+					onSetConfig(config);
 					Intent dbIntent = new Intent(this, getDatabaseServiceClass());
 					bindService(dbIntent, new ServiceConnection() {
 						@Override
@@ -118,5 +119,13 @@ public abstract class ConfigurationUpdaterService extends Service {
 	}
 	
 	protected abstract String getRemoteConfigUrl();
+	
+	/**
+	 * Used to perform actions when the funf config is set
+	 * @param config
+	 */
+	protected void onSetConfig(FunfConfig config) {
+		
+	}
 
 }

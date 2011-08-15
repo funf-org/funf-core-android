@@ -12,10 +12,10 @@ package edu.mit.media.hd.funf.probe.builtin;
 import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
 import android.os.Bundle;
 
-public class NtpProbeTest extends ProbeTestCase<NtpProbe> {
+public class TimeOffsetProbeTest extends ProbeTestCase<TimeOffsetProbe> {
 
-	public NtpProbeTest() {
-		super(NtpProbe.class);
+	public TimeOffsetProbeTest() {
+		super(TimeOffsetProbe.class);
 	}
 
 	public void testProbe() {
@@ -23,7 +23,7 @@ public class NtpProbeTest extends ProbeTestCase<NtpProbe> {
 		params.putLong(SystemParameter.PERIOD.name, 0L);
 		startProbe(params);
 		Bundle data = getData(20);
-		assertNotNull(data.get(NtpProbe.TIME_OFFSET));
+		assertNotNull(data.get(TimeOffsetProbe.TIME_OFFSET));
 		//System.out.println("Time Offset:" + data.getDouble(NtpProbe.TIME_OFFSET));
 	}
 }
