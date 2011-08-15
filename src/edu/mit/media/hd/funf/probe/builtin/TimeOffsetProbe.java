@@ -18,7 +18,7 @@ import edu.mit.media.hd.funf.probe.Probe;
  * Uses "2.north-america.pool.ntp.org"
  *
  */
-public class NtpProbe extends Probe {
+public class TimeOffsetProbe extends Probe {
 
 	public static final String TIME_OFFSET = "TIME_OFFSET";
 	
