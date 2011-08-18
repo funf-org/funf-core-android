@@ -78,4 +78,44 @@
 
 	<path id="android.libraries.src"><path refid="project.libraries.src" /></path>
 	<path id="android.libraries.jars"><path refid="project.libraries.jars" /></path>
+	
+	<target name="getgitdetails" >
+		<exec executable="git" outputproperty="git.tagstring">
+			<arg value="describe"/>
+		</exec>
+		<exec executable="git" outputproperty="git.revision">
+			<arg value="rev-parse"/>
+			<arg value="HEAD"/>
+		</exec>
+		<condition property="git.tag" value="none" else="${git.tagstring}">
+			<contains string="${git.tagstring}" substring="cannot"/>
+		</condition>
+	</target>
+	
+	<target name="jar" depends="compile,getgitdetails">
+		<delete file="bin/funf.jar"/>
+		<mkdir dir="bin" />
+		<tstamp>
+			<format property="version.num.date" pattern="yyyy.MM.dd.HH.mm" />
+		</tstamp>
+		<tstamp>
+			<format property="now" pattern="yyyy-MM-dd HH:mm:ss" />
+		</tstamp>
+		<property name="version.num.full" value="${version.num}.${version.num.date}"/>
+		<manifest file="bin/MANIFEST.MF">
+        	<attribute name="Built-By" value="${user.name}"/>
+			<attribute name="Implementation-Title" value="Funf"/>
+        	<attribute name="Implementation-Version"  value="${version.num.full}-r${git.revision}"/>
+			<attribute name="Implementation-Vendor"  value="Funf at MIT Media Lab"/>
+			<attribute name="Built-Date" value="${now}"/>  
+		</manifest>
+		<jar destfile="bin/funf.jar"
+			basedir="bin/classes"
+			includes="**/*.class"
+			manifest="bin/MANIFEST.MF" />
+	</target>
+	
+	<target name="release" depends="jar">
+	</target>
+	
 </project>
