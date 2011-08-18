@@ -10,7 +10,7 @@
 package edu.mit.media.hd.funf.probe;
 
 /**
- * Exceptions related to Funf Probes.
+ * Exceptions related to Funf ProbeKeys.
  * @author alangardner
  *
  */

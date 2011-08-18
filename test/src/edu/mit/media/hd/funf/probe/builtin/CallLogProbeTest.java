@@ -3,6 +3,7 @@ package edu.mit.media.hd.funf.probe.builtin;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.Probe;
 import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.CallLogKeys;
 
 public class CallLogProbeTest extends ProbeTestCase<CallLogProbe> {
 
@@ -16,7 +17,7 @@ public class CallLogProbeTest extends ProbeTestCase<CallLogProbe> {
 		startProbe(params);
 		Bundle data = getData(5);
 		assertNotNull(data.get(Probe.TIMESTAMP));
-		assertNotNull(data.get(CallLogProbe.CALLS));
+		assertNotNull(data.get(CallLogKeys.CALLS));
 	}
 	
 }

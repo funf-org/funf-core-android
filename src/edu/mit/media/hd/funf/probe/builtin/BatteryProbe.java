@@ -16,8 +16,9 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.BatteryKeys;
 
-public class BatteryProbe extends Probe {
+public class BatteryProbe extends Probe implements BatteryKeys {
 
 	private BroadcastReceiver receiver;
 	private Bundle mostRecentData;

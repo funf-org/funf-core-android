@@ -24,11 +24,10 @@ import android.os.Bundle;
 import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.WifiKeys;
 
-public class WifiProbe extends Probe {
+public class WifiProbe extends Probe implements WifiKeys {
 
-	public static final String DATA_SCAN_RESULTS = "SCAN_RESULTS";
-	
 	public static final long DEFAULT_PERIOD = 60L * 20L;
 	
 	private static final String TAG = WifiProbe.class.getName();
@@ -72,7 +71,7 @@ public class WifiProbe extends Probe {
 		if (results != null) {
 			nonNullResults.addAll(results);
 		}
-		data.putParcelableArrayList(DATA_SCAN_RESULTS, nonNullResults);
+		data.putParcelableArrayList(SCAN_RESULTS, nonNullResults);
 		sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 	}
 	

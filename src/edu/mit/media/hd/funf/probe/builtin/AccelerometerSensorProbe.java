@@ -13,8 +13,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.AccelerometerSensorKeys;
 
-public class AccelerometerSensorProbe extends SensorProbe {
+public class AccelerometerSensorProbe extends SensorProbe implements AccelerometerSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_ACCELEROMETER;
@@ -32,7 +33,7 @@ public class AccelerometerSensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"X", "Y", "Z"	
+				X, Y, Z
 		};
 	}
 

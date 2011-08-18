@@ -13,8 +13,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.GyroscopeSensorKeys;
 
-public class GyroscopeSensorProbe extends SensorProbe {
+public class GyroscopeSensorProbe extends SensorProbe implements GyroscopeSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_GYROSCOPE;
@@ -32,7 +33,7 @@ public class GyroscopeSensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"X", "Y", "Z"	
+			X, Y, Z
 		};
 	}
 

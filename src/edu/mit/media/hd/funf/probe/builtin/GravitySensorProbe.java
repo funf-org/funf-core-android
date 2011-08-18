@@ -12,11 +12,12 @@ package edu.mit.media.hd.funf.probe.builtin;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.GravitySensorKeys;
 
-public class GravitySensorProbe extends SensorProbe {
+public class GravitySensorProbe extends SensorProbe implements GravitySensorKeys {
 
 	public int getSensorType() {
-		return 9;  //Sensor.TYPE_GRAVITY; // API Level 9
+		return 9;  //SensorKeys.TYPE_GRAVITY; // API Level 9
 	}
 
 	public String[] getRequiredFeatures() {
@@ -32,7 +33,7 @@ public class GravitySensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"X", "Y", "Z"	
+			X, Y, Z
 		};
 	}
 

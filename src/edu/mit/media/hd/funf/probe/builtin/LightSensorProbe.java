@@ -13,8 +13,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.LightSensorKeys;
 
-public class LightSensorProbe extends SensorProbe {
+public class LightSensorProbe extends SensorProbe implements LightSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_LIGHT;
@@ -32,7 +33,7 @@ public class LightSensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"LUX"	
+			LUX
 		};
 	}
 

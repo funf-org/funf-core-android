@@ -12,11 +12,12 @@ package edu.mit.media.hd.funf.probe.builtin;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.LinearAccelerationSensorKeys;
 
-public class LinearAccelerationSensorProbe extends SensorProbe {
+public class LinearAccelerationSensorProbe extends SensorProbe implements LinearAccelerationSensorKeys {
 
 	public int getSensorType() {
-		return 10;  //Sensor.TYPE_LINEAR_ACCELERATION; // API Level 9
+		return 10;  //SensorKeys.TYPE_LINEAR_ACCELERATION; // API Level 9
 	}
 
 	public String[] getRequiredFeatures() {
@@ -32,7 +33,7 @@ public class LinearAccelerationSensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"X", "Y", "Z"	
+			X, Y, Z
 		};
 	}
 

@@ -29,7 +29,7 @@ public class WifiProbeTest extends ProbeTestCase<WifiProbe> {
 		params.putString(OppProbe.ReservedParamaters.REQUESTER.name, getTestRequester());
 		startProbe(params);
 		Bundle data = getData(10 + FUDGE_FACTOR);
-		ArrayList<Parcelable> scanResults = data.getParcelableArrayList(WifiProbe.DATA_SCAN_RESULTS);
+		ArrayList<Parcelable> scanResults = data.getParcelableArrayList(WifiProbe.SCAN_RESULTS);
 		assertNotNull(scanResults);
 		assertFalse(scanResults.isEmpty());
 		for (Parcelable result : scanResults) {

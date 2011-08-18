@@ -7,8 +7,9 @@ import android.os.Bundle;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
 import edu.mit.media.hd.funf.probe.SynchronousProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.HardwareInfoKeys;
 
-public class HardwareInfoProbe extends SynchronousProbe {
+public class HardwareInfoProbe extends SynchronousProbe implements HardwareInfoKeys {
 
 	@Override
 	public String[] getRequiredPermissions() {
@@ -20,15 +21,15 @@ public class HardwareInfoProbe extends SynchronousProbe {
 
 	protected Bundle getData() {
 		Bundle data = new Bundle();
-		data.putString("WIFI_MAC", ((WifiManager) getSystemService(WIFI_SERVICE)).getConnectionInfo().getMacAddress());
+		data.putString(WIFI_MAC, ((WifiManager) getSystemService(WIFI_SERVICE)).getConnectionInfo().getMacAddress());
 		String bluetoothMac = getBluetoothMac();
 		if (bluetoothMac != null) {
-			data.putString("BLUETOOTH_MAC", bluetoothMac);
+			data.putString(BLUETOOTH_MAC, bluetoothMac);
 		}
-		data.putString("ANDROID_ID", Secure.getString(getContentResolver(), Secure.ANDROID_ID));
-		data.putString("BRAND", Build.BRAND);
-		data.putString("MODEL", Build.MODEL);
-		data.putString("DEVICE_ID", ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId());
+		data.putString(ANDROID_ID, Secure.getString(getContentResolver(), Secure.ANDROID_ID));
+		data.putString(BRAND, Build.BRAND);
+		data.putString(MODEL, Build.MODEL);
+		data.putString(DEVICE_ID, ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId());
 		return data;
 	}
 

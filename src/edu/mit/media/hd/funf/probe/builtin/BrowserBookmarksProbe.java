@@ -7,14 +7,13 @@ import android.net.Uri;
 import android.provider.Browser;
 import edu.mit.media.hd.funf.probe.CursorCell;
 import edu.mit.media.hd.funf.probe.DatedContentProviderProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.BrowserBookmarksKeys;
 
 public class BrowserBookmarksProbe extends DatedContentProviderProbe {
 
-	public static final String BOOKMARKS = "BOOKMARKS";
-
 	@Override
 	protected String getDataName() {
-		return BOOKMARKS;
+		return BrowserBookmarksKeys.BOOKMARKS;
 	}
 
 	@Override

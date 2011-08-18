@@ -12,15 +12,14 @@ import android.os.Bundle;
 import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.TimeOffsetKeys;
 
 /**
  * Broadcasts the current system time offset from time on major NTP servers in seconds.
  * Uses "2.north-america.pool.ntp.org"
  *
  */
-public class TimeOffsetProbe extends Probe {
-
-	public static final String TIME_OFFSET = "TIME_OFFSET";
+public class TimeOffsetProbe extends Probe implements TimeOffsetKeys {
 	
 	private Thread runningThread;
 	private Double mostRecentTimeOffset;

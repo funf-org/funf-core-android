@@ -3,6 +3,7 @@ package edu.mit.media.hd.funf.probe.builtin;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.Probe;
 import edu.mit.media.hd.funf.probe.Probe.SystemParameter;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.BrowserBookmarksKeys;
 
 public class BrowserBookmarksProbeTest extends ProbeTestCase<BrowserBookmarksProbe> {
 
@@ -16,7 +17,7 @@ public class BrowserBookmarksProbeTest extends ProbeTestCase<BrowserBookmarksPro
 		startProbe(params);
 		Bundle data = getData(5);
 		assertNotNull(data.get(Probe.TIMESTAMP));
-		assertNotNull(data.get(BrowserBookmarksProbe.BOOKMARKS));
+		assertNotNull(data.get(BrowserBookmarksKeys.BOOKMARKS));
 	}
 	
 }

@@ -23,8 +23,9 @@ import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.client.ProbeCommunicator;
 import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.ActivityKeys;
 
-public class ActivityProbe extends Probe {
+public class ActivityProbe extends Probe implements ActivityKeys {
 
 	private static long DEFAULT_DURATION = 5L;
 	private static long DEFAULT_PERIOD = 60L;
@@ -183,8 +184,8 @@ public class ActivityProbe extends Probe {
 	@Override
 	public void sendProbeData() {
 		Bundle data = new Bundle();
-		data.putInt("TOTAL_INTERVALS", intervalCount);
-		data.putInt("ACTIVE_INTERVALS", extremeIntervalCount);
+		data.putInt(TOTAL_INTERVALS, intervalCount);
+		data.putInt(ACTIVE_INTERVALS, extremeIntervalCount);
 		sendProbeData(Utils.millisToSeconds(startTime), new Bundle(), data); // starTime converted last minute for precision
 	}
 

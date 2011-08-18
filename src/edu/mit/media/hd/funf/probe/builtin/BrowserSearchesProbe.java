@@ -7,14 +7,13 @@ import android.net.Uri;
 import android.provider.Browser;
 import edu.mit.media.hd.funf.probe.CursorCell;
 import edu.mit.media.hd.funf.probe.DatedContentProviderProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.BrowserSearchesKeys;
 
 public class BrowserSearchesProbe extends DatedContentProviderProbe {
 
-	public static final String SEARCHES = "SEARCHES";
-	
 	@Override
 	protected String getDataName() {
-		return SEARCHES;
+		return BrowserSearchesKeys.SEARCHES;
 	}
 
 	@Override

@@ -13,8 +13,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.MagneticFieldSensorKeys;
 
-public class MagneticFieldSensorProbe extends SensorProbe {
+public class MagneticFieldSensorProbe extends SensorProbe implements MagneticFieldSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_MAGNETIC_FIELD;
@@ -32,7 +33,7 @@ public class MagneticFieldSensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"X", "Y", "Z"	
+			X, Y, Z
 		};
 	}
 

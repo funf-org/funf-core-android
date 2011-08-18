@@ -20,9 +20,10 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.BluetoothKeys;
 
 
-public class BluetoothProbe extends Probe {
+public class BluetoothProbe extends Probe implements BluetoothKeys {
 
 	private BluetoothAdapter adapter;
 	private BluetoothScanReceiver receiver;
@@ -111,7 +112,7 @@ public class BluetoothProbe extends Probe {
 	public void sendProbeData() {
 		if (deviceDiscoveries != null) {
 			Bundle data = new Bundle();
-			data.putParcelableArrayList("DEVICES", deviceDiscoveries);
+			data.putParcelableArrayList(DEVICES, deviceDiscoveries);
 			sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 		}
 	}

@@ -7,11 +7,10 @@ import android.net.Uri;
 import android.provider.MediaStore.Audio;
 import edu.mit.media.hd.funf.probe.CursorCell;
 import edu.mit.media.hd.funf.probe.DatedContentProviderProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.AudioFilesKeys;
 
-public class AudioFilesProbe extends DatedContentProviderProbe {
+public class AudioFilesProbe extends DatedContentProviderProbe implements AudioFilesKeys {
 
-	public static final String AUDIO_FILES = "AUDIO_FILES";
-	
 	@Override
 	protected Uri getContentProviderUri() {
 		return Audio.Media.EXTERNAL_CONTENT_URI;

@@ -12,11 +12,12 @@ package edu.mit.media.hd.funf.probe.builtin;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.RotationVectorSensorKeys;
 
-public class RotationVectorSensorProbe extends SensorProbe {
+public class RotationVectorSensorProbe extends SensorProbe implements RotationVectorSensorKeys {
 
 	public int getSensorType() {
-		return 11;  //Sensor.TYPE_ROTATION_VECTOR; // API Level 9
+		return 11;  //SensorKeys.TYPE_ROTATION_VECTOR; // API Level 9
 	}
 
 	public String[] getRequiredFeatures() {
@@ -31,7 +32,7 @@ public class RotationVectorSensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"X_SIN_THETA_OVER_2", "Y_SIN_THETA_OVER_2", "Z_SIN_THETA_OVER_2", "COS_THETA_OVER_2"
+			X_SIN_THETA_OVER_2, Y_SIN_THETA_OVER_2, Z_SIN_THETA_OVER_2, COS_THETA_OVER_2
 		};
 	}
 

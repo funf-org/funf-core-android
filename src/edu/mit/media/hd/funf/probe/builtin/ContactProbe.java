@@ -26,10 +26,10 @@ import android.provider.ContactsContract.CommonDataKinds.Website;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.ContentProviderProbe;
 import edu.mit.media.hd.funf.probe.CursorCell;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.ContactKeys;
 
-public class ContactProbe extends ContentProviderProbe {
+public class ContactProbe extends ContentProviderProbe implements ContactKeys {
 
-	public static final String CONTACT_DATA = "CONTACT_DATA";
 	public static final Parameter FULL_PARAM = new Parameter("FULL", false, "FullScan", "If true, probe will return all contacts.  If false, the scan will only return contacts that have changed since the most recent scan."); 
 	
 	private static final String DATA_VERSIONS = "dataVersions";

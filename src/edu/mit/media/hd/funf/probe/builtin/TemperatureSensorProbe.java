@@ -13,8 +13,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.TemperatureSensorKeys;
 
-public class TemperatureSensorProbe extends SensorProbe {
+public class TemperatureSensorProbe extends SensorProbe implements TemperatureSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_TEMPERATURE;
@@ -32,7 +33,7 @@ public class TemperatureSensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"TEMPERATURE"	
+			TEMPERATURE	
 		};
 	}
 

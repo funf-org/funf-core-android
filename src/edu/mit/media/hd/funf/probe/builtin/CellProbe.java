@@ -7,10 +7,9 @@ import android.telephony.TelephonyManager;
 import android.telephony.cdma.CdmaCellLocation;
 import android.telephony.gsm.GsmCellLocation;
 import edu.mit.media.hd.funf.probe.SynchronousProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.CellKeys;
 
-public class CellProbe extends SynchronousProbe {
-
-	public static final String TYPE = "type";
+public class CellProbe extends SynchronousProbe implements CellKeys {
 	
 	@Override
 	public String[] getRequiredPermissions() {

@@ -15,8 +15,9 @@ import android.app.ActivityManager;
 import android.app.ActivityManager.RunningTaskInfo;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SynchronousProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.RunningApplicationsKeys;
 
-public class RunningApplicationsProbe extends SynchronousProbe {
+public class RunningApplicationsProbe extends SynchronousProbe implements RunningApplicationsKeys {
 	
 	@Override
 	public String[] getRequiredPermissions() {
@@ -30,7 +31,7 @@ public class RunningApplicationsProbe extends SynchronousProbe {
 		ActivityManager am = (ActivityManager)this.getApplicationContext().getSystemService(ACTIVITY_SERVICE);
 		ArrayList<RunningTaskInfo> mostRecentRunningTaks = new ArrayList<RunningTaskInfo>(am.getRunningTasks(100000000));
 		Bundle data = new Bundle();
-		data.putParcelableArrayList("RUNNING_TASKS", mostRecentRunningTaks);
+		data.putParcelableArrayList(RUNNING_TASKS, mostRecentRunningTaks);
 		return data;
 	}
 

@@ -83,7 +83,7 @@ public abstract class SensorProbe extends Probe {
 			disable();
 			return;
 		}
-		Log.i(TAG, "Sensor listener:" + sensorListener + " Sensor:" + sensor + " SensorManager:" + getSensorManager());
+		Log.i(TAG, "SensorKeys listener:" + sensorListener + " SensorKeys:" + sensor + " SensorManager:" + getSensorManager());
 		getSensorManager().registerListener(sensorListener,sensor, getSensorDelay(params));
 		Log.i(TAG, "RecentEvents before clear:" + recentEvents.size());
 		recentEvents.clear();

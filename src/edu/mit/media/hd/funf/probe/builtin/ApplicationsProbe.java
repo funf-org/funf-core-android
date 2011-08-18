@@ -18,8 +18,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SynchronousProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.ApplicationsKeys;
 
-public class ApplicationsProbe extends SynchronousProbe {
+public class ApplicationsProbe extends SynchronousProbe implements ApplicationsKeys {
 	
 	@Override
 	public String[] getRequiredPermissions() {
@@ -51,8 +52,8 @@ public class ApplicationsProbe extends SynchronousProbe {
 		PackageManager pm = this.getApplicationContext().getPackageManager();
 		List<ApplicationInfo> allApplications = pm.getInstalledApplications(PackageManager.GET_UNINSTALLED_PACKAGES);
 		ArrayList<ApplicationInfo> installedApplications = new ArrayList<ApplicationInfo>(pm.getInstalledApplications(0));
-		data.putParcelableArrayList("INSTALLED_APPLICATIONS", installedApplications);
-		data.putParcelableArrayList("UNINSTALLED_APPLICATIONS", getUninstalledApps(allApplications, installedApplications));
+		data.putParcelableArrayList(INSTALLED_APPLICATIONS, installedApplications);
+		data.putParcelableArrayList(UNINSTALLED_APPLICATIONS, getUninstalledApps(allApplications, installedApplications));
 		return data;
 	}
 

@@ -16,10 +16,9 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.ScreenKeys;
 
-public class ScreenProbe extends Probe {
-
-	public static String SCREEN_ON_PARAM = "SCREEN_ON";
+public class ScreenProbe extends Probe implements ScreenKeys {
 	
 	private BroadcastReceiver screenReceiver;
 	private Boolean screenOn;
@@ -80,7 +79,7 @@ public class ScreenProbe extends Probe {
 	public void sendProbeData() {
 		if (screenOn != null) {
 			Bundle data = new Bundle();
-			data.putBoolean(SCREEN_ON_PARAM, screenOn);
+			data.putBoolean(SCREEN_ON, screenOn);
 			sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 		}
 	}

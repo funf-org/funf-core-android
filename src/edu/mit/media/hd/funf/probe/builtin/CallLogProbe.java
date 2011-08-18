@@ -10,10 +10,9 @@ import edu.mit.media.hd.funf.probe.CursorCell;
 import edu.mit.media.hd.funf.probe.DatedContentProviderProbe;
 import edu.mit.media.hd.funf.probe.CursorCell.HashedCell;
 import edu.mit.media.hd.funf.probe.CursorCell.PhoneNumberCell;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.CallLogKeys;
 
 public class CallLogProbe extends DatedContentProviderProbe {
-
-	public static final String CALLS = "CALLS";
 
 	@Override
 	public String[] getRequiredPermissions() {
@@ -38,7 +37,7 @@ public class CallLogProbe extends DatedContentProviderProbe {
 	
 	
 	protected String getDataName() {
-		return CALLS;
+		return CallLogKeys.CALLS;
 	}
 
 

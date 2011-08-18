@@ -13,8 +13,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.OrientationSensorKeys;
 
-public class OrientationSensorProbe extends SensorProbe {
+public class OrientationSensorProbe extends SensorProbe implements OrientationSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_ORIENTATION;
@@ -32,7 +33,7 @@ public class OrientationSensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"AZIMUTH", "PITCH", "ROLL"	
+			AZIMUTH, PITCH, ROLL
 		};
 	}
 

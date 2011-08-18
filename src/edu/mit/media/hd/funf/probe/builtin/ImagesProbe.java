@@ -7,10 +7,9 @@ import android.net.Uri;
 import android.provider.MediaStore.Images;
 import edu.mit.media.hd.funf.probe.CursorCell;
 import edu.mit.media.hd.funf.probe.DatedContentProviderProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.ImagesKeys;
 
-public class ImagesProbe extends DatedContentProviderProbe {
-
-	public static final String IMAGES = "IMAGES";
+public class ImagesProbe extends DatedContentProviderProbe implements ImagesKeys {
 	
 	@Override
 	protected Uri getContentProviderUri() {

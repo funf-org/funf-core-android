@@ -20,10 +20,10 @@ import android.os.Bundle;
 import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.Probe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.LocationKeys;
 
-public class LocationProbe extends Probe {
+public class LocationProbe extends Probe implements LocationKeys {
 
-	public static final String LOCATION = "LOCATION";
 	public static final long SIGNIFICANT_TIME_DIFFERENCE = 2*60*1000; // 2 minutes
 	// TODO: May turn MAX_DURATION into duration parameter
 	public static final long DEFAULT_DURATION = 2*60; // 2 minutes

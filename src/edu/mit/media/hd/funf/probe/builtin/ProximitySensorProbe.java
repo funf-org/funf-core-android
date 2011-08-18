@@ -13,8 +13,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.hd.funf.probe.SensorProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.ProximitySensorKeys;
 
-public class ProximitySensorProbe extends SensorProbe {
+public class ProximitySensorProbe extends SensorProbe implements ProximitySensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_PROXIMITY;
@@ -32,7 +33,7 @@ public class ProximitySensorProbe extends SensorProbe {
 	
 	public String[] getValueNames() {
 		return new String[] {
-			"DISTANCE"	
+			DISTANCE
 		};
 	}
 

@@ -5,14 +5,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import android.net.Uri;
-import android.os.Bundle;
 import android.provider.MediaStore.Video;
 import edu.mit.media.hd.funf.probe.CursorCell;
 import edu.mit.media.hd.funf.probe.DatedContentProviderProbe;
+import edu.mit.media.hd.funf.probe.builtin.ProbeKeys.VideosKeys;
 
-public class VideosProbe extends DatedContentProviderProbe {
+public class VideosProbe extends DatedContentProviderProbe implements VideosKeys {
 
-	public static final String VIDEOS = "VIDEOS";
 	
 	@Override
 	protected Uri getContentProviderUri() {
