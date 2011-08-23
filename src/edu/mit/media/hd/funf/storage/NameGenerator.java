@@ -1,5 +1,7 @@
 package edu.mit.media.hd.funf.storage;
 
+import java.util.Date;
+
 import android.content.Context;
 import edu.mit.media.hd.funf.Utils;
 
@@ -23,6 +25,14 @@ public interface NameGenerator {
 		@Override
 		public String generateName(final String name) {
 			return name == null ? null : Utils.getTimestamp() + "_" + name;
+		}
+	}
+	
+	public static class DatetimeNameGenerator implements NameGenerator {
+		@Override
+		public String generateName(final String name) {
+			String datetime = java.text.DateFormat.getDateTimeInstance().format(new Date());
+			return name == null ? null : datetime + "_" + name;
 		}
 	}
 	

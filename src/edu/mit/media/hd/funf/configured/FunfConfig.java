@@ -203,8 +203,14 @@ public class FunfConfig {
 	}
 
 	public String toJson() throws JSONException {
-		return toJsonObject().toString();
+		return toJson(false);
 	}
+	
+	public String toJson(boolean prettyPrint) throws JSONException {
+		JSONObject jsonObject = toJsonObject();
+		return prettyPrint ? jsonObject.toString(4) : toJsonObject().toString();
+	}
+	
 	JSONObject toJsonObject() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(VERSION_KEY, version);
