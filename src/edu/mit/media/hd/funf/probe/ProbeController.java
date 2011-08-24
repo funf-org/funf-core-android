@@ -76,7 +76,7 @@ public class ProbeController extends Service  {
 	private class ProbeMessageReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(final Context context, final Intent intent) {
-			final String requestingPackage = intent.getStringExtra(OppProbe.ReservedParamaters.REQUESTER.name);
+			final String requestingPackage = intent.getStringExtra(OppProbe.ReservedParamaters.PACKAGE.name);
 			final String action = intent.getAction();
 			Log.i(TAG, "Receiving action " + action);
 			if (requestingPackage == null) {

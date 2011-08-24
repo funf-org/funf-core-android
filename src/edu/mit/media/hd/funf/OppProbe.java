@@ -15,7 +15,7 @@ public class OppProbe {
 	 */
 	// TODO: Should these reserved parameters be scoped to action types?
 	public enum ReservedParamaters {
-		REQUESTER("REQUESTER", "Requester", "The package name for who is requesting data from this probe."),
+		PACKAGE("PACKAGE", "Package", "The package name for who is requesting data from this probe."),
 		REQUEST_ID("REQUEST_ID", "RequestId", "The client chosen identifier for this request."),
 		REQUESTS("REQUESTS", "Requests", "An array of Bundles that represent individual data request for the probes."),
 		NONCE("NONCE", "Nonce", "A randomly generated long that is used to verify the identity of an android package."),
@@ -192,7 +192,7 @@ public class OppProbe {
 	public static final String ACTION_SEPERATOR = ".";
 	public static final String ACTION_POLL = "POLL";
 	public static final String ACTION_STATUS = "STATUS";
-	public static final String ACTION_GET = "GET";
+	public static final String ACTION_REQUEST = "REQUEST";
 	public static final String ACTION_DATA = "DATA";
 	
 	// TODO: make this an OPP namespace
@@ -209,7 +209,7 @@ public class OppProbe {
 		}
 		final String[] dividedAction = action.split(Pattern.quote(ACTION_SEPERATOR));
 		final String oppAction = dividedAction[dividedAction.length - 1];
-		if ( oppAction.equals(ACTION_DATA) || oppAction.equals(ACTION_GET) || oppAction.equals(ACTION_POLL) || oppAction.equals(ACTION_STATUS)) {
+		if ( oppAction.equals(ACTION_DATA) || oppAction.equals(ACTION_REQUEST) || oppAction.equals(ACTION_POLL) || oppAction.equals(ACTION_STATUS)) {
 			return oppAction;
 		} else {
 			return null;
@@ -304,7 +304,7 @@ public class OppProbe {
 	 * @return  OPP Data action for probe with class
 	 */
 	public static String getGetAction(String probeName) {
-		return probeName + ACTION_SEPERATOR + ACTION_GET;
+		return probeName + ACTION_SEPERATOR + ACTION_REQUEST;
 	}
 
 	public static String getGetAction(Class<?> probeClass) {
@@ -312,6 +312,6 @@ public class OppProbe {
 	}
 
 	public static boolean isGetAction(final String action) {
-		return action != null && action.endsWith(ACTION_SEPERATOR + ACTION_GET);
+		return action != null && action.endsWith(ACTION_SEPERATOR + ACTION_REQUEST);
 	}
 }

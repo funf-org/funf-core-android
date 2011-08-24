@@ -28,7 +28,7 @@ public class ProbeCommunicator {
 	
 	public static void requestStatusFromAll(Context context) {
 		Intent i = new Intent(OppProbe.getGlobalPollAction());
-		i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, context.getPackageName());
+		i.putExtra(OppProbe.ReservedParamaters.PACKAGE.name, context.getPackageName());
 		context.sendBroadcast(i);
 	}
 	
@@ -36,7 +36,7 @@ public class ProbeCommunicator {
 		final Intent i = new Intent(OppProbe.getPollAction(probeName));
 		Log.i(TAG, "Sending intent '" + i.getAction() + "'");
 		i.setPackage(context.getPackageName());
-		i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, context.getPackageName());
+		i.putExtra(OppProbe.ReservedParamaters.PACKAGE.name, context.getPackageName());
 		i.putExtra(OppProbe.ReservedParamaters.NONCE.name, includeNonce);
 		context.sendBroadcast(i);
 	}
@@ -112,7 +112,7 @@ public class ProbeCommunicator {
 						final Intent i = new Intent(OppProbe.getGetAction(probeName));
 						Log.i(TAG, "Sending intent '" + i.getAction() + "'");
 						i.setPackage(context.getPackageName());
-						i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, context.getPackageName());
+						i.putExtra(OppProbe.ReservedParamaters.PACKAGE.name, context.getPackageName());
 						if (requestId != null && !"".equals(requestId)) {
 							i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, requestId);
 						}

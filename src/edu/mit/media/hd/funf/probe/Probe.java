@@ -105,7 +105,7 @@ public abstract class Probe extends Service {
 	@Override
 	public final int onStartCommand(Intent intent, int flags, int startId) {
 		Bundle extras = intent.getExtras();
-		String requester = extras.getString(OppProbe.ReservedParamaters.REQUESTER.name);
+		String requester = extras.getString(OppProbe.ReservedParamaters.PACKAGE.name);
 		Log.v(TAG, "Requester: " + String.valueOf(requester));
 		if (requester != null && packageHasRequiredPermissions(requester)) {
 			Log.v(TAG, "Updating requests");
@@ -117,12 +117,12 @@ public abstract class Probe extends Service {
 	
 	private void updateRequests(Intent requestIntent) {
 		Bundle extras = requestIntent.getExtras();
-		String requester = extras.getString(OppProbe.ReservedParamaters.REQUESTER.name);
+		String requester = extras.getString(OppProbe.ReservedParamaters.PACKAGE.name);
 		String requestId = extras.getString(OppProbe.ReservedParamaters.REQUEST_ID.name);
 		requestId = (requestId == null) ? "" : requestId;
 		long nonce = extras.getLong(OppProbe.ReservedParamaters.NONCE.name, -1L);
 		if (redeemNonce(requester, nonce)) {
-			// null REQUESTER is internal (ProbeController does not allow null REQUESTER)
+			// null PACKAGE is internal (ProbeController does not allow null PACKAGE)
 			// TODO: may need to handle default top level bundle parameters
 			Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray(OppProbe.ReservedParamaters.REQUESTS.name));
 			
