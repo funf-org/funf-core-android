@@ -90,6 +90,14 @@ public class OppProbe {
 		public String[] getRequiredFeatures() {
 			return bundle.getStringArray("REQUIRED_FEATURES");
 		}
+		public Parameter getParameter(final String name) {
+			for(Parameter parameter : getParameters()) {
+				if (parameter.getName().equalsIgnoreCase(name)) {
+					return parameter;
+				}
+			}
+			return null;
+		}
 		public Parameter[] getParameters() {
 			ArrayList<Bundle> paramBundles = bundle.getParcelableArrayList("PARAMETERS");
 			List<Parameter> paramList = new ArrayList<Parameter>();
