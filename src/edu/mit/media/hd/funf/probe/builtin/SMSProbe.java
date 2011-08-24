@@ -36,7 +36,7 @@ public class SMSProbe extends DatedContentProviderProbe implements SMSKeys {
 		projectionMap.put(Sms.PERSON_ID, longCell());
 		projectionMap.put(Sms.DATE, longCell());
 		projectionMap.put(Sms.READ, booleanCell());
-		projectionMap.put(Sms.SEEN, booleanCell());
+		//projectionMap.put(Sms.SEEN, booleanCell()); //Not Supported on all devices
 		projectionMap.put(Sms.STATUS, intCell());
 		projectionMap.put(Sms.SUBJECT, hashedStringCell());
 		projectionMap.put(Sms.BODY, hashedStringCell());
@@ -45,7 +45,7 @@ public class SMSProbe extends DatedContentProviderProbe implements SMSKeys {
 		projectionMap.put(Sms.REPLY_PATH_PRESENT, booleanCell());
 		projectionMap.put(Sms.SERVICE_CENTER, stringCell());
 		projectionMap.put(Sms.LOCKED, booleanCell());
-		projectionMap.put(Sms.ERROR_CODE, intCell());  //Not Supported on all devices
+		//projectionMap.put(Sms.ERROR_CODE, intCell());  //Not Supported on all devices
 		//projectionMap.put(Sms.META_DATA, hashedStringCell());  Doesn't exist for some reason
 		return projectionMap;
 	}
