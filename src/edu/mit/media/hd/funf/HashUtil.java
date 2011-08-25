@@ -34,24 +34,22 @@ public class HashUtil {
 	}
 
 	public static String oneWayHashString(String msg) {
-		if ((msg != null) || (msg != "")) {
+		if (msg == null || "".equals(msg)) {
+			Log.e(TAG,"HashUtil:hashString: received a null or empty string!, returning empty string");
+			return "";
+		} else {
 			if (md == null) {
 				try {
 					md = MessageDigest.getInstance("SHA-1");
 				} catch (NoSuchAlgorithmException e) {
 					Log.e(TAG, "HashUtil no SHA alghrithom", e);
+					return "NO SHA";
 				}
 			}
 			byte[] msgDigest = md.digest(msg.getBytes());
 			BigInteger number = new BigInteger(1, msgDigest);
 			return number.toString(16);
-		} else {
-			Log
-					.e(TAG,
-							"HashUtil:hashString: received a null or empty string!, returning empty string");
-			return ("");
 		}
-
 	}
 
 	private static String oneWayHashAndRSA(Context context, String msg) {
