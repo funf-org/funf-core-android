@@ -26,7 +26,7 @@ public class WifiProbeTest extends ProbeTestCase<WifiProbe> {
 	
 	public void testWifiProbe() throws InterruptedException {
 		Bundle params = new Bundle();
-		params.putString(OppProbe.ReservedParamaters.REQUESTER.name, getTestRequester());
+		params.putString(OppProbe.ReservedParamaters.PACKAGE.name, getTestRequester());
 		startProbe(params);
 		Bundle data = getData(10 + FUDGE_FACTOR);
 		ArrayList<Parcelable> scanResults = data.getParcelableArrayList(WifiProbe.SCAN_RESULTS);

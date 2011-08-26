@@ -137,7 +137,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 	
 	protected void startProbe(final Bundle... params) {
 		Intent i = new Intent(getContext(), probeClass);
-		i.putExtra(OppProbe.ReservedParamaters.REQUESTER.name, getTestRequester());
+		i.putExtra(OppProbe.ReservedParamaters.PACKAGE.name, getTestRequester());
 		i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, getTestRequestId());
 		i.putExtra(OppProbe.ReservedParamaters.REQUESTS.name, params);
 		getContext().startService(i);

@@ -20,7 +20,7 @@ public class RunningApplicationsProbeTest extends ProbeTestCase<RunningApplicati
 
 	public void testProbe() {
 		Bundle params = new Bundle();
-		params.putString(OppProbe.ReservedParamaters.REQUESTER.name, getTestRequester());
+		params.putString(OppProbe.ReservedParamaters.PACKAGE.name, getTestRequester());
 		startProbe(params);
 		Bundle data = getData(20);
 		assertNotNull(data.get("RUNNING_TASKS"));
