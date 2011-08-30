@@ -19,35 +19,38 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			Arrays.asList(new Column(COLUMN_NAME, "TEXT"), // ACTION from data broadcast
 					      new Column(COLUMN_TIMESTAMP, "INTEGER"), // TIMESTAMP in data broadcast
 					      new Column(COLUMN_VALUE, "TEXT"))); // JSON representing 
+	public static final String COLUMN_DATABASE_NAME= "dbname";
 	public static final String COLUMN_INSTALLATION = "device";
 	public static final String COLUMN_UUID = "uuid";
 	public static final String COLUMN_CREATED = "created";
 	public static final Table FILE_INFO_TABLE = new Table("file_info", 
-			Arrays.asList(new Column(COLUMN_INSTALLATION, "TEXT"), // Hashed device id
+			Arrays.asList(new Column(COLUMN_DATABASE_NAME, "TEXT"), // Name of this database
+						  new Column(COLUMN_INSTALLATION, "TEXT"), // Universally Unique Id for device installation 
 				      	  new Column(COLUMN_UUID, "TEXT"), // Universally Unique Id for file 
 					      new Column(COLUMN_CREATED, "INTEGER"))); // TIMESTAMP in data broadcast
 	
 	
-	private Context context;
+	private final Context context;
+	private final String databaseName;
 	
 	public DatabaseHelper(Context context, String name, int version) {
 		super(context, name, null, version);
 		this.context = context;
+		this.databaseName = name;
 	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL(DATA_TABLE.getCreateTableSQL());
 		db.execSQL(FILE_INFO_TABLE.getCreateTableSQL());
-		
 		// Insert file identifier information
 		String installationUuid = Utils.getInstallationId(context);
 		String fileUuid = UUID.randomUUID().toString();
 		long createdTime = Utils.getTimestamp();
-		db.execSQL(String.format("insert into %s (%s, %s, %s) values ('%s', '%s', %d)", 
+		db.execSQL(String.format("insert into %s (%s, %s, %s, %s) values ('%s', '%s', '%s', %d)", 
 				FILE_INFO_TABLE.name, 
-				COLUMN_INSTALLATION, COLUMN_UUID, COLUMN_CREATED,
-				installationUuid, fileUuid, createdTime));
+				COLUMN_DATABASE_NAME, COLUMN_INSTALLATION, COLUMN_UUID, COLUMN_CREATED,
+				databaseName, installationUuid, fileUuid, createdTime));
 	}
 
 	@Override
