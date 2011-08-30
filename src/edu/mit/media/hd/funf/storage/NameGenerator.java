@@ -83,7 +83,7 @@ public interface NameGenerator {
 		private final NameGenerator delegate;
 		
 		public SystemUniqueTimestampNameGenerator(Context context) {
-			delegate = new CompositeNameGenerator(new TimestampNameGenerator(), new ConstantNameGenerator(Utils.getDeviceId(context) + "_", ""));		
+			delegate = new CompositeNameGenerator(new TimestampNameGenerator(), new ConstantNameGenerator(Utils.getInstallationId(context) + "_", ""));		
 		}
 		
 		

@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -251,13 +252,16 @@ public final class Utils {
 		}
 	}
 	
-	private static String hashedDeviceId;
-	public static String getDeviceId(Context context) {
-		if (hashedDeviceId == null) {
-			String deviceId = ((TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
-			hashedDeviceId = HashUtil.oneWayHashString(deviceId);
+	public static final String DATABASE_HELPER_PREFS = "edu.mit.media.funf.Utils";
+	public static final String INSTALLATION_UUID_KEY = "INSTALLATION_UUID";
+	public static String getInstallationId(Context context) {
+		SharedPreferences prefs = context.getSharedPreferences(DATABASE_HELPER_PREFS, Context.MODE_PRIVATE);
+		String uuid = prefs.getString(INSTALLATION_UUID_KEY, null);
+		if (uuid == null) {
+			uuid = UUID.randomUUID().toString();
+			prefs.edit().putString(INSTALLATION_UUID_KEY, uuid).commit();
 		}
-		return hashedDeviceId;
+		return uuid;
 	}
 	
 	/**
