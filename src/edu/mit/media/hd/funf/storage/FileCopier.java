@@ -74,26 +74,42 @@ public interface FileCopier {
 	
 	public static class EncryptedFileCopier implements FileCopier {
 		public static final String TAG = EncryptedFileCopier.class.getName();
-		private final byte[] dataKey;
+		private final SecretKey key;
+		private final String algorithm;
 		
-		public EncryptedFileCopier(byte[] dataKey) {
-			assert dataKey != null;
-			this.dataKey = new byte[dataKey.length];
-			System.arraycopy(dataKey, 0, this.dataKey, 0, dataKey.length);
+		public EncryptedFileCopier(SecretKey key) {
+			this(key, "DES");
+		}
+		
+		public EncryptedFileCopier(SecretKey key, String algorithm) {
+			assert key != null && algorithm != null;
+			this.key = key;
+			this.algorithm = algorithm;
+		}
+		
+		private Cipher cipher; // Cache
+		protected Cipher getCipher() {
+			if (cipher == null) {
+				synchronized (this) {
+					if (cipher == null) {
+						try {
+							cipher = Cipher.getInstance(algorithm);     
+							cipher.init(Cipher.ENCRYPT_MODE, key);
+						} catch (Exception e) {
+							Log.e(TAG, "Error creating cipher", e);
+						}
+					}
+				}
+			}
+			return cipher;
 		}
 		
 		@Override
 		public boolean copy(File sourceFile, File destinationFile) {
 			Log.i(TAG, "encrypting + copying " + sourceFile.getPath() + " to " + destinationFile.getPath());
 
-			Cipher ecipher = null;
-			try {
-				DESKeySpec des = new DESKeySpec(dataKey);
-				SecretKey key = SecretKeyFactory.getInstance("DES").generateSecret(des);
-				ecipher = Cipher.getInstance("DES");     
-		        ecipher.init(Cipher.ENCRYPT_MODE, key);
-			} catch (Exception e) {
-				Log.e(TAG, "Error creating cipher", e);
+			Cipher ecipher = getCipher();
+			if (ecipher == null) {
 				return false;
 			}
 	        

@@ -145,27 +145,7 @@ public abstract class DatabaseService extends Service {
 	}
 	
 	protected Archive<File> getArchive(String databaseName) {
-		return getDefaultArchive(this, databaseName, null);
-	}
-	
-	public static String getSdCardPath(Context context) {
-		return "/sdcard/" + context.getPackageName() + "/";
-	}
-	
-	public static Archive<File> getDefaultArchive(Context context, String databaseName, byte[] encryptionKey) {
-		String rootSdCardPath = getSdCardPath(context) + databaseName + "/";
-		Archive<File> backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
-		Archive<File> mainArchive = new CompositeFileArchive(
-				getTimestampedDbFileArchive(new File(rootSdCardPath + "archive"), context, encryptionKey),
-				getTimestampedDbFileArchive(context.getDir("funf_" + databaseName + "_archive", Context.MODE_PRIVATE), context, encryptionKey)
-				);
-		return new BackedUpArchive(mainArchive, backupArchive);
-	}
-	
-	public static FileDirectoryArchive getTimestampedDbFileArchive(File archiveDir, Context context, byte[] encryptionKey) {
-		NameGenerator nameGenerator = new CompositeNameGenerator(new SystemUniqueTimestampNameGenerator(context), new RequiredSuffixNameGenerator(".db"));
-		FileCopier copier = (encryptionKey == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(encryptionKey);
-		return new FileDirectoryArchive(archiveDir, nameGenerator, copier, new DirectoryCleaner.KeepAll());
+		return DefaultArchive.getArchive(this, databaseName);
 	}
 	
 	

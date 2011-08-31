@@ -8,6 +8,7 @@ import java.util.Set;
 import edu.mit.media.hd.funf.AndroidUtils;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.storage.Archive;
+import edu.mit.media.hd.funf.storage.DefaultArchive;
 import edu.mit.media.hd.funf.storage.HttpArchive;
 import edu.mit.media.hd.funf.storage.RemoteArchive;
 import edu.mit.media.hd.funf.storage.RemoteArchiverService;
@@ -20,7 +21,6 @@ public class ConfiguredRemoteArchiverService extends RemoteArchiverService {
 	public static final String TAG = ConfiguredRemoteArchiverService.class.getName();
 	
 	private Map<String, ProbeDatabaseConfig> databases;
-	private byte[] encryptionKey;
 	
 	@Override
 	public void onCreate() {
@@ -30,12 +30,11 @@ public class ConfiguredRemoteArchiverService extends RemoteArchiverService {
 			stopSelf();
 		} else {
 			databases = FunfConfig.getFunfConfig(this).getDatabases();
-			encryptionKey = config.getEncryptionKey();
 		}
 	}
 
 	protected Archive<File> getFileArchive(final String databaseName) {
-		return ConfiguredDatabaseService.getDefaultArchive(this, databaseName, encryptionKey);
+		return DefaultArchive.getArchive(this, databaseName);
 	}
 
 	protected RemoteArchive getRemoteArchiver(final String databaseName) {

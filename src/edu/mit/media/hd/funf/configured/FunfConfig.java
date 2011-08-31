@@ -157,11 +157,6 @@ public class FunfConfig {
 		return new JSONObject(Utils.getValues(bundle));
 	}
 	
-	public byte[] getEncryptionKey() {
-		// TODO: make this configurable
-		return new byte[]{12,34,45,54,27,122,33,45,22,12};
-	}
-	
 	public int getVersion() {
 		return version;
 	}

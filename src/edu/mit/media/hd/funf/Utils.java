@@ -17,6 +17,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.PBEKeySpec;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -252,16 +255,20 @@ public final class Utils {
 		}
 	}
 	
-	public static final String DATABASE_HELPER_PREFS = "edu.mit.media.funf.Utils";
+	public static final String FUNF_UTILS_PREFS = "edu.mit.media.funf.Utils";
 	public static final String INSTALLATION_UUID_KEY = "INSTALLATION_UUID";
 	public static String getInstallationId(Context context) {
-		SharedPreferences prefs = context.getSharedPreferences(DATABASE_HELPER_PREFS, Context.MODE_PRIVATE);
+		SharedPreferences prefs = context.getSharedPreferences(FUNF_UTILS_PREFS, Context.MODE_PRIVATE);
 		String uuid = prefs.getString(INSTALLATION_UUID_KEY, null);
 		if (uuid == null) {
 			uuid = UUID.randomUUID().toString();
 			prefs.edit().putString(INSTALLATION_UUID_KEY, uuid).commit();
 		}
 		return uuid;
+	}
+
+	public static String getSdCardPath(Context context) {
+		return "/sdcard/" + context.getPackageName() + "/";
 	}
 	
 	/**

@@ -7,6 +7,7 @@ import java.util.Map;
 import edu.mit.media.hd.funf.storage.Archive;
 import edu.mit.media.hd.funf.storage.DatabaseHelper;
 import edu.mit.media.hd.funf.storage.DatabaseService;
+import edu.mit.media.hd.funf.storage.DefaultArchive;
 
 /**
  * Database service which uses the FunfConfig available
@@ -32,8 +33,7 @@ public class ConfiguredDatabaseService extends DatabaseService {
 	}
 	
 	protected Archive<File> getArchive(String databaseName) {
-		FunfConfig config = FunfConfig.getFunfConfig(this);
-		return getDefaultArchive(this, databaseName, config.getEncryptionKey());
+		return DefaultArchive.getArchive(this, databaseName);
 	}
 	
 }
