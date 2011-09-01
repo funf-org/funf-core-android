@@ -12,6 +12,7 @@ import javax.crypto.spec.PBEKeySpec;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import edu.mit.media.hd.funf.Base64Coder;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.storage.NameGenerator.CompositeNameGenerator;
 import edu.mit.media.hd.funf.storage.NameGenerator.RequiredSuffixNameGenerator;
@@ -31,13 +32,13 @@ public class DefaultArchive implements Archive<File> {
 	private static final String ENCRYPTION_FORMAT = "ENCRYPTION_FORMAT";
 	private static final String DES_ENCRYPTION = "DES";
 	
-	private static final char[] DEFAULT_PASSWORD = "changeme".toCharArray();
+	private static final char[] DEFAULT_PASSWORD = "youchangeme".toCharArray();
 	
 	private final static byte[] SALT = {
         (byte)0xa6, (byte)0xab, (byte)0x09, (byte)0x93,
         (byte)0xf4, (byte)0xcc, (byte)0xee, (byte)0x10
     };
-	private final static int ITERATION_COUNT = 23; // # of times password is hashed
+	private final static int ITERATION_COUNT = 135; // # of times password is hashed
 	
 	protected final String databaseName;
 	protected final Context context;
@@ -66,12 +67,6 @@ public class DefaultArchive implements Archive<File> {
 		return archive;
 	}
 	
-	static FileDirectoryArchive getTimestampedDbFileArchive(File archiveDir, Context context, SecretKey encryptionKey) {
-		NameGenerator nameGenerator = new CompositeNameGenerator(new SystemUniqueTimestampNameGenerator(context), new RequiredSuffixNameGenerator(".db"));
-		FileCopier copier = (encryptionKey == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(encryptionKey);
-		return new FileDirectoryArchive(archiveDir, nameGenerator, copier, new DirectoryCleaner.KeepAll());
-	}
-	
 	/**
 	 * Set the encryption key using a password.  
 	 * Does not store the password, but instead uses it to derive a DES key to encrypt files.
@@ -80,7 +75,8 @@ public class DefaultArchive implements Archive<File> {
 	public void setEncryptionPassword(char[] encryptionPassword) { // Uses char[] instead of String to prevent caching
 		PBEKeySpec keySpec = new PBEKeySpec(encryptionPassword, SALT, ITERATION_COUNT);
 		try {
-			SecretKey secretKey = SecretKeyFactory.getInstance("PBEWithMD5AndDES").generateSecret(keySpec);
+			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+			SecretKey secretKey = factory.generateSecret(keySpec);
 			saveKey(secretKey);
 		} catch (GeneralSecurityException e) {
 			throw new RuntimeException("Unable to encrypt data files.", e);
@@ -98,15 +94,14 @@ public class DefaultArchive implements Archive<File> {
 	}
 	
 	protected SecretKey getKey() {
-		String desKey = preferences.getString(ENCRYPTION_KEY, null);
-		if (desKey == null) { // Use default password if key set
+		String encodedDesKey = preferences.getString(ENCRYPTION_KEY, null);
+		if (encodedDesKey == null) { // Use default password if key set
 			setEncryptionPassword(DEFAULT_PASSWORD); 
-			desKey = preferences.getString(ENCRYPTION_KEY, null);
+			encodedDesKey = preferences.getString(ENCRYPTION_KEY, null);
 		}
-		assert desKey != null;
-		DESKeySpec des;
+		assert encodedDesKey != null;
 		try {
-			des = new DESKeySpec(desKey.getBytes());
+			DESKeySpec des = new DESKeySpec(Base64Coder.decode(encodedDesKey.toCharArray()));
 			return SecretKeyFactory.getInstance(DES_ENCRYPTION).generateSecret(des);
 		} catch (GeneralSecurityException e) {
 			throw new RuntimeException("Unable to build key for encryption", e);
@@ -115,7 +110,7 @@ public class DefaultArchive implements Archive<File> {
 	
 	private void saveKey(SecretKey secretKey) {
 		SharedPreferences.Editor edit = preferences.edit();
-		edit.putString(ENCRYPTION_KEY, new String(secretKey.getEncoded()));
+		edit.putString(ENCRYPTION_KEY, new String(Base64Coder.encode(secretKey.getEncoded())));
 		edit.putString(ENCRYPTION_FORMAT, secretKey.getFormat()); // Stored just for reference
 		edit.putString(ENCRYPTION_ALGORITHM, secretKey.getAlgorithm()); // Stored just for reference
 		edit.commit();
@@ -145,6 +140,12 @@ public class DefaultArchive implements Archive<File> {
 			}
 		}
 		return delegateArchive;
+	}
+	
+	static FileDirectoryArchive getTimestampedDbFileArchive(File archiveDir, Context context, SecretKey encryptionKey) {
+		NameGenerator nameGenerator = new CompositeNameGenerator(new SystemUniqueTimestampNameGenerator(context), new RequiredSuffixNameGenerator(".db"));
+		FileCopier copier = (encryptionKey == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(encryptionKey);
+		return new FileDirectoryArchive(archiveDir, nameGenerator, copier, new DirectoryCleaner.KeepAll());
 	}
 	
 	@Override
