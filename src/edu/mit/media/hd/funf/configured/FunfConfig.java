@@ -1,5 +1,6 @@
 package edu.mit.media.hd.funf.configured;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -8,120 +9,269 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 /**
- * Immutable class representing configuration of the funf system.
+ * A convenience interface to access a Funf configuration stored in a SharedPreferences.
+ * All data is stored in the SharedPreferences, and all edits follow the same transaction 
+ * model as SharedPreferences. 
  *
  */
-public class FunfConfig {
-	public static final String VERSION_KEY = "version";
-	public static final String CONFIG_URL_KEY = "configUrl";
-	public static final String UPDATE_PERIOD_KEY = "configUpdatePeriod";
-	public static final String ARCHIVE_PERIOD_KEY = "archivePeriod";
-	public static final String REMOTE_ARCHIVE_PERIOD_KEY = "remoteArchivePeriod";
-	public static final String DATABASES_KEY = "databases";
-	public static final String DATA_REQUESTS_KEY = "dataRequests";
+public class FunfConfig implements OnSharedPreferenceChangeListener {
+	private static final String 
+		NAME_KEY = "name",
+		VERSION_KEY = "version",
+		CONFIG_UPDATE_URL_KEY = "configUpdateUrl",
+		CONFIG_UPDATE_PERIOD_KEY = "configUpdatePeriod",
+		DATA_UPLOAD_URL_KEY = "dataUploadUrl",
+		DATA_UPLOAD_PERIOD_KEY = "dataUploadPeriod",
+		DATA_ARCHIVE_PERIOD_KEY = "dataArchivePeriod",
+		DATA_REQUESTS_KEY = "dataRequests";
+	public static final long 
+		DEFAULT_VERSION = 0,
+		DEFAULT_DATA_ARCHIVE_PERIOD = 3 * 60 * 60,  // 3 hours
+		DEFAULT_DATA_UPLOAD_PERIOD = 6 * 60 * 60,  // 6 hours
+		DEFAULT_CONFIG_UPDATE_PERIOD = 1 * 60 * 60; // 1 hour
+	public static final String DEFAULT_DATA_REQUESTS = "{}"; // No requests
 	
-
-	public static final long DEFAULT_ARCHIVE_PERIOD = 3 * 60 * 60;  // 3 hours
-	public static final long DEFAULT_REMOTE_ARCHIVE_PERIOD = 6 * 60 * 60;  // 6 hours
-	static final int DEFAULT_UPDATE_PERIOD = 1 * 60 * 60;
-	// TODO: should we add an application name to the config, so that multiple apps can co-exist?
-	// private final String appName;
-	private final int version;
-	private final String configUrl;
-	private final long updatePeriod, archivePeriod, remoteArchivePeriod;
-	private final Map<String, ProbeDatabaseConfig> databases;
-	private final Map<String,Bundle[]> dataRequests;
 	
-	/**
-	 * @param version
-	 * @param configDownloadUrl
-	 * @param configCheckPeriod in seconds
-	 * @param archivePeriod in seconds
-	 * @param remoteArchivePeriod in seconds
-	 * @param databases
-	 * @param dataRequests
-	 */
-	public FunfConfig(int version, String configDownloadUrl, long configCheckPeriod, long archivePeriod, long remoteArchivePeriod, Map<String, ProbeDatabaseConfig> databases, Map<String,Bundle[]> dataRequests) {
-		this.version = version;
-		this.configUrl = configDownloadUrl;
-		this.updatePeriod = configCheckPeriod;
-		this.archivePeriod = archivePeriod;
-		this.remoteArchivePeriod = remoteArchivePeriod;
-		this.databases = new HashMap<String, ProbeDatabaseConfig>(databases);
-		this.dataRequests = new HashMap<String, Bundle[]>(dataRequests);
+	private final SharedPreferences prefs;
+	
+	public FunfConfig(SharedPreferences prefs) {
+		this.prefs = prefs;
+		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public FunfConfig(String jsonString) throws JSONException {
-		JSONObject jsonObject = new JSONObject(jsonString);
-		version = jsonObject.getInt(VERSION_KEY);
-		configUrl = jsonObject.optString(CONFIG_URL_KEY, null);
-		updatePeriod = jsonObject.optLong(UPDATE_PERIOD_KEY, 0L);
-		archivePeriod = jsonObject.optLong(ARCHIVE_PERIOD_KEY, 0L);
-		remoteArchivePeriod = jsonObject.optLong(REMOTE_ARCHIVE_PERIOD_KEY, 0L);
-		
-		databases = new HashMap<String, ProbeDatabaseConfig>();
-		JSONObject databasesJsonObject = jsonObject.getJSONObject(DATABASES_KEY);
-		Iterator<String> databaseNames = databasesJsonObject.keys();
-		while (databaseNames.hasNext()) {
-			String databaseName = databaseNames.next();
-			databases.put(databaseName, 
-					new ProbeDatabaseConfig(databasesJsonObject.getJSONObject(databaseName)));
+	/*
+	// Commented code originally used to make  FunfConfig unique per name
+	// This responsibility was outsourced to classes using it
+	
+	private static final String CONFIG_PREFIX = "edu.mit.media.funf.Config_";
+	FunfConfig(Context context, String name) {
+		prefs = context.getApplicationContext().getSharedPreferences(CONFIG_PREFIX + name, Context.MODE_PRIVATE);
+		if (getName() == null) {
+			prefs.edit().putString(NAME_KEY, name).commit();
 		}
-		
-		dataRequests = new HashMap<String, Bundle[]>();
-		JSONObject dataRequestsObject = jsonObject.getJSONObject(DATA_REQUESTS_KEY);
-		Iterator<String> probeNames = dataRequestsObject.keys();
-		while (probeNames.hasNext()) {
-			String probeName = probeNames.next();
-			JSONArray requestsJsonArray = dataRequestsObject.getJSONArray(probeName);
-			dataRequests.put(probeName, getBundleArray(requestsJsonArray));
-		}
+		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
 	
-	private static FunfConfig cachedConfig = null;
-	
-	public static boolean setFunfConfig(Context context, FunfConfig funfConfig) {
-		return setFunfConfig(context, context.getPackageName(), funfConfig);
+	FunfConfig(Context context, String name, String jsonString) throws JSONException {
+		this(context, (name == null) ? new JSONObject(jsonString).getString(NAME_KEY) : name);
+		this.edit().setAll(jsonString).commit();
 	}
 	
-	static boolean setFunfConfig(Context context, String appPackage, FunfConfig funfConfig) {
-		try {
-			Log.d(FunfConfig.class.getName(),"Config set");
-			context.getSharedPreferences("FUNF_CONFIG", Context.MODE_PRIVATE).edit().putString(appPackage, funfConfig.toJson()).commit();
-			cachedConfig = null;
-			return true;
-		} catch (JSONException e) {
-			Log.e(FunfConfig.class.getName(),"Malformed configuration!!", e);
-			return false;
-		}
+	public static FunfConfig getConfig(Context context, String name) {
+		return new FunfConfig(context, name);
 	}
 	
-	public static FunfConfig getFunfConfig(Context context) {
-		return getFunfConfig(context, context.getPackageName());
+	public static FunfConfig importConfig(Context context, String configJson) throws JSONException {
+		return new FunfConfig(context, null, configJson);
 	}
 	
-	static FunfConfig getFunfConfig(Context context, String appPackage) {
-		if (cachedConfig == null) {
-			String configJson = context.getSharedPreferences("FUNF_CONFIG", Context.MODE_PRIVATE).getString(appPackage, null);
-			try {
-				if (configJson == null) Log.i(FunfConfig.class.getName(),"Config does not exist");
-				cachedConfig = configJson == null ? null : new FunfConfig(configJson);
-			} catch (JSONException e) {
-				Log.e(FunfConfig.class.getName(),"Malformed configuration!!", e);
-				return null;
+	*/
+	
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		if (sharedPreferences == prefs && DATA_REQUESTS_KEY.equals(key)) {
+			synchronized (this) {
+				dataRequests = null; // remove stale cache
 			}
 		}
-		return cachedConfig;
+	}
+		
+	public String getName() {
+		return prefs.getString(NAME_KEY, null);
+	}
+
+	public long getVersion() {
+		return prefs.getLong(VERSION_KEY, DEFAULT_VERSION);
+	}
+
+	public String getConfigUpdateUrl() {
+		return prefs.getString(CONFIG_UPDATE_URL_KEY, null);
+	}
+
+	public long getConfigUpdatePeriod() {
+		return prefs.getLong(CONFIG_UPDATE_PERIOD_KEY, DEFAULT_CONFIG_UPDATE_PERIOD);
+	}
+
+	public String getDataUploadUrl() {
+		return prefs.getString(DATA_UPLOAD_URL_KEY, null);
+	}
+
+	public long getDataUploadPeriod() {
+		return prefs.getLong(DATA_UPLOAD_PERIOD_KEY, DEFAULT_DATA_UPLOAD_PERIOD);
+	}
+
+	public long getDataArchivePeriod() {
+		return prefs.getLong(DATA_ARCHIVE_PERIOD_KEY, DEFAULT_DATA_ARCHIVE_PERIOD);
+	}
+
+	private Map<String, Bundle[]> dataRequests; // cache
+	/**
+	 * Returns a copy of the data requests that can be modified by the users, 
+	 * without affecting the configuration object.
+	 * @return
+	 */
+	public Map<String, Bundle[]> getDataRequests() {
+		Map<String, Bundle[]> localRequests = dataRequests; // another thread may make member variable null
+		if (localRequests == null) { // Avoid synchronized access if we don't need to
+			synchronized (this) {
+				if (dataRequests == null) {
+					String jsonString = prefs.getString(DATA_REQUESTS_KEY, DEFAULT_DATA_REQUESTS);
+					try {
+						JSONObject jsonObject = new JSONObject(jsonString);
+						dataRequests = Collections.unmodifiableMap(getDataRequestMap(jsonObject));
+					} catch (JSONException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				localRequests = dataRequests;
+			}
+		}
+		return deepCopy(localRequests); // Deep copy so users can modify
 	}
 	
+	private Map<String, Bundle[]> deepCopy(Map<String, Bundle[]> original) {
+		Map<String,Bundle[]> copy = new HashMap<String, Bundle[]>();
+		for (Map.Entry<String, Bundle[]> entry : original.entrySet()) {
+			Bundle[] originalBundleArray = entry.getValue();
+			Bundle[] copyBundleArray = new Bundle[originalBundleArray.length];
+			for (int i=0; i<originalBundleArray.length; i++) {
+				copyBundleArray[i] = new Bundle(originalBundleArray[i]);
+			}
+			copy.put(entry.getKey(), copyBundleArray);
+		}
+		return copy;
+	}
+	
+	public SharedPreferences getPrefs() {
+		return prefs;
+	}
+	
+
+	public Editor edit() {
+		return new Editor();
+	}
+	
+	public class Editor {
+
+		private SharedPreferences.Editor editor;
+		
+		public Editor() {
+			editor = getPrefs().edit();
+		}
+		
+		public Editor setName(String name) {
+			editor.putString(NAME_KEY, name);
+			return this;
+		}
+		
+		public Editor setVersion(int version) {
+			editor.putInt(VERSION_KEY, version);
+			return this;
+		}
+
+		public Editor setConfigUpdateUrl(String configUpdateUrl) {
+			editor.putString(CONFIG_UPDATE_URL_KEY, configUpdateUrl);
+			return this;
+		}
+
+		public Editor setConfigUpdatePeriod(long configUpdatePeriod) {
+			editor.putLong(CONFIG_UPDATE_PERIOD_KEY, configUpdatePeriod);
+			return this;
+		}
+
+		public Editor setDataUploadUrl(long dataUploadUrl) {
+			editor.putLong(DATA_UPLOAD_URL_KEY, dataUploadUrl);
+			return this;
+		}
+
+		public Editor setDataUploadPeriod(long dataUploadPeriod) {
+			editor.putLong(DATA_UPLOAD_PERIOD_KEY, dataUploadPeriod);
+			return this;
+		}
+
+		public Editor setDataArchivePeriod(long dataArchivePeriod) {
+			editor.putLong(DATA_ARCHIVE_PERIOD_KEY, dataArchivePeriod);
+			return this;
+		}
+
+		public Editor setDataRequests(Map<String, Bundle[]> dataRequests) {
+			editor.putString(DATA_REQUESTS_KEY, getDataRequestJsonObject(dataRequests).toString());
+			return this;
+		}
+		
+		
+		private void setString(JSONObject jsonObject, String key) {
+			String value = jsonObject.optString(key, null);
+			if (value == null) {
+				editor.remove(key);
+			} else {
+				editor.putString(key, value);
+			}
+		}
+		
+		private void setPositiveLong(JSONObject jsonObject, String key) {
+			long value = jsonObject.optLong(key, 0L);
+			if (value <= 0) {
+				editor.remove(key);
+			} else {
+				editor.putLong(key, value);
+			}
+		}
+		
+		public Editor setAll(String jsonString) throws JSONException {
+			JSONObject jsonObject = new JSONObject(jsonString);
+			editor.clear();
+			setString(jsonObject, NAME_KEY);
+			setPositiveLong(jsonObject, VERSION_KEY);
+			setString(jsonObject, CONFIG_UPDATE_URL_KEY);
+			setPositiveLong(jsonObject, CONFIG_UPDATE_PERIOD_KEY);
+			setString(jsonObject, DATA_UPLOAD_URL_KEY);
+			setPositiveLong(jsonObject, DATA_UPLOAD_PERIOD_KEY);
+			setPositiveLong(jsonObject, DATA_ARCHIVE_PERIOD_KEY);
+			setString(jsonObject, DATA_REQUESTS_KEY);
+			return this;
+		}
+		
+		public boolean commit() {
+			return editor.commit();
+		}
+	}
+	
+	private static JSONObject getDataRequestJsonObject(Map<String, Bundle[]> dataRequestMap) {
+		JSONObject dataRequestsJson = new JSONObject();
+		try {
+			for (Map.Entry<String, Bundle[]> dataReqest : dataRequestMap.entrySet()) {
+					dataRequestsJson.put(dataReqest.getKey(), toJSONArray(dataReqest.getValue()));
+			}
+		} catch (JSONException e) {
+			throw new RuntimeException(e);
+		}
+		return dataRequestsJson;
+	}
+	
+	private static Map<String, Bundle[]> getDataRequestMap(JSONObject dataRequestsObject) {
+		Map<String, Bundle[]> dataRequestMap = new HashMap<String, Bundle[]>();
+		Iterator<String> probeNames = dataRequestsObject.keys();
+		try {
+			while (probeNames.hasNext()) {
+				String probeName = probeNames.next();
+				JSONArray requestsJsonArray = dataRequestsObject.getJSONArray(probeName);
+				dataRequestMap.put(probeName, getBundleArray(requestsJsonArray));
+			}
+		} catch (JSONException e) {
+			throw new RuntimeException(e);
+		}
+		return dataRequestMap;
+	}
+	
+
 	private static Bundle[] getBundleArray(JSONArray jsonArray) throws JSONException {
 		Bundle[] request = new Bundle[jsonArray.length()];
 		for (int i = 0; i < jsonArray.length(); i++) {
@@ -153,85 +303,51 @@ public class FunfConfig {
 		return requestPart;
 	}
 	
-	private static JSONObject toJSONObject(Bundle bundle) {
-		return new JSONObject(Utils.getValues(bundle));
+	
+	
+	@Override
+	public boolean equals(Object o) {
+		return o != null && o instanceof FunfConfig && prefs == ((FunfConfig)o).prefs; // prefs is singleton
+	}
+
+	@Override
+	public int hashCode() {
+		return prefs.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		try {
+			return toJsonObject().toString();
+		} catch (JSONException e) {
+			// Swallowed to prevent crashes in debugger
+			return super.toString();
+		}
 	}
 	
-	public int getVersion() {
-		return version;
-	}
-
-	public String getConfigUrl() {
-		return configUrl;
-	}
-
-	/**
-	 * Period in which configuration should be update, in seconds.
-	 * @return
-	 */
-	public long getConfigUpdatePeriod() {
-		return updatePeriod == 0L ? DEFAULT_UPDATE_PERIOD : updatePeriod;
+	public String toString(boolean prettyPrint) {
+		try {
+			return prettyPrint ? toJsonObject().toString(4) : toString();
+		} catch (JSONException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
-	/**
-	 * Period in which databases are archived, in seconds;
-	 * @return
-	 */
-	public long getArchivePeriod() {
-		return archivePeriod == 0L ? DEFAULT_ARCHIVE_PERIOD : archivePeriod;
-	}
-	
-	/**
-	 * Period in which databases are remotely archived, in seconds;
-	 * @return
-	 */
-	public long getRemoteArchivePeriod() {
-		return remoteArchivePeriod == 0L ? DEFAULT_REMOTE_ARCHIVE_PERIOD : remoteArchivePeriod;
-	}
-
-	public Map<String, ProbeDatabaseConfig> getDatabases() {
-		return new HashMap<String, ProbeDatabaseConfig>(databases);
-	}
-
-	public Map<String, Bundle[]> getDataRequests() {
-		return new HashMap<String, Bundle[]>(dataRequests);
-	}
-
-	public String toJson() throws JSONException {
-		return toJson(false);
-	}
-	
-	public String toJson(boolean prettyPrint) throws JSONException {
-		JSONObject jsonObject = toJsonObject();
-		return prettyPrint ? jsonObject.toString(4) : toJsonObject().toString();
-	}
 	
 	JSONObject toJsonObject() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
-		jsonObject.put(VERSION_KEY, version);
-		jsonObject.put(CONFIG_URL_KEY, configUrl);
-		if (updatePeriod != 0L) {
-			jsonObject.put(UPDATE_PERIOD_KEY, updatePeriod);
+		for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
+			Object value = entry.getValue();
+			if (DATA_REQUESTS_KEY.equals(entry.getKey())) {
+				value = new JSONObject((String)value);
+			}
+			jsonObject.put(entry.getKey(), value);
 		}
-		if (archivePeriod != 0L) {
-			jsonObject.put(ARCHIVE_PERIOD_KEY, archivePeriod);
-		}
-		if (remoteArchivePeriod != 0L) {
-			jsonObject.put(REMOTE_ARCHIVE_PERIOD_KEY, remoteArchivePeriod);
-		}
-		
-		JSONObject databasesJsonObject = new JSONObject();
-		for (Map.Entry<String, ProbeDatabaseConfig> databaseConfig : databases.entrySet()) {
-			databasesJsonObject.put(databaseConfig.getKey(), databaseConfig.getValue().toJsonObject());
-		}
-		jsonObject.put(DATABASES_KEY, databasesJsonObject);
-		
-		JSONObject dataRequestsJson = new JSONObject();
-		for (Map.Entry<String, Bundle[]> dataReqest : dataRequests.entrySet()) {
-			dataRequestsJson.put(dataReqest.getKey(), toJSONArray(dataReqest.getValue()));
-		}
-		jsonObject.put(DATA_REQUESTS_KEY, dataRequestsJson);
-		
 		return jsonObject;
 	}
+
+	private static JSONObject toJSONObject(Bundle bundle) {
+		return new JSONObject(Utils.getValues(bundle));
+	}
+
 }

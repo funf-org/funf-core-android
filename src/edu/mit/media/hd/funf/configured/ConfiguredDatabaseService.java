@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.mit.media.hd.funf.storage.Archive;
-import edu.mit.media.hd.funf.storage.DatabaseHelper;
+import edu.mit.media.hd.funf.storage.NameValueDatabaseHelper;
 import edu.mit.media.hd.funf.storage.DatabaseService;
 import edu.mit.media.hd.funf.storage.DefaultArchive;
 
@@ -18,15 +18,15 @@ public class ConfiguredDatabaseService extends DatabaseService {
 	public static final String TAG = ConfiguredDatabaseService.class.getName();
 	
 	
-	protected Map<String, DatabaseHelper> getDatabaseHelpers() {
-		Map<String,DatabaseHelper> databaseHelpers = new HashMap<String, DatabaseHelper>();
+	protected Map<String, NameValueDatabaseHelper> getDatabaseHelpers() {
+		Map<String,NameValueDatabaseHelper> databaseHelpers = new HashMap<String, NameValueDatabaseHelper>();
 		FunfConfig config = FunfConfig.getFunfConfig(this);
 		if (config == null) {
 			stopSelf();
 		} else {
 			for (Map.Entry<String,ProbeDatabaseConfig> dbEntry : config.getDatabases().entrySet()) {
 				String dbName = dbEntry.getKey();
-				databaseHelpers.put(dbName, new DatabaseHelper(this, dbName, 1));
+				databaseHelpers.put(dbName, new NameValueDatabaseHelper(this, dbName, 1));
 			}
 		}
 		return databaseHelpers;

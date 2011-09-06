@@ -13,7 +13,7 @@ import android.util.Log;
 import edu.mit.media.hd.funf.OppProbe;
 import edu.mit.media.hd.funf.Utils;
 import edu.mit.media.hd.funf.storage.BundleSerializer;
-import edu.mit.media.hd.funf.storage.ProbeDataListener;
+import edu.mit.media.hd.funf.storage.NameValueProbeDataListener;
 
 /**
  * Reads the database configuration to determine which data streams to save to which databases
@@ -22,7 +22,7 @@ public abstract class ConfiguredDataListenerService extends Service {
 
 	private static final String TAG = ConfiguredDataListenerService.class.getName();
 	
-	private List<ProbeDataListener> dataListeners;
+	private List<NameValueProbeDataListener> dataListeners;
 	
 	@Override
 	public void onCreate() {
@@ -32,7 +32,7 @@ public abstract class ConfiguredDataListenerService extends Service {
 	@Override
 	public void onDestroy() {
 		if (dataListeners != null) {
-			for (ProbeDataListener dataListener : dataListeners) {
+			for (NameValueProbeDataListener dataListener : dataListeners) {
 				unregisterReceiver(dataListener);
 			}
 		}
@@ -43,7 +43,7 @@ public abstract class ConfiguredDataListenerService extends Service {
 		Log.i(TAG, "Start called");
 		if (dataListeners == null) {
 			Log.i(TAG, "Creating data listeners");
-			dataListeners = new ArrayList<ProbeDataListener>();
+			dataListeners = new ArrayList<NameValueProbeDataListener>();
 			FunfConfig config = FunfConfig.getFunfConfig(this);
 			if (config == null) {
 				Log.i(TAG, "No Config");
@@ -54,7 +54,7 @@ public abstract class ConfiguredDataListenerService extends Service {
 					String databaseName = entry.getKey();
 					Log.i(TAG, "Configuring database: " + databaseName);
 					String[] probesToRecord = entry.getValue().getProbesToRecord();
-					ProbeDataListener dataListener = getDataListener(databaseName);
+					NameValueProbeDataListener dataListener = getDataListener(databaseName);
 					IntentFilter filter = new IntentFilter();
 					Log.i(TAG, "Listening for probes: " + Utils.join(Arrays.asList(probesToRecord), ", ") );
 					for (String probe : probesToRecord) {
@@ -67,8 +67,8 @@ public abstract class ConfiguredDataListenerService extends Service {
 		return START_STICKY;
 	}
 	
-	protected ProbeDataListener getDataListener(String databaseName) {
-		return new ProbeDataListener(databaseName, ConfiguredDatabaseService.class, getBundleSerializer());
+	protected NameValueProbeDataListener getDataListener(String databaseName) {
+		return new NameValueProbeDataListener(databaseName, ConfiguredDatabaseService.class, getBundleSerializer());
 	}
 	
 	protected abstract BundleSerializer getBundleSerializer();

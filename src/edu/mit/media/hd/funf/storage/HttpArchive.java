@@ -34,6 +34,10 @@ public class HttpArchive implements RemoteArchive {
 		this.mimeType = mimeType;
 	}
 	
+	public String getId() {
+		return uploadUrl;
+	}
+	
 	public boolean add(File file) {
 		/*
 		HttpClient httpclient = new DefaultHttpClient();

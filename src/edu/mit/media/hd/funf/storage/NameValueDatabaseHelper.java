@@ -10,8 +10,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import edu.mit.media.hd.funf.Utils;
 
-public class DatabaseHelper extends SQLiteOpenHelper {
+public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 
+	public static final int CURRENT_VERSION = 1;
+	
 	public static final String COLUMN_NAME = "name";
 	public static final String COLUMN_TIMESTAMP = "timestamp";
 	public static final String COLUMN_VALUE = "value";
@@ -33,7 +35,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private final Context context;
 	private final String databaseName;
 	
-	public DatabaseHelper(Context context, String name, int version) {
+	public NameValueDatabaseHelper(Context context, String name, int version) {
 		super(context, name, null, version);
 		this.context = context;
 		this.databaseName = name;

@@ -4,18 +4,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import edu.mit.media.hd.funf.OppProbe;
 
-public class ProbeDataListener extends BroadcastReceiver {
-	
-	private static final String TAG = ProbeDataListener.class.getName();
+public class NameValueProbeDataListener extends BroadcastReceiver {
 	
 	private final String databaseName;
 	private final Class<? extends DatabaseService> databaseServiceClass;
 	private final BundleSerializer bundleSerializer;
 	
-	public ProbeDataListener(String databaseName, Class<? extends DatabaseService> databaseServiceClass, BundleSerializer bundleSerializer) {
+	public NameValueProbeDataListener(String databaseName, Class<? extends DatabaseService> databaseServiceClass, BundleSerializer bundleSerializer) {
 		this.databaseName = databaseName;
 		this.databaseServiceClass = databaseServiceClass;
 		this.bundleSerializer = bundleSerializer;
@@ -25,18 +22,17 @@ public class ProbeDataListener extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
 		if (OppProbe.isDataAction(action)) {
-			Log.i(TAG, "Recording data: " + action);
 			String dataJson = bundleSerializer.serialize(intent.getExtras());
 			String probeName = OppProbe.getProbeName(action);
 			long timestamp = intent.getLongExtra("TIMESTAMP", 0L);
 			Bundle b = new Bundle();
-			b.putString(DatabaseService.DATABASE_NAME_KEY, databaseName);
-			b.putLong(DatabaseService.TIMESTAMP_KEY, timestamp);
-			b.putString(DatabaseService.NAME_KEY, probeName);
-			b.putString(DatabaseService.VALUE_KEY, dataJson);
+			b.putString(NameValueDatabaseService.DATABASE_NAME_KEY, databaseName);
+			b.putLong(NameValueDatabaseService.TIMESTAMP_KEY, timestamp);
+			b.putString(NameValueDatabaseService.NAME_KEY, probeName);
+			b.putString(NameValueDatabaseService.VALUE_KEY, dataJson);
 			Intent i = new Intent(context, databaseServiceClass);
+			i.setAction(DatabaseService.ACTION_RECORD);
 			i.putExtras(b);
-			Log.i(TAG, "Starting db service: " + probeName);
 			context.startService(i);
 		}
 	}
