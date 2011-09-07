@@ -42,6 +42,7 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 	private final SharedPreferences prefs;
 	
 	public FunfConfig(SharedPreferences prefs) {
+		assert prefs != null;
 		this.prefs = prefs;
 		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
@@ -307,7 +308,10 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 	
 	@Override
 	public boolean equals(Object o) {
-		return o != null && o instanceof FunfConfig && prefs == ((FunfConfig)o).prefs; // prefs is singleton
+		return o != null 
+		&& o instanceof FunfConfig 
+		&& (prefs == ((FunfConfig)o).prefs // prefs is singleton
+				|| prefs.getAll().equals(((FunfConfig)o).prefs.getAll())); // All internal values are the same
 	}
 
 	@Override
@@ -349,5 +353,7 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 	private static JSONObject toJSONObject(Bundle bundle) {
 		return new JSONObject(Utils.getValues(bundle));
 	}
+	
+	
 
 }
