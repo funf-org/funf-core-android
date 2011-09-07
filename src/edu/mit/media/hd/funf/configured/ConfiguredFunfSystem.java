@@ -12,6 +12,7 @@ import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -112,9 +113,9 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 		} else if(action.equals(ACTION_ARCHIVE_DATA)) {
 			archiveData();
 		} else if(action.equals(ACTION_ENABLE)) {
-			enable();
+			setEnabled(true);
 		} else if(action.equals(ACTION_DISABLE)) {
-			disable();
+			setEnabled(false);
 		}
 	}
 
@@ -298,12 +299,12 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 		startService(i);
 	}
 	
-	public void enable() {
-		getSystemPrefs().edit().putBoolean(ENABLED_KEY, true).commit();
+	public boolean isEnabled() {
+		return getSystemPrefs().getBoolean(ENABLED_KEY, true);
 	}
-
-	public void disable() {
-		getSystemPrefs().edit().putBoolean(ENABLED_KEY, false).commit();
+	
+	public boolean setEnabled(boolean enabled) {
+		return getSystemPrefs().edit().putBoolean(ENABLED_KEY, enabled).commit();
 	}
 	
 	public Class<? extends DatabaseService> getDatabaseServiceClass() {
@@ -326,7 +327,11 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	}
 	
 	public FunfConfig getConfig() {
-		SharedPreferences prefs = getSharedPreferences(getClass().getName() + "_config", MODE_PRIVATE);
+		return getConfig(this, getClass().getName() + "_config");
+	}
+	
+	protected static FunfConfig getConfig(Context context, String name) {
+		SharedPreferences prefs = context.getSharedPreferences(name, MODE_PRIVATE);
 		return new FunfConfig(prefs);
 	}
 	

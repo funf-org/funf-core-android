@@ -201,7 +201,7 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 			editor.putLong(DATA_ARCHIVE_PERIOD_KEY, dataArchivePeriod);
 			return this;
 		}
-
+		
 		public Editor setDataRequests(Map<String, Bundle[]> dataRequests) {
 			editor.putString(DATA_REQUESTS_KEY, getDataRequestJsonObject(dataRequests).toString());
 			return this;
@@ -237,6 +237,13 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 			setPositiveLong(jsonObject, DATA_UPLOAD_PERIOD_KEY);
 			setPositiveLong(jsonObject, DATA_ARCHIVE_PERIOD_KEY);
 			setString(jsonObject, DATA_REQUESTS_KEY);
+			return this;
+		}
+		
+		public Editor setAll(FunfConfig otherConfig) {
+			for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
+				Utils.putInPrefs(editor, entry.getKey(), entry.getValue());
+			}
 			return this;
 		}
 		
