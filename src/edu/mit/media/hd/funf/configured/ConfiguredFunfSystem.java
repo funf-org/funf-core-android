@@ -286,6 +286,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	}
 	
 	public void uploadData() {
+		archiveData();
 		String archiveName = getConfig().getName();
 		String uploadUrl = getConfig().getDataUploadUrl();
 		Intent i = new Intent(this, getUploadServiceClass());

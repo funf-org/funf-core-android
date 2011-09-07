@@ -241,7 +241,8 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 		}
 		
 		public Editor setAll(FunfConfig otherConfig) {
-			for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
+			editor.clear();
+			for (Map.Entry<String, ?> entry : otherConfig.getPrefs().getAll().entrySet()) {
 				Utils.putInPrefs(editor, entry.getKey(), entry.getValue());
 			}
 			return this;
