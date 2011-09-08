@@ -34,6 +34,7 @@ import edu.mit.media.hd.funf.probe.Probe;
 import edu.mit.media.hd.funf.probe.ProbeUtils;
 import edu.mit.media.hd.funf.storage.BundleSerializer;
 import edu.mit.media.hd.funf.storage.DatabaseService;
+import edu.mit.media.hd.funf.storage.DefaultArchive;
 import edu.mit.media.hd.funf.storage.HttpUploadService;
 import edu.mit.media.hd.funf.storage.NameValueDatabaseService;
 import edu.mit.media.hd.funf.storage.NameValueProbeDataListener;
@@ -56,7 +57,6 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	CONFIG = "config",
 	CONFIG_URL = "config_url",
 	CONFIG_FILE = "config_file";
-
 
 	private Map<String, Bundle[]> sentProbeRequests = null;
 	private NameValueProbeDataListener dataListener;
@@ -136,13 +136,9 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 				cancelAlarm(ACTION_ARCHIVE_DATA);
 			} else if (FunfConfig.DATA_UPLOAD_PERIOD_KEY.equals(key)) {
 				cancelAlarm(ACTION_UPLOAD_DATA);
-			} 
+			}
 			scheduleAlarms();
-			// TODO: need to elegantly handle name changes
-			// How do we keep track of unregistering all of the old probes?  When do we do it?
-			//else if (FunfConfig.NAME_KEY.equals(key)) {
-			//	reload();
-			//}
+			
 		} else if (sharedPreferences.equals(getSystemPrefs()) && ENABLED_KEY.equals(key)) {
 			reload();
 		}
@@ -181,6 +177,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 			AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
 			long delayInMilliseconds = Utils.secondsToMillis(delayInSeconds);
 			long startTimeInMilliseconds = System.currentTimeMillis() + delayInMilliseconds;
+			Log.i(TAG, "Scheduling alarm for '" + action + "' at " + Utils.millisToSeconds(startTimeInMilliseconds) + " and every " + delayInSeconds  + " seconds");
 			// Inexact repeating doesn't work unlesss interval is 15, 30 min, or 1, 6, or 24 hours
 			alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, startTimeInMilliseconds, delayInMilliseconds, pi);
 		}
@@ -208,6 +205,9 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 		sendProbeRequests(false);
 	}
 	
+	public void setEncryptionPassword(char[] password) {
+		DefaultArchive.getArchive(this, getPipelineName()).setEncryptionPassword(password);
+	}
 	
 	/**
 	 * By default only sends probe requests that are different than the last probe requests.
@@ -222,7 +222,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 		Set<String> allRequests = new HashSet<String>();
 		allRequests.addAll(configuredDataRequests.keySet());
 		allRequests.addAll(sentProbeRequests.keySet());
-		String requestId = getConfig().getName();
+		String requestId = getPipelineName();
 		int updateCount = 0;
 		for (String probeName : allRequests) {
 			Bundle[] oldRequest = sentProbeRequests.get(probeName);
@@ -244,11 +244,16 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	private void removeProbeRequests() {
 		// TODO: Use a more general approach to remove data registration in all probes in all packages
 		Log.w(TAG, "Only removing requests for probes that are registered in this package.");
-		String requestId = getConfig().getName();
+		String requestId = getPipelineName();
 		for (Class<? extends Probe> probeClass : ProbeUtils.getAvailableProbeClasses(this)) {
 			ProbeCommunicator probe = new ProbeCommunicator(this, probeClass);
 			probe.unregisterDataRequest(requestId);
 		}
+	}
+	
+	public static final String DEFAULT_PIPELINE_NAME = "mainPipeline";
+	public String getPipelineName() {
+		return DEFAULT_PIPELINE_NAME;
 	}
 	
 	private synchronized void registerListeners() {
@@ -259,7 +264,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 				Log.i(TAG, "No Config");
 				return;
 			}
-			dataListener = new NameValueProbeDataListener(config.getName(), getDatabaseServiceClass(), getBundleSerializer());
+			dataListener = new NameValueProbeDataListener(getPipelineName(), getDatabaseServiceClass(), getBundleSerializer());
 			Set<String> probes = config.getDataRequests().keySet();
 			IntentFilter filter = new IntentFilter();
 			for (String probe : probes) {
@@ -314,7 +319,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 			FunfConfig tempConfig = getTemporaryConfig();
 			boolean successfullyWroteConfig = tempConfig.edit().setAll(jsonString).commit();
 			if (successfullyWroteConfig	&& !tempConfig.equals(getConfig())) {
-				getConfig().edit().setAll(jsonString).commit();
+				getConfig().edit().setAll(tempConfig).commit();
 			}
 		} catch (JSONException e) {
 			Log.e(TAG, "Unable to update configuration.", e);
@@ -332,7 +337,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	
 	public void uploadData() {
 		archiveData();
-		String archiveName = getConfig().getName();
+		String archiveName = getPipelineName();
 		String uploadUrl = getConfig().getDataUploadUrl();
 		Intent i = new Intent(this, getUploadServiceClass());
 		i.putExtra(UploadService.ARCHIVE_ID, archiveName);
@@ -362,7 +367,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	}
 	
 	public BroadcastReceiver getProbeDataListener() {
-		return new NameValueProbeDataListener(getConfig().getName(), getDatabaseServiceClass(), getBundleSerializer());
+		return new NameValueProbeDataListener(getPipelineName(), getDatabaseServiceClass(), getBundleSerializer());
 	}
 	
 	// TODO: enable json serialization of bundles to eliminate the need for this class to be abstract
