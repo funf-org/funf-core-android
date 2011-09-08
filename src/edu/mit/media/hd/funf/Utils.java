@@ -15,10 +15,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-
-import javax.crypto.Cipher;
-import javax.crypto.spec.PBEKeySpec;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -26,7 +24,6 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.PowerManager;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 

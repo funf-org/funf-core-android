@@ -3,8 +3,10 @@ package edu.mit.media.hd.funf.configured;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import org.json.JSONException;
 
@@ -22,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import edu.mit.media.hd.funf.EqualsUtil;
 import edu.mit.media.hd.funf.FileUtils;
 import edu.mit.media.hd.funf.IOUtils;
 import edu.mit.media.hd.funf.OppProbe;
@@ -54,6 +57,8 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	CONFIG_URL = "config_url",
 	CONFIG_FILE = "config_file";
 
+
+	private Map<String, Bundle[]> sentProbeRequests = null;
 	private NameValueProbeDataListener dataListener;
 	private Handler handler;
 
@@ -123,8 +128,24 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	public void onSharedPreferenceChanged (SharedPreferences sharedPreferences, String key) {
 		if (sharedPreferences.equals(getConfig().getPrefs())) {
 			onConfigChange(getConfig().toString(true));
+			if (FunfConfig.DATA_REQUESTS_KEY.equals(key)) {
+				sendProbeRequests(false);
+			} else if (FunfConfig.CONFIG_UPDATE_PERIOD_KEY.equals(key)) {
+				cancelAlarm(ACTION_UPDATE_CONFIG);
+			} else if (FunfConfig.DATA_ARCHIVE_PERIOD_KEY.equals(key)) {
+				cancelAlarm(ACTION_ARCHIVE_DATA);
+			} else if (FunfConfig.DATA_UPLOAD_PERIOD_KEY.equals(key)) {
+				cancelAlarm(ACTION_UPLOAD_DATA);
+			} 
+			scheduleAlarms();
+			// TODO: need to elegantly handle name changes
+			// How do we keep track of unregistering all of the old probes?  When do we do it?
+			//else if (FunfConfig.NAME_KEY.equals(key)) {
+			//	reload();
+			//}
+		} else if (sharedPreferences.equals(getSystemPrefs()) && ENABLED_KEY.equals(key)) {
+			reload();
 		}
-		reload();
 	}
 	
 	public void reload() {
@@ -132,6 +153,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 		cancelAlarms();
 		unregisterListeners();
 		removeProbeRequests();
+		sentProbeRequests = null;
 		if (enabled) {
 			// Schedule this for the future to prevent race conditions
 			handler.postDelayed(new Runnable() {
@@ -183,17 +205,40 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	public void ensureServicesAreRunning() {
 		scheduleAlarms();
 		registerListeners();
-		sendProbeRequests();
+		sendProbeRequests(false);
 	}
 	
-	private void sendProbeRequests() {
-		String requestId = getConfig().getName();
-		for (Entry<String, Bundle[]> entry : getConfig().getDataRequests().entrySet()) {
-			String probeName = entry.getKey();
-			Bundle[] probeRequests = entry.getValue();
-			ProbeCommunicator probe = new ProbeCommunicator(this, probeName);
-			probe.registerDataRequest(requestId, probeRequests);
+	
+	/**
+	 * By default only sends probe requests that are different than the last probe requests.
+	 * If the send all flag is specified then all will be sent.
+	 */
+	private void sendProbeRequests(boolean sendAll) {
+		if (sentProbeRequests == null) {
+			sendAll = true;
+			sentProbeRequests = new HashMap<String, Bundle[]>();
 		}
+		Map<String,Bundle[]> configuredDataRequests = getConfig().getDataRequests();
+		Set<String> allRequests = new HashSet<String>();
+		allRequests.addAll(configuredDataRequests.keySet());
+		allRequests.addAll(sentProbeRequests.keySet());
+		String requestId = getConfig().getName();
+		int updateCount = 0;
+		for (String probeName : allRequests) {
+			Bundle[] oldRequest = sentProbeRequests.get(probeName);
+			Bundle[] newRequest = configuredDataRequests.get(probeName);
+			if(sendAll || !EqualsUtil.areEqual(oldRequest, newRequest)) {
+				updateCount++;
+				ProbeCommunicator probe = new ProbeCommunicator(this, probeName);
+				if (newRequest == null) {
+					probe.unregisterDataRequest(requestId);
+				} else {
+					probe.registerDataRequest(requestId, newRequest);
+				}
+			}
+		}
+		Log.i(TAG, "Sent update requests for " + updateCount + " probes.");
+		sentProbeRequests = getConfig().getDataRequests();
 	}
 	
 	private void removeProbeRequests() {

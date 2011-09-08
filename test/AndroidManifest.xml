@@ -46,9 +46,6 @@
         <service android:name="edu.mit.media.hd.funf.probe.builtin.RotationVectorSensorProbe"></service>
         <service android:name="edu.mit.media.hd.funf.probe.builtin.TemperatureSensorProbe"></service>
         
-        <service android:name="edu.mit.media.hd.funf.configured.ConfiguredDatabaseService"></service>
-        <service android:name="edu.mit.media.hd.funf.configured.ConfiguredArchiverService"></service>
-        <service android:name="edu.mit.media.hd.funf.configured.ConfiguredRemoteArchiverService"></service>
     </application>
     
     <!-- All probes -->

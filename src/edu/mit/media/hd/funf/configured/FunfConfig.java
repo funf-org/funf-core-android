@@ -22,7 +22,7 @@ import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
  *
  */
 public class FunfConfig implements OnSharedPreferenceChangeListener {
-	private static final String 
+	public static final String 
 		NAME_KEY = "name",
 		VERSION_KEY = "version",
 		CONFIG_UPDATE_URL_KEY = "configUpdateUrl",
@@ -203,7 +203,9 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 		}
 		
 		public Editor setDataRequests(Map<String, Bundle[]> dataRequests) {
-			editor.putString(DATA_REQUESTS_KEY, getDataRequestJsonObject(dataRequests).toString());
+			if (!getDataRequests().equals(dataRequests)) { // Don't reset all data requests unless it is necessary
+				editor.putString(DATA_REQUESTS_KEY, getDataRequestJsonObject(dataRequests).toString());
+			}
 			return this;
 		}
 		
