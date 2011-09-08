@@ -77,23 +77,41 @@ public abstract class ContentProviderProbe extends Probe {
 		stopSelf();
 	}
 
+	private static final long THROTTLE_SLEEP_MILLIS = 50;
+	private void throttle() {
+		try {
+			Thread.sleep(THROTTLE_SLEEP_MILLIS);
+		} catch (InterruptedException e) {
+			Log.e(TAG, "Throttled thread interrupted.", e);
+		}
+	}
 	@Override
 	public void sendProbeData() {
+		// TODO: make this always run on separate thread
 		if (mostRecentScan != null ) {
 			if (sendEachRowSeparately()) {
 				for (Bundle data : mostRecentScan) {
 					if (data != null) {
 						sendProbeData(getTimestamp(data), new Bundle(), data);
+						throttle();
 					}
 				}
 			} else {
-				Bundle data = new Bundle();
 				ArrayList<Bundle> results = new ArrayList<Bundle>();
+				
 				for (Bundle item : mostRecentScan) {
 					if (item != null) {
 						results.add(item);
+						throttle();
+					}
+					if (results.size() >= 100) {
+						Bundle data = new Bundle();
+						data.putParcelableArrayList(getDataName(), results);
+						sendProbeData(getTimestamp(results), new Bundle(), data);
+						results = new ArrayList<Bundle>();
 					}
 				}
+				Bundle data = new Bundle();
 				data.putParcelableArrayList(getDataName(), results);
 				sendProbeData(getTimestamp(results), new Bundle(), data);
 			}

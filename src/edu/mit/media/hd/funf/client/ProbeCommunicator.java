@@ -111,7 +111,7 @@ public class ProbeCommunicator {
 						}
 						final Intent i = new Intent(OppProbe.getGetAction(probeName));
 						Log.i(TAG, "Sending intent '" + i.getAction() + "'");
-						i.setPackage(context.getPackageName());
+						i.setPackage(context.getPackageName()); // Send only to this app for right now
 						i.putExtra(OppProbe.ReservedParamaters.PACKAGE.name, context.getPackageName());
 						if (requestId != null && !"".equals(requestId)) {
 							i.putExtra(OppProbe.ReservedParamaters.REQUEST_ID.name, requestId);

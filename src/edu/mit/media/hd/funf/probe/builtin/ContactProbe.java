@@ -323,7 +323,7 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys {
 
 	@Override
 	protected boolean sendEachRowSeparately() {
-		return true;
+		return false;
 	}
 
 

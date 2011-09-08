@@ -218,27 +218,48 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 			sendAll = true;
 			sentProbeRequests = new HashMap<String, Bundle[]>();
 		}
-		Map<String,Bundle[]> configuredDataRequests = getConfig().getDataRequests();
-		Set<String> allRequests = new HashSet<String>();
+		final Map<String,Bundle[]> configuredDataRequests = getConfig().getDataRequests();
+		final Set<String> allRequests = new HashSet<String>();
 		allRequests.addAll(configuredDataRequests.keySet());
 		allRequests.addAll(sentProbeRequests.keySet());
-		String requestId = getPipelineName();
-		int updateCount = 0;
-		for (String probeName : allRequests) {
-			Bundle[] oldRequest = sentProbeRequests.get(probeName);
-			Bundle[] newRequest = configuredDataRequests.get(probeName);
-			if(sendAll || !EqualsUtil.areEqual(oldRequest, newRequest)) {
-				updateCount++;
-				ProbeCommunicator probe = new ProbeCommunicator(this, probeName);
-				if (newRequest == null) {
-					probe.unregisterDataRequest(requestId);
-				} else {
-					probe.registerDataRequest(requestId, newRequest);
+		final String requestId = getPipelineName();
+		final boolean shouldSendAll = sendAll;
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				synchronized (sentProbeRequests) {
+				Map<String, Bundle[]> localSentProbeRequests = sentProbeRequests;
+				int updateCount = 0;
+				for (String probeName : allRequests) {
+					if (sentProbeRequests != localSentProbeRequests) {
+						// Another thread has reloaded the probe
+						return;
+					}
+					Bundle[] oldRequest = localSentProbeRequests.get(probeName);
+					Bundle[] newRequest = configuredDataRequests.get(probeName);
+					if(shouldSendAll || !EqualsUtil.areEqual(oldRequest, newRequest)) {
+						updateCount++;
+						ProbeCommunicator probe = new ProbeCommunicator(ConfiguredFunfSystem.this, probeName);
+						if (newRequest == null) {
+							probe.unregisterDataRequest(requestId);
+						} else {
+							probe.registerDataRequest(requestId, newRequest);
+						}
+						
+						// Throttled to prevent binder exceptions
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							Log.e(TAG, "Throttle interrupted", e);
+						}
+					}
+				}
+				Log.i(TAG, "Sent update requests for " + updateCount + " probes.");
+				sentProbeRequests.clear();
+				sentProbeRequests.putAll(getConfig().getDataRequests());
 				}
 			}
-		}
-		Log.i(TAG, "Sent update requests for " + updateCount + " probes.");
-		sentProbeRequests = getConfig().getDataRequests();
+		}).start();
 	}
 	
 	private void removeProbeRequests() {

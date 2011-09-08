@@ -26,7 +26,7 @@ public abstract class ProbeCommandServiceConnection implements ServiceConnection
 	private Context context;
 	private Probe probe;
 	private boolean hasRun;
-	
+	private Thread thread;
 	
 	public ProbeCommandServiceConnection(Context context, Class<? extends Probe> probeClass) {
 		this.context = context;
@@ -42,8 +42,14 @@ public abstract class ProbeCommandServiceConnection implements ServiceConnection
 		Log.v(TAG, "Binding: " + className);
         probe = ((Probe.LocalBinder)service).getService();
         if (probe != null) {
-        	runCommand();
-        	hasRun = true;
+        	thread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+		        	runCommand();
+		        	hasRun = true;
+				}
+			});
+        	thread.start();
         }
         context.unbindService(this);
     }

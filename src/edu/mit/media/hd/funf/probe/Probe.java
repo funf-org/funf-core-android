@@ -276,6 +276,7 @@ public abstract class Probe extends Service {
 	}
 	
 	private void removeInvalidNonces() {
+		synchronized (nonces) {
 		List<Nonce> noncesToRemove = new ArrayList<Nonce>();
 		for (Nonce oldNonce : nonces) {
 			if(!oldNonce.isValid()) {
@@ -283,6 +284,7 @@ public abstract class Probe extends Service {
 			}
 		}
 		nonces.removeAll(noncesToRemove);
+		}
 	}
 	
 
@@ -610,10 +612,12 @@ public abstract class Probe extends Service {
 	 * @return long value of the nonce
 	 */
 	protected long createNonce(String requester) {
-		removeInvalidNonces();
-		Nonce nonce = new Nonce(requester);
-		nonces.add(nonce);
-		return nonce.value;
+		synchronized (nonces) {
+			removeInvalidNonces();
+			Nonce nonce = new Nonce(requester);
+			nonces.add(nonce);
+			return nonce.value;
+		}
 	}
 	
 	/**
@@ -622,6 +626,7 @@ public abstract class Probe extends Service {
 	 * @return true if valid nonce, false otherwise
 	 */
 	protected boolean redeemNonce(String requester, long nonce) {
+		synchronized (nonces) {
 		removeInvalidNonces();
 		Nonce redeemedNonce = null;
 		for (Nonce existingNonce : nonces) {
@@ -631,7 +636,8 @@ public abstract class Probe extends Service {
 			}
 		}
 		nonces.remove(redeemedNonce);
-		return nonces != null;
+		return redeemedNonce != null;
+		}
 	}
 	
 
