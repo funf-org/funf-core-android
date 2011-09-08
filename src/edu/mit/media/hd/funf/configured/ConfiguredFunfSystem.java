@@ -218,16 +218,16 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 			sendAll = true;
 			sentProbeRequests = new HashMap<String, Bundle[]>();
 		}
-		final Map<String,Bundle[]> configuredDataRequests = getConfig().getDataRequests();
-		final Set<String> allRequests = new HashSet<String>();
-		allRequests.addAll(configuredDataRequests.keySet());
-		allRequests.addAll(sentProbeRequests.keySet());
-		final String requestId = getPipelineName();
 		final boolean shouldSendAll = sendAll;
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				synchronized (sentProbeRequests) {
+				final Map<String,Bundle[]> configuredDataRequests = getConfig().getDataRequests();
+				final Set<String> allRequests = new HashSet<String>();
+				allRequests.addAll(configuredDataRequests.keySet());
+				allRequests.addAll(sentProbeRequests.keySet());
+				final String requestId = getPipelineName();
 				Map<String, Bundle[]> localSentProbeRequests = sentProbeRequests;
 				int updateCount = 0;
 				for (String probeName : allRequests) {
