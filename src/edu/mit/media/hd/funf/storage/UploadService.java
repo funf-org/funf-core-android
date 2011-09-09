@@ -39,6 +39,7 @@ public abstract class UploadService extends Service {
 		Log.i(TAG, "Creating...");
 		lock = Utils.getWakeLock(this);
 		fileFailures = new HashMap<String, Integer>();
+		remoteArchiveFailures = new HashMap<String, Integer>();
 		filesToUpload = new ConcurrentLinkedQueue<ArchiveFile>();
 		// TODO: consider and add multiple upload threads
 		uploadThread = new Thread(new Runnable() {

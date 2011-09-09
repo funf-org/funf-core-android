@@ -43,8 +43,10 @@ public abstract class DatabaseService extends IntentService {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		for (SQLiteOpenHelper dbHelper : databaseHelpers.values()) {
-			dbHelper.close();
+		if (databaseHelpers != null) {
+			for (SQLiteOpenHelper dbHelper : databaseHelpers.values()) {
+				dbHelper.close();
+			}
 		}
 		Log.i(TAG, "Destroyed");
 	}

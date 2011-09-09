@@ -187,8 +187,8 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 			return this;
 		}
 
-		public Editor setDataUploadUrl(long dataUploadUrl) {
-			editor.putLong(DATA_UPLOAD_URL_KEY, dataUploadUrl);
+		public Editor setDataUploadUrl(String dataUploadUrl) {
+			editor.putString(DATA_UPLOAD_URL_KEY, dataUploadUrl);
 			return this;
 		}
 

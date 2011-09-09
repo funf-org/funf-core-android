@@ -363,11 +363,13 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 		Intent i = new Intent(this, getUploadServiceClass());
 		i.putExtra(UploadService.ARCHIVE_ID, archiveName);
 		i.putExtra(UploadService.REMOTE_ARCHIVE_ID, uploadUrl);
+		startService(i);
 	}
 	
 	public void archiveData() {
 		Intent i = new Intent(this, getDatabaseServiceClass());
 		i.setAction(DatabaseService.ACTION_ARCHIVE);
+		i.putExtra(DatabaseService.DATABASE_NAME_KEY, getPipelineName());
 		startService(i);
 	}
 	
