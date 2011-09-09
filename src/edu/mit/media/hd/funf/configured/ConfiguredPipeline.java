@@ -40,7 +40,7 @@ import edu.mit.media.hd.funf.storage.NameValueDatabaseService;
 import edu.mit.media.hd.funf.storage.NameValueProbeDataListener;
 import edu.mit.media.hd.funf.storage.UploadService;
 
-public abstract class ConfiguredFunfSystem extends IntentService implements OnSharedPreferenceChangeListener {
+public abstract class ConfiguredPipeline extends IntentService implements OnSharedPreferenceChangeListener {
 
 	private static final String TAG = "Funf";
 	
@@ -62,8 +62,8 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	private NameValueProbeDataListener dataListener;
 	private Handler handler;
 
-	public ConfiguredFunfSystem() {
-		super("ConfiguredFunfSystem");
+	public ConfiguredPipeline() {
+		super("ConfiguredPipeline");
 		setIntentRedelivery(true);
 	}
 
@@ -246,7 +246,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 					Bundle[] newRequest = configuredDataRequests.get(probeName);
 					if(shouldSendAll || !EqualsUtil.areEqual(oldRequest, newRequest)) {
 						updateCount++;
-						ProbeCommunicator probe = new ProbeCommunicator(ConfiguredFunfSystem.this, probeName);
+						ProbeCommunicator probe = new ProbeCommunicator(ConfiguredPipeline.this, probeName);
 						if (newRequest == null) {
 							probe.unregisterDataRequest(requestId);
 						} else {
@@ -429,8 +429,8 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	 * Binder interface to the probe
 	 */
 	public class LocalBinder extends Binder {
-		public ConfiguredFunfSystem getService() {
-            return ConfiguredFunfSystem.this;
+		public ConfiguredPipeline getService() {
+            return ConfiguredPipeline.this;
         }
     }
 	private final IBinder mBinder = new LocalBinder();
