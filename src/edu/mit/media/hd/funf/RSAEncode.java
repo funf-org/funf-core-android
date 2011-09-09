@@ -20,11 +20,11 @@ import javax.crypto.Cipher;
 
 import android.content.Context;
 import android.util.Log;
-
+import static edu.mit.media.hd.funf.Utils.TAG;
 
 
 public class RSAEncode {
-	private static final String TAG = "funf_RSA";
+	
 	private static Cipher cipher = null;
 	private static void genCipher(Context context, int publicKey) {
 		Log.i(TAG, "generate new cipher");

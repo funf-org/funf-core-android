@@ -20,11 +20,11 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.util.Log;
+import static edu.mit.media.hd.funf.Utils.TAG;
 
 public class HashUtil {
 
 	private static MessageDigest md;
-	private static final String TAG = "FNF";
 
 	private HashUtil() {
 	}
@@ -35,7 +35,6 @@ public class HashUtil {
 
 	public static String oneWayHashString(String msg) {
 		if (msg == null || "".equals(msg)) {
-			Log.e(TAG,"HashUtil:hashString: received a null or empty string!, returning empty string");
 			return "";
 		} else {
 			if (md == null) {
@@ -64,7 +63,7 @@ public class HashUtil {
 			// Log.v(TAG, "oneWayHashAndRSA, jsonEncMsg: " + jsonEncMsg);
 			return jsonEncMsg.toString();
 		} catch (JSONException e) {
-			Log.e(TAG + " oneWayHashAndRSA: json error:", e.getMessage());
+			Log.e(TAG, "oneWayHashAndRSA: json error:", e);
 			return "JSON ERROR!";
 		}
 	}
@@ -81,7 +80,7 @@ public class HashUtil {
 				return (new JSONObject()).put(HashingType.ONE_WAY_HASH.name(),
 						oneWayHashString(msg)).toString();
 			} catch (JSONException e) {
-				Log.e(TAG + " hashString: json error:", e.getMessage());
+				Log.e(TAG, "hashString: json error:", e);
 				return "JSON ERROR!";
 			}
 		} else if (hashingType == HashingType.INTERMEDIATE_HASH_ENC) {

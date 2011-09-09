@@ -39,10 +39,10 @@ import edu.mit.media.hd.funf.storage.HttpUploadService;
 import edu.mit.media.hd.funf.storage.NameValueDatabaseService;
 import edu.mit.media.hd.funf.storage.NameValueProbeDataListener;
 import edu.mit.media.hd.funf.storage.UploadService;
+import static edu.mit.media.hd.funf.Utils.TAG;
 
 public abstract class ConfiguredPipeline extends IntentService implements OnSharedPreferenceChangeListener {
 
-	private static final String TAG = "Funf";
 	
 	private static final String PREFIX = "edu.mit.media.funf.";
 	public static final String

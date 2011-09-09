@@ -14,9 +14,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpParams;
 
 import android.util.Log;
+import static edu.mit.media.hd.funf.Utils.TAG;
 
 public class IOUtils {
-	public static final String TAG = IOUtils.class.getName();
 	
 	public static String inputStreamToString(InputStream is, String encoding) throws IOException {
 		final char[] buffer = new char[0x10000];

@@ -6,6 +6,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import static edu.mit.media.hd.funf.Utils.TAG;
 
 public class NameValueDatabaseService extends DatabaseService {
 	public static final String NAME_KEY = "NAME";

@@ -15,10 +15,10 @@ import android.util.Log;
 import edu.mit.media.hd.funf.EqualsUtil;
 import edu.mit.media.hd.funf.HashCodeUtil;
 import edu.mit.media.hd.funf.Utils;
+import static edu.mit.media.hd.funf.Utils.TAG;
 
 public abstract class UploadService extends Service {
 
-	public static final String TAG = "Funf";
 	
 	public static final int
 	MAX_REMOTE_ARCHIVE_RETRIES = 6,

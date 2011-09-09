@@ -11,7 +11,7 @@ import java.net.URL;
 
 import android.net.Uri;
 import android.util.Log;
-
+import static edu.mit.media.hd.funf.Utils.TAG;
 /**
  * Archives a file to the url specified using POST HTTP method.
  * 
@@ -19,8 +19,6 @@ import android.util.Log;
  *
  */
 public class HttpArchive implements RemoteArchive {
-
-	public static final String TAG = HttpArchive.class.getName();
 	
 	private String uploadUrl;
 	private String mimeType;

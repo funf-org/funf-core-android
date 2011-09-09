@@ -26,10 +26,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
+import static edu.mit.media.hd.funf.Utils.TAG;
 
 public class FileUtils {
 
-	private static final String TAG = "Funf";
 	
 	public static boolean isSDCardReady() {
 		try {

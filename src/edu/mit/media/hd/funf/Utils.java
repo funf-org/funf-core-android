@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import android.content.Context;
@@ -29,7 +28,7 @@ import edu.mit.media.hd.funf.probe.ProbeExceptions.UnstorableTypeException;
 
 public final class Utils {
 
-	public static final String TAG = Utils.class.getName();
+	public static final String TAG = "Funf";
 	
 	/**
 	 * Should not be instantiated.  Used only as a namespace for static Utils functions
@@ -101,7 +100,7 @@ public final class Utils {
 				try {
 					putInBundle(bundle, getBundleParamKey(key, prefsKey), prefsMap.get(prefsKey));
 				} catch (UnstorableTypeException e) {
-					Log.e(TAG, "Should never happen, since SharedPrefs stores only types Bundle can store: " + e.getLocalizedMessage());
+					Log.e(TAG, "Should never happen, since SharedPrefs stores only types Bundle can store: ",  e);
 				}
 			}
 		}

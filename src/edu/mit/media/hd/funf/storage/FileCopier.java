@@ -1,5 +1,7 @@
 package edu.mit.media.hd.funf.storage;
 
+import static edu.mit.media.hd.funf.Utils.TAG;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -12,8 +14,6 @@ import java.nio.channels.FileChannel;
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.DESKeySpec;
 
 import android.util.Log;
 import edu.mit.media.hd.funf.Utils;
@@ -37,7 +37,6 @@ public interface FileCopier {
 	 *
 	 */
 	public static class SimpleFileCopier implements FileCopier {
-		public final static String TAG = SimpleFileCopier.class.getName();
 		
 		@Override
 		public boolean copy(File srcFile, File dstFile) {

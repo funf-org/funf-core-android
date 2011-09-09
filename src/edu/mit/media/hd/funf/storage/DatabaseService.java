@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import static edu.mit.media.hd.funf.Utils.TAG;
 
 /**
  * Simple database service that is able to write timestamp, name, value tuples.
@@ -26,7 +27,6 @@ import android.util.Log;
  */
 public abstract class DatabaseService extends IntentService {
 
-	public static final String TAG = DatabaseService.class.getName();
 	
 	public static final String
 		ACTION_RECORD = "edu.mit.media.funf.RECORD",
