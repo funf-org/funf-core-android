@@ -86,7 +86,13 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 		getSystemPrefs().unregisterOnSharedPreferenceChangeListener(this);
 	}
 
-
+	// HACK: Send a fake start id to prevent this service from being stopped
+	// This is so we could use all of the other features of Intent service without rewriting them
+	private static final int FAKE_START_ID = 98723546;
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		return super.onStartCommand(intent, flags, FAKE_START_ID);
+	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
@@ -215,6 +221,7 @@ public abstract class ConfiguredFunfSystem extends IntentService implements OnSh
 	 */
 	private void sendProbeRequests(boolean sendAll) {
 		if (sentProbeRequests == null) {
+			Log.i(TAG, "Pipeline sending first probe requests since created.");
 			sendAll = true;
 			sentProbeRequests = new HashMap<String, Bundle[]>();
 		}
