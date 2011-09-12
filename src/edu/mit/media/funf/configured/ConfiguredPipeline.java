@@ -224,7 +224,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	 * By default only sends probe requests that are different than the last probe requests.
 	 * If the send all flag is specified then all will be sent.
 	 */
-	private void sendProbeRequests(boolean sendAll) {
+	public void sendProbeRequests(boolean sendAll) {
 		if (sentProbeRequests == null) {
 			Log.i(TAG, "Pipeline sending first probe requests since created.");
 			sendAll = true;
