@@ -135,7 +135,9 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 		if (sharedPreferences.equals(getConfig().getPrefs())) {
 			onConfigChange(getConfig().toString(true));
 			if (FunfConfig.DATA_REQUESTS_KEY.equals(key)) {
-				sendProbeRequests(false);
+				if (isEnabled()) {
+					sendProbeRequests(false);
+				}
 			} else if (FunfConfig.CONFIG_UPDATE_PERIOD_KEY.equals(key)) {
 				cancelAlarm(ACTION_UPDATE_CONFIG);
 			} else if (FunfConfig.DATA_ARCHIVE_PERIOD_KEY.equals(key)) {
@@ -143,7 +145,9 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 			} else if (FunfConfig.DATA_UPLOAD_PERIOD_KEY.equals(key)) {
 				cancelAlarm(ACTION_UPLOAD_DATA);
 			}
-			scheduleAlarms();
+			if (isEnabled()) {
+				scheduleAlarms();
+			}
 			
 		} else if (sharedPreferences.equals(getSystemPrefs()) && ENABLED_KEY.equals(key)) {
 			reload();
@@ -151,12 +155,11 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	}
 	
 	public void reload() {
-		boolean enabled = getSystemPrefs().getBoolean(ENABLED_KEY, true);
 		cancelAlarms();
 		unregisterListeners();
 		removeProbeRequests();
 		sentProbeRequests = null;
-		if (enabled) {
+		if (isEnabled()) {
 			// Schedule this for the future to prevent race conditions
 			handler.postDelayed(new Runnable() {
 				@Override
@@ -206,9 +209,11 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	}
 	
 	public void ensureServicesAreRunning() {
-		scheduleAlarms();
-		registerListeners();
-		sendProbeRequests(false);
+		if (isEnabled()) {
+			scheduleAlarms();
+			registerListeners();
+			sendProbeRequests(false);
+		}
 	}
 	
 	public void setEncryptionPassword(char[] password) {
