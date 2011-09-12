@@ -13,6 +13,7 @@ import static edu.mit.media.funf.Utils.nonNullStrings;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +76,7 @@ public abstract class Probe extends Service {
 		mostRecentTimeDataSent = prefs.getLong(MOST_RECENT_KEY, 0);
 		mostRecentTimeRun = prefs.getLong(MOST_RECENT_RUN_KEY, 0);
 		mostRecentParameters = Utils.getBundleFromPrefs(prefs, MOST_RECENT_PARAMS_KEY);
+		Log.v(TAG, "Deserializing nonces: " + prefs.getString(NONCES_KEY, null));
 		nonces = Nonce.unserializeNonces(prefs.getString(NONCES_KEY, null));
 		enabled = false;
 		running = false;
@@ -121,14 +123,18 @@ public abstract class Probe extends Service {
 		String requestId = extras.getString(OppProbe.ReservedParamaters.REQUEST_ID.name);
 		requestId = (requestId == null) ? "" : requestId;
 		long nonce = extras.getLong(OppProbe.ReservedParamaters.NONCE.name, -1L);
+		Log.v(TAG, "Updating request for " + requester + ":" + requestId);
 		if (redeemNonce(requester, nonce)) {
+			Log.v(TAG, "Nonce accepted for " + requester + ":" + requestId);
 			// null PACKAGE is internal (ProbeController does not allow null PACKAGE)
 			// TODO: may need to handle default top level bundle parameters
 			Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray(OppProbe.ReservedParamaters.REQUESTS.name));
 			
 			if (requests.length == 0) {
+				Log.v(TAG, "Removing requests for " + requester + ":" + requestId);
 				allRequests.remove(requester, requestId);
 			} else {
+				Log.v(TAG, "Storing requests for " + requester + ":" + requestId);
 				if (!allRequests.put(requester, requestId, requests)) {
 					Log.w(TAG, "Unable to store requests for probe.");
 				}
@@ -201,36 +207,53 @@ public abstract class Probe extends Service {
 		return mostRecentParameters;
 	}
 
+	public void sendProbeStatus() {
+		sendProbeStatus(null, false);
+	}
+	
+	
+	private Status mostRecentStatus;
 	/**
 	 * Sends a STATUS broadcast for the probe.
 	 */
 	public void sendProbeStatus(final String packageName, final boolean includeNonce) {
-		Intent statusBroadcast = new Intent(OppProbe.getStatusAction());
-		String name = getClass().getName();
-		String displayName = getDisplayName();
 		
-		List<String> requiredPermissionsList = new ArrayList<String>(Arrays.asList(nonNullStrings(getRequiredPermissions())));
-		if (!requiredPermissionsList.contains(android.Manifest.permission.WAKE_LOCK)) {
-			requiredPermissionsList.add(android.Manifest.permission.WAKE_LOCK);
+		if (mostRecentStatus == null) {
+			String name = getClass().getName();
+			String displayName = getDisplayName();
+			
+			List<String> requiredPermissionsList = new ArrayList<String>(Arrays.asList(nonNullStrings(getRequiredPermissions())));
+			if (!requiredPermissionsList.contains(android.Manifest.permission.WAKE_LOCK)) {
+				requiredPermissionsList.add(android.Manifest.permission.WAKE_LOCK);
+			}
+			String[] requiredPermissions = new String[requiredPermissionsList.size()];
+			requiredPermissionsList.toArray(requiredPermissions);
+			List<OppProbe.Parameter> parameters = new ArrayList<OppProbe.Parameter>();
+			for (Parameter param : getAvailableParametersNotNull()) {
+				parameters.add(param);
+			}
+			mostRecentStatus = new Status(
+					name,
+					displayName,
+					enabled,
+					isRunning(),
+					Utils.millisToSeconds(nextRunTime), // millis to seconds
+					Utils.millisToSeconds(mostRecentTimeRun), // millis to seconds
+					requiredPermissions,
+					nonNullStrings(getRequiredFeatures()),
+					parameters
+					);
+		} else {
+			mostRecentStatus = new Status(
+					mostRecentStatus, 
+					enabled, 
+					running, 
+					Utils.millisToSeconds(nextRunTime), // millis to seconds
+					Utils.millisToSeconds(mostRecentTimeRun)); // millis to seconds
 		}
-		String[] requiredPermissions = new String[requiredPermissionsList.size()];
-		requiredPermissionsList.toArray(requiredPermissions);
-		List<OppProbe.Parameter> parameters = new ArrayList<OppProbe.Parameter>();
-		for (Parameter param : getAvailableParametersNotNull()) {
-			parameters.add(param);
-		}
-		Status status = new Status(
-				name,
-				displayName,
-				enabled,
-				isRunning(),
-				Utils.millisToSeconds(nextRunTime), // millis to seconds
-				Utils.millisToSeconds(mostRecentTimeRun), // millis to seconds
-				requiredPermissions,
-				nonNullStrings(getRequiredFeatures()),
-				parameters
-				);
-		statusBroadcast.putExtras(status.getBundle());
+
+		Intent statusBroadcast = new Intent(OppProbe.getStatusAction());
+		statusBroadcast.putExtras(mostRecentStatus.getBundle());
 		if (packageName != null) {
 			statusBroadcast.setPackage(packageName);
 			if (includeNonce && packageHasRequiredPermissions(packageName)) {
@@ -376,6 +399,7 @@ public abstract class Probe extends Service {
 				if (lock == null) {
 					lock = Utils.getWakeLock(this);
 				}
+				sendProbeStatus();
 				Log.i(TAG, "Started Running " + getClass().getCanonicalName());
 				mostRecentTimeRun = System.currentTimeMillis();
 				Parameter durationParam = getAvailableSystemParameter(SystemParameter.DURATION);
@@ -463,13 +487,14 @@ public abstract class Probe extends Service {
 	
 	private boolean shouldRunNow(Bundle params) {
 		if (params == null) {
+			Log.v(TAG, "shouldRunNow is false because no params were specified");
 			return false;
 		}
 		long period = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.PERIOD.name, 0L));
 		long startTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.START.name, 0L));
 		long endTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.END.name, 0L));
 		long currentTime = System.currentTimeMillis();
-		Log.d(TAG, "Period, Start, End, Current, LastRun ->" + Utils.join(Arrays.asList(period, startTime, endTime, currentTime, mostRecentTimeRun), ", "));
+		Log.v(TAG, "Period, Start, End, Current, LastRun ->" + Utils.join(Arrays.asList(period, startTime, endTime, currentTime, mostRecentTimeRun), ", "));
 		return (startTime == 0 || startTime <= currentTime) // After start time (if exists)
 			&& (endTime == 0 || currentTime <= endTime)   // Before end time (if exists)
 			&& (period == 0 || (mostRecentTimeRun + period) <= currentTime); // At least one period since last run
@@ -531,6 +556,7 @@ public abstract class Probe extends Service {
 			Log.i(TAG, "Stopping probe: " + getClass().getName());
 			onStop();
 			running = false;
+			sendProbeStatus();
 			if (allRequests.getAll().size() > 0) {
 				scheduleNextRun();
 			} else {
@@ -557,6 +583,7 @@ public abstract class Probe extends Service {
 			Log.i(TAG, "Enabling probe: " + getClass().getName());
 			enabled = true;
 			running = false;
+			sendProbeStatus();
 			onEnable();
 		}
 	}
@@ -575,6 +602,7 @@ public abstract class Probe extends Service {
 				stop();
 			}
 			enabled = false;
+			sendProbeStatus();
 			onDisable();
 			stopSelf();
 		}

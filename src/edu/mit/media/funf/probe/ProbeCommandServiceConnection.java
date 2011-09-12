@@ -47,11 +47,11 @@ public abstract class ProbeCommandServiceConnection implements ServiceConnection
 				public void run() {
 		        	runCommand();
 		        	hasRun = true;
+		            context.unbindService(ProbeCommandServiceConnection.this);
 				}
 			});
         	thread.start();
         }
-        context.unbindService(this);
     }
 	
 	/**

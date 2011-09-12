@@ -64,7 +64,23 @@ public class OppProbe {
 			
 		}
 		public Status(Bundle bundle) {
-			this.bundle = bundle;
+			this.bundle = new Bundle(bundle);
+		}
+		
+		/**
+		 * A copy constructor that allows you to change the dynamic values in a status message.
+		 * @param bundle
+		 * @param enabled
+		 * @param running
+		 * @param nextRun
+		 * @param previousRun
+		 */
+		public Status(Status otherStatus, boolean enabled, boolean running, long nextRun, long previousRun) {
+			this.bundle = new Bundle(otherStatus.getBundle());
+			bundle.putBoolean("ENABLED", enabled);
+			bundle.putBoolean("RUNNING", running);
+			bundle.putLong("NEXT_RUN", nextRun);
+			bundle.putLong("PREVIOUS_RUN", previousRun);
 		}
 		public String getName() {
 			return bundle.getString("NAME");

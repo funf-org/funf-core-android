@@ -37,6 +37,7 @@ public class ProbeScheduleResolver {
 	 */
 	public ProbeScheduleResolver(final Set<Bundle> requests, final Bundle defaults, final long lastRunTime, final Bundle lastRunParams) {
 		this.nextRunTime = Long.MAX_VALUE;
+		Log.i("ProbeScheduleResolver", "Number of requests: " + requests.size());
 		if (!requests.isEmpty()) {
 			this.nextRunParams = new Bundle();
 			for (Bundle request : requests) {
