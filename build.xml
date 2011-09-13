@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="funf" default="help">
+<project name="." default="help">
 
 <!-- The local.properties file is created and updated by the 'android'
      tool.
@@ -32,10 +32,18 @@
          application and should be checked into Version Control Systems. -->
     <property file="default.properties" />
 
+    <!-- Custom Android task to deal with the project target, and import the
+         proper rules.
+         This requires ant 1.6.0 or above. -->
+    <path id="android.antlibs">
+        <pathelement path="${sdk.dir}/tools/lib/anttasks.jar" />
+        <pathelement path="${sdk.dir}/tools/lib/sdklib.jar" />
+        <pathelement path="${sdk.dir}/tools/lib/androidprefs.jar" />
+    </path>
 
-    <!-- Required pre-setup import -->
-    <import file="${sdk.dir}/tools/ant/pre_setup.xml" />
-
+    <taskdef name="setup"
+        classname="com.android.ant.SetupTask"
+        classpathref="android.antlibs" />
 
 <!-- extension targets. Uncomment the ones where you want to do custom work
      in between standard targets -->
@@ -52,15 +60,12 @@
     </target>
 -->
 
+
     <!-- Execute the Android Setup task that will setup some properties
          specific to the target, and import the build rules files.
 
          The rules file is imported from
-            <SDK>/tools/ant/
-         Depending on the project type it can be either:
-         - main_rules.xml
-         - lib_rules.xml
-         - test_rules.xml
+            <SDK>/platforms/<target_platform>/ant/ant_rules_r#.xml
 
          To customize existing targets, there are two options:
          - Customize only one target:
@@ -75,44 +80,44 @@
              - customize to your needs.
     -->
     <setup />
-
+	
 	<path id="android.libraries.src"><path refid="project.libraries.src" /></path>
 	<path id="android.libraries.jars"><path refid="project.libraries.jars" /></path>
-	
+
 	<target name="getgitdetails" >
-		<exec executable="git" outputproperty="git.tagstring">
-			<arg value="describe"/>
-		</exec>
-		<exec executable="git" outputproperty="git.revision">
-			<arg value="rev-parse"/>
-			<arg value="HEAD"/>
-		</exec>
-		<condition property="git.tag" value="none" else="${git.tagstring}">
-			<contains string="${git.tagstring}" substring="cannot"/>
-		</condition>
+	        <exec executable="git" outputproperty="git.tagstring">
+	                <arg value="describe"/>
+	        </exec>
+	        <exec executable="git" outputproperty="git.revision">
+	                <arg value="rev-parse"/>
+	                <arg value="HEAD"/>
+	        </exec>
+	        <condition property="git.tag" value="none" else="${git.tagstring}">
+	                <contains string="${git.tagstring}" substring="cannot"/>
+	        </condition>
 	</target>
 	
 	<target name="jar" depends="compile,getgitdetails">
-		<delete file="bin/funf.jar"/>
-		<mkdir dir="bin" />
-		<tstamp>
-			<format property="version.num.date" pattern="yyyy.MM.dd.HH.mm" />
-		</tstamp>
-		<tstamp>
-			<format property="now" pattern="yyyy-MM-dd HH:mm:ss" />
-		</tstamp>
-		<property name="version.num.full" value="${version.num}.${version.num.date}"/>
-		<manifest file="bin/MANIFEST.MF">
-        	<attribute name="Built-By" value="${user.name}"/>
-			<attribute name="Implementation-Title" value="Funf"/>
-        	<attribute name="Implementation-Version"  value="${version.num.full}-r${git.revision}"/>
-			<attribute name="Implementation-Vendor"  value="Funf at MIT Media Lab"/>
-			<attribute name="Built-Date" value="${now}"/>  
-		</manifest>
-		<jar destfile="bin/funf.jar"
-			basedir="bin/classes"
-			includes="**/*.class"
-			manifest="bin/MANIFEST.MF" />
+	        <delete file="bin/funf.jar"/>
+	        <mkdir dir="bin" />
+	        <tstamp>
+	                <format property="version.num.date" pattern="yyyy.MM.dd.HH.mm" />
+	        </tstamp>
+	        <tstamp>
+	                <format property="now" pattern="yyyy-MM-dd HH:mm:ss" />
+	        </tstamp>
+	        <property name="version.num.full" value="${version.num}.${version.num.date}"/>
+	        <manifest file="bin/MANIFEST.MF">
+	        <attribute name="Built-By" value="${user.name}"/>
+	                <attribute name="Implementation-Title" value="Funf"/>
+	        <attribute name="Implementation-Version"  value="${version.num.full}-r${git.revision}"/>
+	                <attribute name="Implementation-Vendor"  value="Funf at MIT Media Lab"/>
+	                <attribute name="Built-Date" value="${now}"/>  
+	        </manifest>
+	        <jar destfile="bin/funf.jar"
+	                basedir="bin/classes"
+	                includes="**/*.class"
+	                manifest="bin/MANIFEST.MF" />
 	</target>
 	
 	<target name="release" depends="jar">
