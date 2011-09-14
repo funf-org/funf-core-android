@@ -247,8 +247,12 @@ public class OppProbe {
 	public static String getProbeName(final String action) {
 		final String oppAction = getOppAction(action);
 		// Remove .<oppAction> at the end of action
-		return (oppAction == null) ? null 
-				: action.replaceFirst(Pattern.quote(ACTION_SEPERATOR + oppAction) + "$", "");
+		final String ending = ACTION_SEPERATOR + oppAction;
+		if (oppAction != null && action.endsWith(ending)) {
+			return action.substring(0, action.length() - ending.length());
+		} else {
+			return null;
+		}
 	}
 	
 

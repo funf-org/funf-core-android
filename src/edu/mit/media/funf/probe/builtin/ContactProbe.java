@@ -1,5 +1,6 @@
 package edu.mit.media.funf.probe.builtin;
 
+import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,7 +63,7 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys {
 	@Override
 	protected void onDisable() {
 		super.onDisable();
-		SharedPreferences.Editor versionPrefs = getSharedPreferences(DATA_VERSIONS, MODE_PRIVATE).edit();
+		SharedPreferences.Editor versionPrefs = async(getSharedPreferences(DATA_VERSIONS, MODE_PRIVATE)).edit();
 		versionPrefs.clear();
 		for (Map.Entry<Integer, Integer> idToVersion : dataIdToVersion.entrySet()) {
 			versionPrefs.putInt(String.valueOf(idToVersion.getKey()), idToVersion.getValue());

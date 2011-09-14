@@ -174,7 +174,7 @@ public abstract class ContentProviderProbe extends Probe {
 		
 		@Override
 		public boolean hasNext() {
-			Log.d(TAG, "Checking has next");
+			//Log.d(TAG, "Checking has next");
 			boolean hasNext = brandNew ? c.moveToFirst() : !(c.isLast() || c.isAfterLast());
 			if (!hasNext)
 				c.close();
@@ -196,7 +196,7 @@ public abstract class ContentProviderProbe extends Probe {
 				throw new NoSuchElementException();
 			} finally {
 				if (!hasNext()) {
-					Log.d(TAG, "CLOSING cursor");
+					//Log.d(TAG, "CLOSING cursor");
 					c.close();
 				}
 			}

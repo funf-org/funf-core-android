@@ -9,6 +9,7 @@
  */
 package edu.mit.media.funf.probe;
 
+import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,8 +38,10 @@ public class ProbeRequests {
 	private SharedPreferences prefs;
 	
 	private ProbeRequests(final Context context, final String name) {
-		this.prefs = context.getSharedPreferences(name, Context.MODE_PRIVATE);
-		prefs.edit().putString(PROBE_NAME_PREF_KEY, name).commit();
+		this.prefs = async(context.getSharedPreferences(name, Context.MODE_PRIVATE));
+		if (!prefs.contains(PROBE_NAME_PREF_KEY)) {
+			prefs.edit().putString(PROBE_NAME_PREF_KEY, name).commit();
+		}
 	}
 
 	public static ProbeRequests getRequestsForProbe(final Context context, final SharedPreferences probePrefs) {

@@ -13,7 +13,6 @@ import static edu.mit.media.funf.Utils.nonNullStrings;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,7 @@ import edu.mit.media.funf.OppProbe;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.OppProbe.Status;
 import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;
+import static edu.mit.media.funf.AsyncSharedPrefs.async;
 
 public abstract class Probe extends Service {
 
@@ -51,6 +51,7 @@ public abstract class Probe extends Service {
 	private static final String MOST_RECENT_RUN_KEY = "mostRecentTimeRun";
 	private static final String MOST_RECENT_KEY = "mostRecentTimeDataSent";
 	private static final String MOST_RECENT_PARAMS_KEY = "mostRecentParamsSent";
+	private static final String NEXT_RUN_TIME_KEY = "nextRunTime";
 	private static final String NONCES_KEY = "nonces";
 	
 	private PowerManager.WakeLock lock;
@@ -71,11 +72,12 @@ public abstract class Probe extends Service {
 	@Override
 	public final void onCreate() {
 		Log.v(TAG, "CREATED");
-		prefs = getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE);
+		prefs = async(getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE));
 		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
-		mostRecentTimeDataSent = prefs.getLong(MOST_RECENT_KEY, 0);
-		mostRecentTimeRun = prefs.getLong(MOST_RECENT_RUN_KEY, 0);
+		mostRecentTimeDataSent = prefs.getLong(MOST_RECENT_KEY, 0L);
+		mostRecentTimeRun = prefs.getLong(MOST_RECENT_RUN_KEY, 0L);
 		mostRecentParameters = Utils.getBundleFromPrefs(prefs, MOST_RECENT_PARAMS_KEY);
+		nextRunTime = prefs.getLong(NEXT_RUN_TIME_KEY, 0L);
 		Log.v(TAG, "Deserializing nonces: " + prefs.getString(NONCES_KEY, null));
 		nonces = Nonce.unserializeNonces(prefs.getString(NONCES_KEY, null));
 		enabled = false;
@@ -86,10 +88,15 @@ public abstract class Probe extends Service {
 	@Override
 	public final void onDestroy() {
 		Log.v(TAG, "DESTROYED");
+		if (enabled) {
+			disable();
+		}
+
 		if (prefs != null) {
 			SharedPreferences.Editor editor = prefs.edit();
 			editor.putLong(MOST_RECENT_KEY, mostRecentTimeDataSent);
 			editor.putLong(MOST_RECENT_RUN_KEY, mostRecentTimeRun);
+			editor.putLong(NEXT_RUN_TIME_KEY, nextRunTime);
 			Log.v(TAG, "Most recent run onDestroy: " + mostRecentTimeRun);
 			editor.putString(NONCES_KEY, Nonce.serializeNonces(nonces));
 			try {
@@ -98,9 +105,6 @@ public abstract class Probe extends Service {
 				Log.e(TAG, e.getLocalizedMessage());
 			}
 			editor.commit();
-		}
-		if (enabled) {
-			disable();
 		}
 	}
 	
@@ -247,11 +251,11 @@ public abstract class Probe extends Service {
 			mostRecentStatus = new Status(
 					mostRecentStatus, 
 					enabled, 
-					running, 
+					isRunning(), 
 					Utils.millisToSeconds(nextRunTime), // millis to seconds
 					Utils.millisToSeconds(mostRecentTimeRun)); // millis to seconds
 		}
-
+		Log.i(TAG, "Sending status with next run time: " + mostRecentStatus.getNextRun());
 		Intent statusBroadcast = new Intent(OppProbe.getStatusAction());
 		statusBroadcast.putExtras(mostRecentStatus.getBundle());
 		if (packageName != null) {
@@ -269,8 +273,15 @@ public abstract class Probe extends Service {
 		return className.replaceAll("(\\p{Ll})(\\p{Lu})","$1 $2"); // Insert spaces
 	}
 	
+	private static List<PackageInfo> apps;
+	private static long appsLastLoadTime = 0L;
+	private static final long APPS_CACHE_TIME = Utils.secondsToMillis(300); // 5 minutes
 	private static PackageInfo getPackageInfo(Context context, String packageName) {
-		List<PackageInfo> apps = context.getPackageManager().getInstalledPackages(PackageManager.GET_PERMISSIONS);
+		long now = System.currentTimeMillis();
+		if (apps == null || now > (appsLastLoadTime + APPS_CACHE_TIME)) {
+			apps = context.getPackageManager().getInstalledPackages(PackageManager.GET_PERMISSIONS);
+			appsLastLoadTime = now;
+		}
 		for (PackageInfo info : apps) {
 			if (info.packageName.equals(packageName)) {
 				return info;
@@ -411,13 +422,23 @@ public abstract class Probe extends Service {
 				}
 				Log.i(TAG, "Calling onRun for probe: " + getClass().getName());
 				onRun(completeParams); // call onRun to update parameters
-			} else if (allRequests.getAll().size() > 0) {
-				Log.i(TAG, "Scheduling");
-				scheduleNextRun();
 			} else {
-				Log.i(TAG, "Disabling");
-				disable();
+				scheduleOrDisable();
 			}
+		}
+	}
+	
+	private void scheduleOrDisable() {
+		cleanRequests(); // Cleaning currently removes any existing 0 period requests
+		// TODO: need to be smarter about this.  Probe may handle period, but not start or end times.
+		if (allRequests.getAll().size() > 0) {
+			Log.i(TAG, "Scheduling");
+			scheduleNextRun();
+			sendProbeStatus();
+		} else {
+			Log.i(TAG, "Disabling");
+			cancelNextRun();
+			disable();
 		}
 	}
 	
@@ -501,8 +522,6 @@ public abstract class Probe extends Service {
 	}	
 	
 	private void scheduleNextRun() {
-		cleanRequests(); // Cleaning currently removes any existing 0 period requests
-		// TODO: need to be smarter about this.  Probe may handle period, but not start or end times.
 		Parameter periodParam = getAvailableSystemParameter(SystemParameter.PERIOD);
 		if (periodParam == null) {
 			Log.v(TAG, "PERIOD parameter is not valid for this probe");
@@ -556,12 +575,7 @@ public abstract class Probe extends Service {
 			Log.i(TAG, "Stopping probe: " + getClass().getName());
 			onStop();
 			running = false;
-			sendProbeStatus();
-			if (allRequests.getAll().size() > 0) {
-				scheduleNextRun();
-			} else {
-				disable();
-			}
+			scheduleOrDisable();
 			if (lock != null && lock.isHeld()) {
 				lock.release();
 				lock = null;

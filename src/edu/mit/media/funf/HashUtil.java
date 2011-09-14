@@ -24,9 +24,21 @@ import static edu.mit.media.funf.Utils.TAG;
 
 public class HashUtil {
 
-	private static MessageDigest md;
+	private static MessageDigest instance;
 
 	private HashUtil() {
+	}
+	
+	public static MessageDigest getMessageDigest() {
+		if (instance == null) {
+			try {
+				instance = MessageDigest.getInstance("SHA-1");
+			} catch (NoSuchAlgorithmException e) {
+				Log.e(TAG, "HashUtil no SHA alghrithom", e);
+				return null;
+			}
+		}
+		return instance;
 	}
 
 	public enum HashingType {
@@ -34,20 +46,17 @@ public class HashUtil {
 	}
 
 	public static String oneWayHashString(String msg) {
-		if (msg == null || "".equals(msg)) {
-			return "";
-		} else {
-			if (md == null) {
-				try {
-					md = MessageDigest.getInstance("SHA-1");
-				} catch (NoSuchAlgorithmException e) {
-					Log.e(TAG, "HashUtil no SHA alghrithom", e);
+		MessageDigest md = getMessageDigest();
+		synchronized (md) {
+			if (msg == null || "".equals(msg)) {
+				return "";
+			} else if (md == null) {
 					return "NO SHA";
-				}
+			} else {
+				byte[] msgDigest = md.digest(msg.getBytes());
+				BigInteger number = new BigInteger(1, msgDigest);
+				return number.toString(16);
 			}
-			byte[] msgDigest = md.digest(msg.getBytes());
-			BigInteger number = new BigInteger(1, msgDigest);
-			return number.toString(16);
 		}
 	}
 

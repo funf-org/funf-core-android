@@ -1,5 +1,6 @@
 package edu.mit.media.funf.configured;
 
+import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -260,7 +261,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 						
 						// Throttled to prevent binder exceptions
 						try {
-							Thread.sleep(1000);
+							Thread.sleep(5000L);
 						} catch (InterruptedException e) {
 							Log.e(TAG, "Throttle interrupted", e);
 						}
@@ -409,7 +410,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	public abstract BundleSerializer getBundleSerializer();
 	
 	public SharedPreferences getSystemPrefs() {
-		return getSharedPreferences(getClass().getName() + "_system", MODE_PRIVATE);
+		return async(getSharedPreferences(getClass().getName() + "_system", MODE_PRIVATE));
 	}
 	
 	public FunfConfig getConfig() {
@@ -418,7 +419,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	
 	protected static FunfConfig getConfig(Context context, String name) {
 		SharedPreferences prefs = context.getSharedPreferences(name, MODE_PRIVATE);
-		return new FunfConfig(prefs);
+		return new FunfConfig(async(prefs));
 	}
 	
 	/**
@@ -427,7 +428,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	 */
 	protected FunfConfig getTemporaryConfig() {
 		SharedPreferences prefs = getSharedPreferences(getClass().getName() + "_tempconfig", MODE_PRIVATE);
-		return new FunfConfig(prefs);
+		return new FunfConfig(async(prefs));
 	}
 	
 	/**

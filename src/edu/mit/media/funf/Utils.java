@@ -9,6 +9,7 @@
  */
 package edu.mit.media.funf;
 
+import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
@@ -253,12 +254,15 @@ public final class Utils {
 	
 	public static final String FUNF_UTILS_PREFS = "edu.mit.media.funf.Utils";
 	public static final String INSTALLATION_UUID_KEY = "INSTALLATION_UUID";
+	public static String uuid = null;
 	public static String getInstallationId(Context context) {
-		SharedPreferences prefs = context.getSharedPreferences(FUNF_UTILS_PREFS, Context.MODE_PRIVATE);
-		String uuid = prefs.getString(INSTALLATION_UUID_KEY, null);
 		if (uuid == null) {
-			uuid = UUID.randomUUID().toString();
-			prefs.edit().putString(INSTALLATION_UUID_KEY, uuid).commit();
+			SharedPreferences prefs = async(context.getSharedPreferences(FUNF_UTILS_PREFS, Context.MODE_PRIVATE));
+			uuid = prefs.getString(INSTALLATION_UUID_KEY, null);
+			if (uuid == null) {
+				uuid = UUID.randomUUID().toString();
+				prefs.edit().putString(INSTALLATION_UUID_KEY, uuid).commit();
+			}
 		}
 		return uuid;
 	}
