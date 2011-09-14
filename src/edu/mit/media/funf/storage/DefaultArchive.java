@@ -17,6 +17,7 @@ import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.storage.NameGenerator.CompositeNameGenerator;
 import edu.mit.media.funf.storage.NameGenerator.RequiredSuffixNameGenerator;
 import edu.mit.media.funf.storage.NameGenerator.SystemUniqueTimestampNameGenerator;
+import static edu.mit.media.funf.AsyncSharedPrefs.async;
 
 /**
  * A default implementation of a file archive, which should be good enough for most cases.
@@ -48,7 +49,7 @@ public class DefaultArchive implements Archive<File> {
 	private DefaultArchive(Context context, String databaseName) {
 		this.context = context.getApplicationContext();
 		this.databaseName = databaseName;
-		this.preferences = this.context.getSharedPreferences(ENCRYPTION_PREFS, Context.MODE_PRIVATE);
+		this.preferences = async(this.context.getSharedPreferences(ENCRYPTION_PREFS, Context.MODE_PRIVATE));
 	}
 	
 	private static final Map<String,DefaultArchive> instances = new HashMap<String, DefaultArchive>();
