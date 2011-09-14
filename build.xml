@@ -101,16 +101,12 @@
 	        <delete file="bin/funf.jar"/>
 	        <mkdir dir="bin" />
 	        <tstamp>
-	                <format property="version.num.date" pattern="yyyy.MM.dd.HH.mm" />
-	        </tstamp>
-	        <tstamp>
 	                <format property="now" pattern="yyyy-MM-dd HH:mm:ss" />
 	        </tstamp>
-	        <property name="version.num.full" value="${version.num}.${version.num.date}"/>
 	        <manifest file="bin/MANIFEST.MF">
 	        <attribute name="Built-By" value="${user.name}"/>
 	                <attribute name="Implementation-Title" value="Funf"/>
-	        <attribute name="Implementation-Version"  value="${version.num.full}-r${git.revision}"/>
+	        <attribute name="Implementation-Version"  value="${version.num}r${git.revision}"/>
 	                <attribute name="Implementation-Vendor"  value="Funf at MIT Media Lab"/>
 	                <attribute name="Built-Date" value="${now}"/>  
 	        </manifest>
@@ -121,6 +117,7 @@
 	</target>
 	
 	<target name="release" depends="jar">
+		<copy file="bin/funf.jar" tofile="bin/funf-${version.num}.jar" />
 	</target>
 	
 </project>
