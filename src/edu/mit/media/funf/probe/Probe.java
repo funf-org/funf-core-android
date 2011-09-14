@@ -273,8 +273,15 @@ public abstract class Probe extends Service {
 		return className.replaceAll("(\\p{Ll})(\\p{Lu})","$1 $2"); // Insert spaces
 	}
 	
+	private static List<PackageInfo> apps;
+	private static long appsLastLoadTime = 0L;
+	private static final long APPS_CACHE_TIME = Utils.secondsToMillis(300); // 5 minutes
 	private static PackageInfo getPackageInfo(Context context, String packageName) {
-		List<PackageInfo> apps = context.getPackageManager().getInstalledPackages(PackageManager.GET_PERMISSIONS);
+		long now = System.currentTimeMillis();
+		if (apps == null || now > (appsLastLoadTime + APPS_CACHE_TIME)) {
+			apps = context.getPackageManager().getInstalledPackages(PackageManager.GET_PERMISSIONS);
+			appsLastLoadTime = now;
+		}
 		for (PackageInfo info : apps) {
 			if (info.packageName.equals(packageName)) {
 				return info;

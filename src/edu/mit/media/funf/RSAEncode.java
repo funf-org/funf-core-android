@@ -54,27 +54,30 @@ public class RSAEncode {
 		byte[] txtbytes = txt.getBytes(); 		
 		int remainder_len = txtbytes.length;
 		
-		int count = 0;				
-		while (remainder_len > 0){	     
-	         // Now, encrypt them and write them to the encrypted file...
-			byte[] clearchunk = new byte[blocksize];
-			System.arraycopy(txtbytes, blocksize*count, clearchunk, 0, Math.min(blocksize, remainder_len));
-			count +=1; 
-			try{
-				byte[] encryptedBytes = cipher.doFinal(clearchunk);				
-				//byte[] encryptedBytes = cipher.update(txtbytes,(txtbytes.length-remainder_len), 10);// blocksize);
-				chunkList.add(encryptedBytes);
-				// debugging:				
-	        	
-			}catch (Exception e) {
-				System.err.println("cannot encrypt text");
-				//  Log.e(TAG, "cannot encrypt text");
-	            e.printStackTrace();
-	            return null;
-			}
-			remainder_len = remainder_len - Math.min(blocksize, remainder_len);							
-		} // while
-		
+		synchronized (cipher) {
+			
+			int count = 0;				
+			while (remainder_len > 0){	     
+		         // Now, encrypt them and write them to the encrypted file...
+				byte[] clearchunk = new byte[blocksize];
+				System.arraycopy(txtbytes, blocksize*count, clearchunk, 0, Math.min(blocksize, remainder_len));
+				count +=1; 
+				try{
+					byte[] encryptedBytes = cipher.doFinal(clearchunk);				
+					//byte[] encryptedBytes = cipher.update(txtbytes,(txtbytes.length-remainder_len), 10);// blocksize);
+					chunkList.add(encryptedBytes);
+					// debugging:				
+		        	
+				}catch (Exception e) {
+					System.err.println("cannot encrypt text");
+					//  Log.e(TAG, "cannot encrypt text");
+		            e.printStackTrace();
+		            return null;
+				}
+				remainder_len = remainder_len - Math.min(blocksize, remainder_len);							
+			} // while
+
+		}
 		result = arrayMerge(chunkList);
 
 		return new String(Base64Coder.encode(result));

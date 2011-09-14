@@ -261,7 +261,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 						
 						// Throttled to prevent binder exceptions
 						try {
-							Thread.sleep(1000);
+							Thread.sleep(5000L);
 						} catch (InterruptedException e) {
 							Log.e(TAG, "Throttle interrupted", e);
 						}

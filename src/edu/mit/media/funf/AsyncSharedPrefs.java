@@ -4,10 +4,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.Map.Entry;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.os.Looper;
 import android.util.Log;
 
 /**
@@ -20,17 +22,19 @@ import android.util.Log;
  *
  */
 public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceChangeListener {
+
+	private static final Object mContent = new Object();
 	
 	private final Map<String,Object> mMap;
 	private final SharedPreferences prefs;
+    private final WeakHashMap<OnSharedPreferenceChangeListener, Object> mListeners;
 
 	private AsyncSharedPrefs(SharedPreferences prefs) {
 		this.prefs = prefs;
 		this.mMap = new HashMap<String, Object>();
-		synchronized (mMap) {
-			prefs.registerOnSharedPreferenceChangeListener(this);
-			this.mMap.putAll(prefs.getAll());
-		}
+		this.mListeners = new WeakHashMap<OnSharedPreferenceChangeListener, Object>();
+		prefs.registerOnSharedPreferenceChangeListener(this);
+		this.mMap.putAll(prefs.getAll());
 	}
 	
 	private static final Map<SharedPreferences, AsyncSharedPrefs> instances = new HashMap<SharedPreferences, AsyncSharedPrefs>();
@@ -57,18 +61,24 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 			} else {
 				mMap.remove(key);
 			}
+			// Already will be running on main thread
+			for (OnSharedPreferenceChangeListener listener : mListeners.keySet()) {
+				if (listener != null) {
+					listener.onSharedPreferenceChanged(this, key);
+				}
+			}
 		}
 	}
 
     public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
         synchronized(this) {
-            prefs.registerOnSharedPreferenceChangeListener(listener);
+        	mListeners.put(listener, mContent);
         }
     }
 
     public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
         synchronized(this) {
-            prefs.unregisterOnSharedPreferenceChangeListener(listener);
+        	mListeners.remove(listener);
         }
     }
 
@@ -216,7 +226,7 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 						}
 					}
 				}
-			});
+			}).start();
 			return true;
 		}
 	}
@@ -258,7 +268,7 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 			public void run() {
 				editor.commit();
 			}
-		});
+		}).start();
 	}
 
 }
