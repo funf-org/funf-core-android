@@ -139,38 +139,42 @@ public abstract class SensorProbe extends Probe {
 			List<SensorEvent> events = new ArrayList<SensorEvent>();
 			recentEvents.drainTo(events);
 			
-			Sensor sensor  = events.get(0).sensor;
-			Bundle sensorBundle = new Bundle();
-			sensorBundle.putFloat("MAXIMUM_RANGE", sensor.getMaximumRange());
-			sensorBundle.putString("NAME", sensor.getName());
-			sensorBundle.putFloat("POWER", sensor.getPower());
-			sensorBundle.putFloat("RESOLUTION", sensor.getResolution());
-			sensorBundle.putInt("TYPE", sensor.getType());
-			sensorBundle.putString("VENDOR", sensor.getVendor());
-			sensorBundle.putInt("VERSION", sensor.getVersion());
-			
-			String[] valueNames = getValueNames();
-			long[] timestamp = new long[events.size()];
-			int[] accuracy = new int[events.size()];
-			int valuesLength = Math.min(valueNames.length, events.get(0).values.length); // Accounts for optional values
-			float[][] values = new float[valuesLength][events.size()];
-			for (int i=0; i<events.size(); i++) {
-				SensorEvent event = events.get(i);
-				timestamp[i] = event.timestamp;
-				accuracy[i] = event.accuracy;
-				for (int valueIndex=0; valueIndex<valuesLength; valueIndex++) {
-					values[valueIndex][i] = event.values[valueIndex];
+			if (!events.isEmpty()) {
+				Sensor sensor  = events.get(0).sensor;
+				Bundle sensorBundle = new Bundle();
+				sensorBundle.putFloat("MAXIMUM_RANGE", sensor.getMaximumRange());
+				sensorBundle.putString("NAME", sensor.getName());
+				sensorBundle.putFloat("POWER", sensor.getPower());
+				sensorBundle.putFloat("RESOLUTION", sensor.getResolution());
+				sensorBundle.putInt("TYPE", sensor.getType());
+				sensorBundle.putString("VENDOR", sensor.getVendor());
+				sensorBundle.putInt("VERSION", sensor.getVersion());
+				
+				String[] valueNames = getValueNames();
+				long[] timestamp = new long[events.size()];
+				int[] accuracy = new int[events.size()];
+				int valuesLength = Math.min(valueNames.length, events.get(0).values.length); // Accounts for optional values
+				float[][] values = new float[valuesLength][events.size()];
+				for (int i=0; i<events.size(); i++) {
+					SensorEvent event = events.get(i);
+					timestamp[i] = event.timestamp;
+					accuracy[i] = event.accuracy;
+					for (int valueIndex=0; valueIndex<valuesLength; valueIndex++) {
+						values[valueIndex][i] = event.values[valueIndex];
+					}
 				}
+	
+				data.putBundle("SENSOR", sensorBundle);
+				data.putLongArray("EVENT_TIMESTAMP", timestamp);
+				data.putIntArray("ACCURACY", accuracy);
+				for (int valueIndex=0; valueIndex<valuesLength; valueIndex++) {
+					data.putFloatArray(valueNames[valueIndex], values[valueIndex]);
+				}
+				
+				sendProbeData(Utils.getTimestamp(), new Bundle(), data);
+			} else {
+				Log.i(TAG, "Recent events is empty.");
 			}
-
-			data.putBundle("SENSOR", sensorBundle);
-			data.putLongArray("EVENT_TIMESTAMP", timestamp);
-			data.putIntArray("ACCURACY", accuracy);
-			for (int valueIndex=0; valueIndex<valuesLength; valueIndex++) {
-				data.putFloatArray(valueNames[valueIndex], values[valueIndex]);
-			}
-			
-			sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 		} else {
 			Log.i(TAG, "Recent events is empty.");
 		}
