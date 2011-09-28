@@ -19,7 +19,13 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-Case<LocationProbe> {
+package edu.mit.media.funf.probe.builtin;
+
+import android.location.Location;
+import android.os.Bundle;
+import edu.mit.media.funf.probe.Probe.SystemParameter;
+
+public class LocationProbeTest extends ProbeTestCase<LocationProbe> {
 
 	private static final int FUDGE_FACTOR = 10;
 	

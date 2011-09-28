@@ -19,7 +19,15 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
+package edu.mit.media.funf.probe.builtin;
 
+import android.os.Bundle;
+
+public class BluetoothProbeTest extends ProbeTestCase<BluetoothProbe> {
+
+	public BluetoothProbeTest() {
+		super(BluetoothProbe.class);
+	}
 
 	public void testBluetoothProbe() {
 		Bundle params = new Bundle();

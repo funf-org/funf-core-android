@@ -19,7 +19,15 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-atteryProbeTest() {
+package edu.mit.media.funf.probe.builtin;
+
+import android.os.BatteryManager;
+import android.os.Bundle;
+import android.util.Log;
+
+public class BatteryProbeTest extends ProbeTestCase<BatteryProbe> {
+
+	public BatteryProbeTest() {
 		super(BatteryProbe.class);
 	}
 	

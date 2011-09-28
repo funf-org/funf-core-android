@@ -19,7 +19,14 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
- TimeOffsetProbeTest() {
+package edu.mit.media.funf.probe.builtin;
+
+import edu.mit.media.funf.probe.Probe.SystemParameter;
+import android.os.Bundle;
+
+public class TimeOffsetProbeTest extends ProbeTestCase<TimeOffsetProbe> {
+
+	public TimeOffsetProbeTest() {
 		super(TimeOffsetProbe.class);
 	}
 

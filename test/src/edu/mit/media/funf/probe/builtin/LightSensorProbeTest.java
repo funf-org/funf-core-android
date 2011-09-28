@@ -19,7 +19,14 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-ic LightSensorProbeTest() {
+package edu.mit.media.funf.probe.builtin;
+
+import android.os.Bundle;
+import edu.mit.media.funf.probe.Probe.SystemParameter;
+
+public class LightSensorProbeTest extends ProbeTestCase<LightSensorProbe> {
+
+	public LightSensorProbeTest() {
 		super(LightSensorProbe.class);
 	}
 	

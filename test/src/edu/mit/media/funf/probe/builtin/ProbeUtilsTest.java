@@ -19,7 +19,14 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-tCase {
+package edu.mit.media.funf.probe.builtin;
+
+import junit.framework.TestCase;
+import android.content.Intent;
+import android.location.Location;
+import android.os.Bundle;
+
+public class ProbeUtilsTest extends TestCase {
 
 	
 	public void testIntentUrls() {

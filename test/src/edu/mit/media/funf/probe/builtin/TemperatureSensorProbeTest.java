@@ -19,7 +19,13 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-st extends ProbeTestCase<TemperatureSensorProbe> {
+package edu.mit.media.funf.probe.builtin;
+
+import junit.framework.AssertionFailedError;
+import android.os.Bundle;
+import edu.mit.media.funf.probe.Probe.SystemParameter;
+
+public class TemperatureSensorProbeTest extends ProbeTestCase<TemperatureSensorProbe> {
 
 	public TemperatureSensorProbeTest() {
 		super(TemperatureSensorProbe.class);

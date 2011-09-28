@@ -19,7 +19,16 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
- class WifiProbeTest extends ProbeTestCase<WifiProbe> {
+package edu.mit.media.funf.probe.builtin;
+
+import java.util.ArrayList;
+
+import android.net.wifi.ScanResult;
+import android.os.Bundle;
+import android.os.Parcelable;
+import edu.mit.media.funf.OppProbe;
+
+public class WifiProbeTest extends ProbeTestCase<WifiProbe> {
 
 	private static final int FUDGE_FACTOR = 20;
 	

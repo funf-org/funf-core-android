@@ -19,7 +19,14 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
+package edu.mit.media.funf.probe.builtin;
 
+import android.os.Bundle;
+import android.util.Log;
+
+public class ApplicationsProbeTest extends ProbeTestCase<ApplicationsProbe> {
+
+	public ApplicationsProbeTest() {
 		super(ApplicationsProbe.class);
 	}
 
