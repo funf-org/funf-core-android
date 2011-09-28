@@ -26,6 +26,13 @@ import android.os.Bundle;
 import edu.mit.media.funf.probe.SensorProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.GravitySensorKeys;
 
+/**
+ * A three dimensional vector indicating the direction and magnitude of gravity. Units are m/s^2. The coordinate system is the same as is used by the acceleration sensor.
+ * Note: When the device is at rest, the output of the gravity sensor should be identical to that of the accelerometer.
+ * 
+ * Android Reference http://developer.android.com/reference/android/hardware/SensorEvent.html
+ *
+ */
 public class GravitySensorProbe extends SensorProbe implements GravitySensorKeys {
 
 	public int getSensorType() {

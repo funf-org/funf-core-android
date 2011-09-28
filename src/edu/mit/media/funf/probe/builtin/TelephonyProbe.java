@@ -31,8 +31,21 @@ public class TelephonyProbe extends SynchronousProbe implements TelephonyKeys {
 
 	@Override
 	public String[] getRequiredPermissions() {
-		return null;
+		return new String[] {
+				android.Manifest.permission.READ_PHONE_STATE,
+			};
 	}
+	
+	
+
+	@Override
+	public String[] getRequiredFeatures() {
+		return new String[] {
+			"android.hardware.telephony"
+		};
+	}
+
+
 
 	@Override
 	public Bundle getData() {

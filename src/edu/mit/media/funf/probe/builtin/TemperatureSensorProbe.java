@@ -27,6 +27,11 @@ import android.os.Bundle;
 import edu.mit.media.funf.probe.SensorProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.TemperatureSensorKeys;
 
+/**
+ * Used to record temperature.  Implementation depends on the device and does not exist on all devices.  
+ *	Some will record temperature of battery, others temperature of CPU or environment.
+ *
+ */
 public class TemperatureSensorProbe extends SensorProbe implements TemperatureSensorKeys {
 
 	public int getSensorType() {

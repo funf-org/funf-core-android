@@ -40,6 +40,13 @@ public class CellProbe extends SynchronousProbe implements CellKeys {
 	}
 	
 	@Override
+	public String[] getRequiredFeatures() {
+		return new String[] {
+				"android.hardware.telephony"
+		};
+	}
+
+	@Override
 	protected Bundle getData() {
 		TelephonyManager manager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
 		CellLocation location = manager.getCellLocation();

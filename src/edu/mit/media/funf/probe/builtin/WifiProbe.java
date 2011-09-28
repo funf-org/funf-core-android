@@ -71,7 +71,7 @@ public class WifiProbe extends Probe implements WifiKeys {
 	@Override
 	public String[] getRequiredFeatures() {
 		return new String[] {
-				"android.hardware.location"
+				"android.hardware.wifi"
 		};
 	}
 

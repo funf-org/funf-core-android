@@ -37,7 +37,10 @@ public class ScreenProbe extends Probe implements ScreenKeys {
 	
 	@Override
 	public Parameter[] getAvailableParameters() {
-		return new Parameter[]{};
+		return new Parameter[] {
+				new Parameter(SystemParameter.START, 0L),
+				new Parameter(SystemParameter.END, 0L)
+		};
 	}
 
 	@Override

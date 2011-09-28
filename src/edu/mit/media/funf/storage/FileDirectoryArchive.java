@@ -50,7 +50,7 @@ public class FileDirectoryArchive implements Archive<File> {
 	}
 	
 	public static FileDirectoryArchive getRollingFileArchive(File archiveDir) {
-		return new FileDirectoryArchive(archiveDir, new NameGenerator.IdentityNameGenerator(), new FileCopier.SimpleFileCopier(), new DirectoryCleaner.KeepMostRecent(50));
+		return new FileDirectoryArchive(archiveDir, new NameGenerator.IdentityNameGenerator(), new FileCopier.SimpleFileCopier(), new DirectoryCleaner.KeepUnderPercentageOfDiskFree(0.5, 10000000));
 	}
 	
 	

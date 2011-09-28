@@ -27,6 +27,16 @@ import android.os.Bundle;
 import edu.mit.media.funf.probe.SensorProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.GyroscopeSensorKeys;
 
+/**
+ * Measures angular speed around each axis.
+ * 
+ * All values are in radians/second and measure the rate of rotation around the X, Y and Z axis. 
+ * The coordinate system is the same as is used for the acceleration sensor. 
+ * Rotation is positive in the counter-clockwise direction. That is, an observer looking from some positive location on the x, y. or z axis at a device positioned on the origin would report positive rotation if the device appeared to be rotating counter clockwise. 
+ * Note that this is the standard mathematical definition of positive rotation and does not agree with the definition of roll given earlier.
+ *
+ * Android Reference http://developer.android.com/reference/android/hardware/SensorEvent.html
+ */
 public class GyroscopeSensorProbe extends SensorProbe implements GyroscopeSensorKeys {
 
 	public int getSensorType() {

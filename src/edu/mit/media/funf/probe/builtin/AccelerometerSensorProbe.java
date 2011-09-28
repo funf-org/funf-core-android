@@ -27,6 +27,12 @@ import android.os.Bundle;
 import edu.mit.media.funf.probe.SensorProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerSensorKeys;
 
+/**
+ * Measures the acceleration applied to the device.  All values are in SI units (m/s^2).
+ * 
+ * More information in the Android Reference http://developer.android.com/reference/android/hardware/SensorEvent.html
+ *
+ */
 public class AccelerometerSensorProbe extends SensorProbe implements AccelerometerSensorKeys {
 
 	public int getSensorType() {

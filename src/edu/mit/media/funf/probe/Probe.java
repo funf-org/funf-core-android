@@ -795,8 +795,8 @@ public abstract class Probe extends Service {
 	public enum SystemParameter {
 		PASSIVE("PASSIVE", "Passive", "Whether the requester wants data they did not specifically request."),
 		DURATION("DURATION", "Duration", "Length of time probe will run for (seconds)"),
-		START("START_DATE", "Start Timestamp", "Date after which probe is allowed to run (millis since epoch)"),
-		END("END_DATE", "End Timestamp", "Date before which probe is allowed to run (millis since epoch)"),
+		START("START_DATE", "Start Timestamp", "Date after which probe is allowed to run (seconds since epoch)"),
+		END("END_DATE", "End Timestamp", "Date before which probe is allowed to run (seconds since epoch)"),
 		PERIOD("PERIOD", "Period", "Length of time between probe runs (seconds)");
 		
 		public final String name, displayName, description;

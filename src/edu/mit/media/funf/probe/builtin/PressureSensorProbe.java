@@ -35,7 +35,7 @@ public class PressureSensorProbe extends SensorProbe implements PressureSensorKe
 
 	public String[] getRequiredFeatures() {
 		return new String[]{
-			"android.hardware.sensor.barometer"
+			//"android.hardware.sensor.barometer" // varies
 		};
 	}
 	

@@ -26,6 +26,14 @@ import android.os.Bundle;
 import edu.mit.media.funf.probe.SensorProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.LinearAccelerationSensorKeys;
 
+/**
+ * Records a three dimensional vector indicating acceleration along each device axis, not including gravity. All values have units of m/s^2. The coordinate system is the same as is used by the acceleration sensor.  
+ * The output of the accelerometer, gravity and linear-acceleration sensors obey the following relation:
+ * acceleration = gravity + linear-acceleration
+ * 
+ * Android Reference http://developer.android.com/reference/android/hardware/SensorEvent.html
+ *
+ */
 public class LinearAccelerationSensorProbe extends SensorProbe implements LinearAccelerationSensorKeys {
 
 	public int getSensorType() {
