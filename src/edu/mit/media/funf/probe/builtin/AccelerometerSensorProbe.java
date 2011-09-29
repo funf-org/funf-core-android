@@ -45,9 +45,6 @@ public class AccelerometerSensorProbe extends SensorProbe implements Acceleromet
 		};
 	}
 	
-	public int getSensorDelay(Bundle params) {
-		return SensorManager.SENSOR_DELAY_NORMAL;
-	}
 	
 	public String[] getValueNames() {
 		return new String[] {

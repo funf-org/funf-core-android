@@ -155,8 +155,14 @@ public abstract class SensorProbe extends Probe {
 				int[] accuracy = new int[events.size()];
 				int valuesLength = Math.min(valueNames.length, events.get(0).values.length); // Accounts for optional values
 				float[][] values = new float[valuesLength][events.size()];
+				long previousTimestamp = 0L;
 				for (int i=0; i<events.size(); i++) {
 					SensorEvent event = events.get(i);
+					// We see repeating events from 
+					if (event.timestamp == previousTimestamp) {
+						continue;
+					}
+					previousTimestamp = event.timestamp;
 					timestamp[i] = event.timestamp;
 					accuracy[i] = event.accuracy;
 					for (int valueIndex=0; valueIndex<valuesLength; valueIndex++) {
@@ -183,7 +189,9 @@ public abstract class SensorProbe extends Probe {
 
 	public abstract int getSensorType();
 	
-	public abstract int getSensorDelay(Bundle params);
+	public int getSensorDelay(Bundle params) {
+		return SensorManager.SENSOR_DELAY_GAME;
+	}
 	
 	public abstract String[] getValueNames();
 	

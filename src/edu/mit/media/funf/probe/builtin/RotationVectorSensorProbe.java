@@ -38,10 +38,6 @@ public class RotationVectorSensorProbe extends SensorProbe implements RotationVe
 		};
 	}
 	
-	public int getSensorDelay(Bundle params) {
-		return SensorManager.SENSOR_DELAY_NORMAL;
-	}
-	
 	public String[] getValueNames() {
 		return new String[] {
 			X_SIN_THETA_OVER_2, Y_SIN_THETA_OVER_2, Z_SIN_THETA_OVER_2, COS_THETA_OVER_2

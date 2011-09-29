@@ -49,10 +49,6 @@ public class GyroscopeSensorProbe extends SensorProbe implements GyroscopeSensor
 		};
 	}
 	
-	public int getSensorDelay(Bundle params) {
-		return SensorManager.SENSOR_DELAY_NORMAL;
-	}
-	
 	public String[] getValueNames() {
 		return new String[] {
 			X, Y, Z
