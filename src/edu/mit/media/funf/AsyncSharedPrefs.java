@@ -24,13 +24,14 @@ package edu.mit.media.funf;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.Map.Entry;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.os.Looper;
 import android.util.Log;
 
 /**
@@ -83,7 +84,8 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 				mMap.remove(key);
 			}
 			// Already will be running on main thread
-			for (OnSharedPreferenceChangeListener listener : mListeners.keySet()) {
+			Set<OnSharedPreferenceChangeListener> listeners = new HashSet<OnSharedPreferenceChangeListener>(mListeners.keySet());
+			for (OnSharedPreferenceChangeListener listener : listeners) {
 				if (listener != null) {
 					listener.onSharedPreferenceChanged(this, key);
 				}

@@ -152,11 +152,11 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 		}
 	}
 
-	private static final String ENABLED_KEY = "enabled";
+	public static final String ENABLED_KEY = "enabled";
 	public void onSharedPreferenceChanged (SharedPreferences sharedPreferences, String key) {
 		if (sharedPreferences.equals(getConfig().getPrefs())) {
 			onConfigChange(getConfig().toString(true));
-			if (FunfConfig.DATA_REQUESTS_KEY.equals(key)) {
+			if (FunfConfig.isDataRequestKey(key)) {
 				if (isEnabled()) {
 					sendProbeRequests(false);
 				}
@@ -176,19 +176,25 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 		}
 	}
 	
+	private long lastRun = 0L;
+	private static final long STARTUP_DELAY = 5000L;
 	public void reload() {
-		cancelAlarms();
-		unregisterListeners();
-		removeProbeRequests();
-		sentProbeRequests = null;
-		if (isEnabled()) {
-			// Schedule this for the future to prevent race conditions
-			handler.postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					ensureServicesAreRunning();
-				}
-			}, 5000);
+		long now = System.currentTimeMillis();
+		if (lastRun + STARTUP_DELAY < now) {
+			lastRun = now;
+			cancelAlarms();
+			unregisterListeners();
+			removeProbeRequests();
+			sentProbeRequests = null;
+			if (isEnabled()) {
+				// Schedule this for the future to prevent race conditions
+				handler.postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						ensureServicesAreRunning();
+					}
+				}, STARTUP_DELAY);
+			}
 		}
 	}
 	
@@ -253,16 +259,16 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 			sentProbeRequests = new HashMap<String, Bundle[]>();
 		}
 		final boolean shouldSendAll = sendAll;
+		final Map<String,Bundle[]> localSentProbeRequests = sentProbeRequests;
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				synchronized (sentProbeRequests) {
+				synchronized (localSentProbeRequests) {
 				final Map<String,Bundle[]> configuredDataRequests = getConfig().getDataRequests();
 				final Set<String> allRequests = new HashSet<String>();
 				allRequests.addAll(configuredDataRequests.keySet());
-				allRequests.addAll(sentProbeRequests.keySet());
+				allRequests.addAll(localSentProbeRequests.keySet());
 				final String requestId = getPipelineName();
-				Map<String, Bundle[]> localSentProbeRequests = sentProbeRequests;
 				int updateCount = 0;
 				for (String probeName : allRequests) {
 					if (sentProbeRequests != localSentProbeRequests) {
@@ -298,12 +304,20 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	
 	private void removeProbeRequests() {
 		// TODO: Use a more general approach to remove data registration in all probes in all packages
-		Log.w(TAG, "Only removing requests for probes that are registered in this package.");
-		String requestId = getPipelineName();
-		for (Class<? extends Probe> probeClass : ProbeUtils.getAvailableProbeClasses(this)) {
-			ProbeCommunicator probe = new ProbeCommunicator(this, probeClass);
-			probe.unregisterDataRequest(requestId);
-		}
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				Log.w(TAG, "Only removing requests for probes that are registered in this package.");
+				String requestId = getPipelineName();
+				for (Class<? extends Probe> probeClass : ProbeUtils.getAvailableProbeClasses(ConfiguredPipeline.this)) {
+					ProbeCommunicator probe = new ProbeCommunicator(ConfiguredPipeline.this, probeClass);
+					probe.unregisterDataRequest(requestId);
+					try {
+						Thread.sleep(100L); // Rate limit
+					} catch (InterruptedException e) {}
+				}
+			}
+		}).start();
 	}
 	
 	public static final String DEFAULT_PIPELINE_NAME = "mainPipeline";

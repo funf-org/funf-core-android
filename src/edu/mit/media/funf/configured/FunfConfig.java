@@ -21,10 +21,11 @@
  */
 package edu.mit.media.funf.configured;
 
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,6 +34,7 @@ import org.json.JSONObject;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
+import edu.mit.media.funf.EqualsUtil;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;
 
@@ -66,6 +68,7 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 		assert prefs != null;
 		this.prefs = prefs;
 		prefs.registerOnSharedPreferenceChangeListener(this);
+		dataRequests = new HashMap<String, Bundle[]>();
 	}
 	
 	/*
@@ -98,9 +101,9 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 	
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		if (sharedPreferences == prefs && DATA_REQUESTS_KEY.equals(key)) {
-			synchronized (this) {
-				dataRequests = null; // remove stale cache
+		if (sharedPreferences == prefs && isDataRequestKey(key)) {
+			synchronized (dataRequests) {
+				dataRequests.remove(keyToProbename(key));
 			}
 		}
 	}
@@ -139,23 +142,44 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 	 * without affecting the configuration object.
 	 * @return
 	 */
-	public Map<String, Bundle[]> getDataRequests() {
-		Map<String, Bundle[]> localRequests = dataRequests; // another thread may make member variable null
-		if (localRequests == null) { // Avoid synchronized access if we don't need to
-			synchronized (this) {
-				if (dataRequests == null) {
-					String jsonString = prefs.getString(DATA_REQUESTS_KEY, DEFAULT_DATA_REQUESTS);
-					try {
-						JSONObject jsonObject = new JSONObject(jsonString);
-						dataRequests = Collections.unmodifiableMap(getDataRequestMap(jsonObject));
-					} catch (JSONException e) {
-						throw new RuntimeException(e);
+	public synchronized Map<String, Bundle[]> getDataRequests() {
+		synchronized (dataRequests) {
+			// Make sure all keys have been cached
+			for (String key : prefs.getAll().keySet()) {
+				if (isDataRequestKey(key)) {
+					String probeName = keyToProbename(key);
+					if (!dataRequests.containsKey(probeName)) {
+						getDataRequests(probeName);
 					}
 				}
-				localRequests = dataRequests;
+			}
+			return deepCopy(dataRequests); // Deep copy so users can modify
+		}
+	}
+
+	public Bundle[] getDataRequests(String probeName) {
+		synchronized (dataRequests) {
+			// Check to see if it is cached first
+			if (dataRequests.containsKey(probeName)) {
+				return dataRequests.get(probeName);
+			}
+	
+			// Check to see if we have a key for this
+			String jsonString = prefs.getString(probeNameToKey(probeName), null);
+			if (jsonString == null) {
+				return null;
+			}
+
+			// If so parse value and store in cache
+			try {
+				JSONArray jsonArray = new JSONArray(jsonString);
+				Bundle[] requests = getBundleArray(jsonArray);
+				dataRequests.put(probeName, requests);
+				return requests;
+			} catch (JSONException e) {
+				throw new RuntimeException(e);
 			}
 		}
-		return deepCopy(localRequests); // Deep copy so users can modify
 	}
 	
 	private Map<String, Bundle[]> deepCopy(Map<String, Bundle[]> original) {
@@ -182,11 +206,10 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 	
 	public class Editor {
 
-		private SharedPreferences.Editor editor;
+		private SharedPreferences.Editor editor = getPrefs().edit();
+		private Set<String> changedProbes = new HashSet<String>();
+		private boolean clear = false;
 		
-		public Editor() {
-			editor = getPrefs().edit();
-		}
 		
 		public Editor setName(String name) {
 			editor.putString(NAME_KEY, name);
@@ -224,8 +247,27 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 		}
 		
 		public Editor setDataRequests(Map<String, Bundle[]> dataRequests) {
-			if (!getDataRequests().equals(dataRequests)) { // Don't reset all data requests unless it is necessary
-				editor.putString(DATA_REQUESTS_KEY, getDataRequestJsonObject(dataRequests).toString());
+			// Remove all of the items that don't exist in the new data requests
+			for (String existingProbeName : getDataRequests().keySet()) {
+				if (!dataRequests.containsKey(existingProbeName)) {
+					editor.remove(probeNameToKey(existingProbeName));
+					changedProbes.add(existingProbeName);
+				}
+			}
+			for (Map.Entry<String, Bundle[]> dataRequestEntry : dataRequests.entrySet()) {
+				setDataRequest(dataRequestEntry.getKey(), dataRequestEntry.getValue());
+			}
+			return this;
+		}
+		
+		public Editor setDataRequest(String probeName, Bundle[] requests) {
+			if (!EqualsUtil.areEqual(getDataRequests(probeName), requests)) {
+				if (requests == null || requests.length == 0) {
+					editor.remove(probeNameToKey(probeName));
+				} else {
+					editor.putString(probeNameToKey(probeName), toJSONArray(requests).toString());
+				}
+				changedProbes.add(probeName);
 			}
 			return this;
 		}
@@ -252,6 +294,7 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 		public Editor setAll(String jsonString) throws JSONException {
 			JSONObject jsonObject = new JSONObject(jsonString);
 			editor.clear();
+			clear = true;
 			setString(jsonObject, NAME_KEY);
 			setPositiveLong(jsonObject, VERSION_KEY);
 			setString(jsonObject, CONFIG_UPDATE_URL_KEY);
@@ -259,12 +302,22 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 			setString(jsonObject, DATA_UPLOAD_URL_KEY);
 			setPositiveLong(jsonObject, DATA_UPLOAD_PERIOD_KEY);
 			setPositiveLong(jsonObject, DATA_ARCHIVE_PERIOD_KEY);
-			setString(jsonObject, DATA_REQUESTS_KEY);
+			
+			// Add new probe requests
+			JSONObject requestsJsonObject = jsonObject.getJSONObject(DATA_REQUESTS_KEY);
+			Iterator requestsIterator = requestsJsonObject.keys();
+			while (requestsIterator.hasNext()) {
+				String probeName = (String)requestsIterator.next();
+				JSONArray value = requestsJsonObject.getJSONArray(probeName);
+				editor.putString(probeNameToKey(probeName), value.toString());
+			}
+			
 			return this;
 		}
 		
 		public Editor setAll(FunfConfig otherConfig) {
 			editor.clear();
+			clear = true;
 			for (Map.Entry<String, ?> entry : otherConfig.getPrefs().getAll().entrySet()) {
 				Utils.putInPrefs(editor, entry.getKey(), entry.getValue());
 			}
@@ -272,8 +325,33 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 		}
 		
 		public boolean commit() {
-			return editor.commit();
+			if (clear || !changedProbes.isEmpty()) {
+				synchronized (dataRequests) {
+					if (clear) {
+						dataRequests.clear();
+					} else {
+						for (String changedProbeName : changedProbes) {
+							dataRequests.remove(changedProbeName);
+						}
+					}
+					return editor.commit(); // Commit in synchronized block to prevent stale data request caches
+				}
+			} else {
+				return editor.commit(); // Don't need to synchronize
+			}
 		}
+	}
+	
+	public static boolean isDataRequestKey(String key) {
+		return key != null && key.startsWith(DATA_REQUESTS_KEY);
+	}
+	
+	public static String probeNameToKey(String probeName) {
+		return DATA_REQUESTS_KEY + probeName;
+	}
+	
+	public static String keyToProbename(String key) {
+		return key.substring(DATA_REQUESTS_KEY.length());
 	}
 	
 	private static JSONObject getDataRequestJsonObject(Map<String, Bundle[]> dataRequestMap) {
