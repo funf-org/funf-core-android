@@ -295,8 +295,8 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 					}
 				}
 				Log.i(TAG, "Sent update requests for " + updateCount + " probes.");
-				sentProbeRequests.clear();
-				sentProbeRequests.putAll(getConfig().getDataRequests());
+				localSentProbeRequests.clear();
+				localSentProbeRequests.putAll(getConfig().getDataRequests());
 				}
 			}
 		}).start();
