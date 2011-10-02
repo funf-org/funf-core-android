@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.util.Log;
+import static edu.mit.media.funf.Utils.TAG;
 
 /**
  * A convenience class to make sure that writes happen in a separate thread,
@@ -242,6 +243,7 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 				public void run() {
 					boolean success = editor.commit();
 					if (!success) {
+						Log.w(TAG, "AsyncSharedPrefs failed to commit changes to disk.  Rolling back.");
 						synchronized (AsyncSharedPrefs.this) {
 							// Reset to prefs
 							mMap.clear();

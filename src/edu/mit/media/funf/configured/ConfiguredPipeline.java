@@ -23,6 +23,7 @@ package edu.mit.media.funf.configured;
 
 import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import java.io.File;
+import java.io.ObjectOutputStream.PutField;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -399,6 +400,8 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 		// Record configuration change to database
 		Intent i = new Intent(this, getDatabaseServiceClass());
 		i.setAction(DatabaseService.ACTION_RECORD);
+		i.putExtra(DatabaseService.DATABASE_NAME_KEY, getPipelineName());
+		i.putExtra(NameValueDatabaseService.TIMESTAMP_KEY, System.currentTimeMillis());
 		i.putExtra(NameValueDatabaseService.NAME_KEY, getClass().getName());
 		i.putExtra(NameValueDatabaseService.VALUE_KEY, json);
 		startService(i);
@@ -454,7 +457,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	
 	protected static FunfConfig getConfig(Context context, String name) {
 		SharedPreferences prefs = context.getSharedPreferences(name, MODE_PRIVATE);
-		return new FunfConfig(async(prefs));
+		return FunfConfig.getInstance(async(prefs));
 	}
 	
 	/**
@@ -463,7 +466,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	 */
 	protected FunfConfig getTemporaryConfig() {
 		SharedPreferences prefs = getSharedPreferences(getClass().getName() + "_tempconfig", MODE_PRIVATE);
-		return new FunfConfig(async(prefs));
+		return FunfConfig.getInstance(async(prefs));
 	}
 	
 	/**

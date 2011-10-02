@@ -34,6 +34,7 @@ import org.json.JSONObject;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
+import edu.mit.media.funf.AsyncSharedPrefs;
 import edu.mit.media.funf.EqualsUtil;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;
@@ -64,40 +65,28 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 	
 	private final SharedPreferences prefs;
 	
-	public FunfConfig(SharedPreferences prefs) {
+	private FunfConfig(SharedPreferences prefs) {
 		assert prefs != null;
 		this.prefs = prefs;
 		prefs.registerOnSharedPreferenceChangeListener(this);
 		dataRequests = new HashMap<String, Bundle[]>();
 	}
 	
-	/*
-	// Commented code originally used to make  FunfConfig unique per name
-	// This responsibility was outsourced to classes using it
-	
-	private static final String CONFIG_PREFIX = "edu.mit.media.funf.Config_";
-	FunfConfig(Context context, String name) {
-		prefs = context.getApplicationContext().getSharedPreferences(CONFIG_PREFIX + name, Context.MODE_PRIVATE);
-		if (getName() == null) {
-			prefs.edit().putString(NAME_KEY, name).commit();
+	private static final Map<SharedPreferences, FunfConfig> instances = new HashMap<SharedPreferences, FunfConfig>();
+	public static FunfConfig getInstance(SharedPreferences prefs) {
+		FunfConfig config = instances.get(prefs);
+		if (config == null) {
+			synchronized (instances) {
+				// Check one more time when we are synchronized
+				config = instances.get(prefs);
+				if (config == null) {
+					config = new FunfConfig(prefs);
+					instances.put(prefs, config);
+				}
+			}
 		}
-		prefs.registerOnSharedPreferenceChangeListener(this);
+		return config;
 	}
-	
-	FunfConfig(Context context, String name, String jsonString) throws JSONException {
-		this(context, (name == null) ? new JSONObject(jsonString).getString(NAME_KEY) : name);
-		this.edit().setAll(jsonString).commit();
-	}
-	
-	public static FunfConfig getConfig(Context context, String name) {
-		return new FunfConfig(context, name);
-	}
-	
-	public static FunfConfig importConfig(Context context, String configJson) throws JSONException {
-		return new FunfConfig(context, null, configJson);
-	}
-	
-	*/
 	
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
