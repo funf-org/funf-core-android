@@ -144,6 +144,10 @@ public class DefaultArchive implements Archive<File> {
 	/////////////////////
 	// Delegate
 	
+	public String getPathOnSDCard() {
+		return Utils.getSdCardPath(context) + databaseName + "/";
+	}
+	
 	private Archive<File> delegateArchive; // Cache
 	@SuppressWarnings("unchecked")
 	protected Archive<File> getDelegateArchive() {
@@ -151,7 +155,7 @@ public class DefaultArchive implements Archive<File> {
 			synchronized (this) {
 				if (delegateArchive == null) {
 					SecretKey key = getKey();
-					String rootSdCardPath = Utils.getSdCardPath(context) + databaseName + "/";
+					String rootSdCardPath = getPathOnSDCard();
 					Archive<File> backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
 					Archive<File> mainArchive = new CompositeFileArchive(
 							getTimestampedDbFileArchive(new File(rootSdCardPath + "archive"), context, key),
