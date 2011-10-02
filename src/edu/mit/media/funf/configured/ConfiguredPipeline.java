@@ -81,7 +81,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	CONFIG_FILE = "config_file";
 
 	private Map<String, Bundle[]> sentProbeRequests = null;
-	private NameValueProbeDataListener dataListener;
+	private BroadcastReceiver dataListener;
 	private Handler handler;
 
 	public ConfiguredPipeline() {
@@ -333,7 +333,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 				Log.i(TAG, "No Config");
 				return;
 			}
-			dataListener = new NameValueProbeDataListener(getPipelineName(), getDatabaseServiceClass(), getBundleSerializer());
+			dataListener = getProbeDataListener();
 			Set<String> probes = config.getDataRequests().keySet();
 			IntentFilter filter = new IntentFilter();
 			for (String probe : probes) {
