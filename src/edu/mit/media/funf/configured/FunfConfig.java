@@ -142,10 +142,11 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 	 * without affecting the configuration object.
 	 * @return
 	 */
-	public synchronized Map<String, Bundle[]> getDataRequests() {
+	public  Map<String, Bundle[]> getDataRequests() {
+		Set<String> probeNames = prefs.getAll().keySet();
 		synchronized (dataRequests) {
 			// Make sure all keys have been cached
-			for (String key : prefs.getAll().keySet()) {
+			for (String key : probeNames) {
 				if (isDataRequestKey(key)) {
 					String probeName = keyToProbename(key);
 					if (!dataRequests.containsKey(probeName)) {
