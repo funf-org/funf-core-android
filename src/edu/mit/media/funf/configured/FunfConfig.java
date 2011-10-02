@@ -449,12 +449,19 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 	
 	JSONObject toJsonObject() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
+		JSONObject dataRequests = new JSONObject();
+		jsonObject.put(DATA_REQUESTS_KEY, dataRequests);
 		for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
+			String key = entry.getKey();
 			Object value = entry.getValue();
-			if (DATA_REQUESTS_KEY.equals(entry.getKey())) {
-				value = new JSONObject((String)value);
+			if (isDataRequestKey(key)) {
+				if (value != null) {
+					String probeName = keyToProbename(key);
+					dataRequests.put(probeName, new JSONArray((String)value));
+				}
+			} else {
+				jsonObject.put(key, value);
 			}
-			jsonObject.put(entry.getKey(), value);
 		}
 		return jsonObject;
 	}
