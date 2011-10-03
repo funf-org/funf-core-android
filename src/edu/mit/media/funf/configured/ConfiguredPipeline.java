@@ -166,6 +166,9 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 			if (FunfConfig.isDataRequestKey(key)) {
 				if (isEnabled()) {
 					sendProbeRequests(false);
+					// Reregister listeners
+					unregisterListeners(); 
+					registerListeners();
 				}
 			} else if (FunfConfig.CONFIG_UPDATE_PERIOD_KEY.equals(key)) {
 				cancelAlarm(ACTION_UPDATE_CONFIG);
@@ -293,7 +296,6 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 						} else {
 							probe.registerDataRequest(requestId, newRequest);
 						}
-						
 						// Throttled to prevent binder exceptions
 						try {
 							Thread.sleep(5000L);
