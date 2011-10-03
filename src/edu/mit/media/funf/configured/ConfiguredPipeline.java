@@ -66,7 +66,7 @@ import static edu.mit.media.funf.Utils.TAG;
 
 public abstract class ConfiguredPipeline extends IntentService implements OnSharedPreferenceChangeListener {
 
-	
+
 	private static final String PREFIX = "edu.mit.media.funf.";
 	public static final String
 	ACTION_RELOAD = PREFIX + "reload",
@@ -75,6 +75,10 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	ACTION_ARCHIVE_DATA = PREFIX + "archive",
 	ACTION_ENABLE = PREFIX + "enable",
 	ACTION_DISABLE = PREFIX + "disable";
+	
+
+	public static final String LAST_CONFIG_UPDATE = "LAST_CONFIG_UPDATE";
+	public static final String LAST_DATA_UPLOAD = "LAST_DATA_UPLOAD";
 	
 	public static final String
 	CONFIG = "config",
@@ -155,7 +159,9 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 
 	public static final String ENABLED_KEY = "enabled";
 	public void onSharedPreferenceChanged (SharedPreferences sharedPreferences, String key) {
+		Log.i(TAG, "Shared Prefs changed");
 		if (sharedPreferences.equals(getConfig().getPrefs())) {
+			Log.i(TAG, "Configuration changed");
 			onConfigChange(getConfig().toString(true));
 			if (FunfConfig.isDataRequestKey(key)) {
 				if (isEnabled()) {
@@ -173,6 +179,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 			}
 			
 		} else if (sharedPreferences.equals(getSystemPrefs()) && ENABLED_KEY.equals(key)) {
+			Log.i(TAG, "System prefs changed");
 			reload();
 		}
 	}
@@ -385,9 +392,13 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 			return;
 		}
 		try {
+			Log.i(TAG, "Updating pipeline config.");
 			// Write to temporary to compare
 			FunfConfig tempConfig = getTemporaryConfig();
 			boolean successfullyWroteConfig = tempConfig.edit().setAll(jsonString).commit();
+			if (successfullyWroteConfig) {
+				getSystemPrefs().edit().putLong(LAST_CONFIG_UPDATE, System.currentTimeMillis()).commit();
+			}
 			if (successfullyWroteConfig	&& !tempConfig.equals(getConfig())) {
 				getConfig().edit().setAll(tempConfig).commit();
 			}
@@ -415,6 +426,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 		i.putExtra(UploadService.ARCHIVE_ID, archiveName);
 		i.putExtra(UploadService.REMOTE_ARCHIVE_ID, uploadUrl);
 		startService(i);
+		getSystemPrefs().edit().putLong(LAST_DATA_UPLOAD, System.currentTimeMillis()).commit();
 	}
 	
 	public void archiveData() {
