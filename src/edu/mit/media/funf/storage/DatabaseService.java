@@ -21,6 +21,8 @@
  */
 package edu.mit.media.funf.storage;
 
+import static edu.mit.media.funf.Utils.TAG;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +35,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-import static edu.mit.media.funf.Utils.TAG;
 
 /**
  * Simple database service that is able to write timestamp, name, value tuples.
@@ -122,7 +123,6 @@ public abstract class DatabaseService extends IntentService {
 		if (archive.add(dbFile)) {
 			dbFile.delete();
 		}
-		dbHelper = new NameValueDatabaseHelper(this, databaseName, 1);
 	}
 	
 	private SQLiteOpenHelper getOrCreateDatabaseHelper(String databaseName) {
