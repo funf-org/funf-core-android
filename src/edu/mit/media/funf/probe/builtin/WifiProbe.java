@@ -160,8 +160,15 @@ public class WifiProbe extends Probe implements WifiKeys {
 			registerReceiver(new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context ctx, Intent i) {
-					unregisterReceiver(this);
-					runScan();
+					if (WifiManager.WIFI_STATE_CHANGED_ACTION.equals(i.getAction())) {
+						try {
+							unregisterReceiver(this);
+							runScan();
+						} catch (IllegalArgumentException e) {
+							// Not sure why, but sometimes this is not registered
+							// Probably two intents at once
+						}
+					}
 				}
 			}, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
 			wifiManager.setWifiEnabled(true);
