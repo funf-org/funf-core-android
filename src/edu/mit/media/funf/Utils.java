@@ -75,6 +75,10 @@ public final class Utils {
 	 * @throws UnstorableTypeException
 	 */
 	public static SharedPreferences.Editor putInPrefs(SharedPreferences.Editor editor, String key, Object value) throws UnstorableTypeException {
+		if (value == null) {
+			editor.putString(key, null);
+			return editor;
+		}
 		Class<?> valueClass = value.getClass();
 		if (Boolean.class.isAssignableFrom(valueClass)) {
 			editor.putBoolean(key, ((Boolean)value).booleanValue());
