@@ -65,6 +65,11 @@ public class BluetoothProbe extends Probe implements BluetoothKeys {
 			android.Manifest.permission.BLUETOOTH_ADMIN,	
 		};
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Nearby Bluetooth Devices Probe";
+	}
 
 	@Override
 	protected void onEnable() {

@@ -45,6 +45,11 @@ public class CellProbe extends SynchronousProbe implements CellKeys {
 				"android.hardware.telephony"
 		};
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Nearby Cellular Towers Probe";
+	}
 
 	@Override
 	protected Bundle getData() {

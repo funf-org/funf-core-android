@@ -74,6 +74,11 @@ public class WifiProbe extends Probe implements WifiKeys {
 				"android.hardware.wifi"
 		};
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Nearby Wifi Devices Probe";
+	}
 
 	@Override
 	public void sendProbeData() {

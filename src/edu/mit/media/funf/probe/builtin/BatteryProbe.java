@@ -56,6 +56,11 @@ public class BatteryProbe extends Probe implements BatteryKeys {
 			android.Manifest.permission.BATTERY_STATS,
 		};
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Battery Info Probe";
+	}
 
 	@Override
 	protected void onEnable() {

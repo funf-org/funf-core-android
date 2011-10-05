@@ -52,6 +52,11 @@ public class SMSProbe extends DatedContentProviderProbe implements SMSKeys {
 	protected long getDefaultPeriod() {
 		return 36000;
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "SMS Log Probe";
+	}
 
 
 	@Override

@@ -69,6 +69,11 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys {
 			FULL_PARAM
 		};
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Contacts Probe";
+	}
 
 	@Override
 	protected void onEnable() {

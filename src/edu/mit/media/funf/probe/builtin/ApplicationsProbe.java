@@ -39,6 +39,11 @@ public class ApplicationsProbe extends SynchronousProbe implements ApplicationsK
 		return null;
 	}
 	
+	@Override
+	protected String getDisplayName() {
+		return "Installed Applications Probe";
+	}
+	
 	private static Set<String> getInstalledAppPackageNames(List<ApplicationInfo> installedApps) {
 		HashSet<String> installedAppPackageNames = new HashSet<String>();
 		for (ApplicationInfo info : installedApps) {

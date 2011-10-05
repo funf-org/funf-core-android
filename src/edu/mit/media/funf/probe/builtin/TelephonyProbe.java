@@ -47,6 +47,11 @@ public class TelephonyProbe extends SynchronousProbe implements TelephonyKeys {
 	protected long getDefaultPeriod() {
 		return 604800L;
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Mobile Network Info Probe";
+	}
 
 	@Override
 	public Bundle getData() {

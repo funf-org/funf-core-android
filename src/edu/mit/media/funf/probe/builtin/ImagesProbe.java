@@ -46,6 +46,11 @@ public class ImagesProbe extends DatedContentProviderProbe implements ImagesKeys
 	protected String getDataName() {
 		return IMAGES;
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Image File Stats Probe";
+	}
 
 	@Override
 	protected Map<String, CursorCell<?>> getProjectionMap() {

@@ -73,6 +73,11 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 	public String[] getRequiredPermissions() {
 		return new String[]{};
 	}
+
+	@Override
+	protected String getDisplayName() {
+		return "Activity Level Probe";
+	}
 	
 	@Override
 	protected void onEnable() {

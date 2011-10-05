@@ -52,6 +52,11 @@ public class ScreenProbe extends Probe implements ScreenKeys {
 	public String[] getRequiredPermissions() {
 		return new String[]{};
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Screen On/Off State Probe";
+	}
 
 	@Override
 	protected void onEnable() {

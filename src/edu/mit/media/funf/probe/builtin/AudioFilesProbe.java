@@ -46,6 +46,11 @@ public class AudioFilesProbe extends DatedContentProviderProbe implements AudioF
 	protected String getDataName() {
 		return AUDIO_FILES;
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Audio File Stats Probe";
+	}
 
 	@Override
 	protected Map<String, CursorCell<?>> getProjectionMap() {

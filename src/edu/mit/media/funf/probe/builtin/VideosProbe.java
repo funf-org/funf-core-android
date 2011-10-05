@@ -53,6 +53,11 @@ public class VideosProbe extends DatedContentProviderProbe implements VideosKeys
 	protected String getDataName() {
 		return VIDEOS;
 	}
+	
+	@Override
+	protected String getDisplayName() {
+		return "Video File Stats Probe";
+	}
 
 	@Override
 	protected Map<String, CursorCell<?>> getProjectionMap() {
