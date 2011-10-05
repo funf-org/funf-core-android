@@ -54,7 +54,7 @@ public class DefaultArchive implements Archive<File> {
 	private static final String ENCRYPTION_FORMAT = "ENCRYPTION_FORMAT";
 	private static final String DES_ENCRYPTION = "DES";
 	
-	private static final char[] DEFAULT_PASSWORD = "youchangeme".toCharArray();
+	private static final char[] DEFAULT_PASSWORD = "changeme".toCharArray();
 	
 	private final static byte[] SALT = {
         (byte)0xa6, (byte)0xab, (byte)0x09, (byte)0x93,
