@@ -105,7 +105,7 @@
 	
 	<path id="android.libraries.src"><path refid="project.libraries.src" /></path>
 	<path id="android.libraries.jars"><path refid="project.libraries.jars" /></path>
-
+	
 	<target name="getgitdetails" >
 	        <exec executable="git" outputproperty="git.tagstring">
 	                <arg value="describe"/>
@@ -138,8 +138,16 @@
 	                manifest="bin/MANIFEST.MF" />
 	</target>
 	
+	<target name="debug" depends="jar">
+	</target>
+	
 	<target name="release" depends="jar">
-		<copy file="bin/funf.jar" tofile="bin/funf-${version.num}.jar" />
+		<input message="Please enter keystore password:" addproperty="keypass" />
+		<signjar jar="bin/funf.jar" 
+			keystore="${keystore}" 
+			alias="${keystore.alias}"
+			storepass="${keypass}"
+			signedjar="bin/funf-${version.num}.jar"></signjar>
 	</target>
 	
 </project>
