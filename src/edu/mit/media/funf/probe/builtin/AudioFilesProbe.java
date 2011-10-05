@@ -83,4 +83,8 @@ public class AudioFilesProbe extends DatedContentProviderProbe implements AudioF
 		return null;
 	}
 
+	@Override
+	protected long getDefaultPeriod() {
+		return 36000L;
+	}
 }

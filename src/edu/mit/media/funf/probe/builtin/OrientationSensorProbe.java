@@ -45,5 +45,16 @@ public class OrientationSensorProbe extends SensorProbe implements OrientationSe
 		};
 	}
 
+	@Override
+	protected long getDefaultDuration() {
+		return 15L;
+	}
+
+	@Override
+	protected long getDefaultPeriod() {
+		return 180L;
+	}
+
+	
 
 }

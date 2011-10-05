@@ -68,6 +68,10 @@ public class BrowserBookmarksProbe extends DatedContentProviderProbe {
 		return Browser.BookmarkColumns.DATE;
 	}
 	
+	@Override
+	protected long getDefaultPeriod() {
+		return 604800L;
+	}
 	
 
 }

@@ -46,5 +46,11 @@ public class AndroidInfoProbe extends SynchronousProbe implements AndroidInfoKey
 		data.putInt(SDK, Integer.parseInt(Build.VERSION.SDK, 10));
 		return data;
 	}
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 86400L;
+	}
+
 
 }

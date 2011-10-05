@@ -89,4 +89,8 @@ public class VideosProbe extends DatedContentProviderProbe implements VideosKeys
 		return null;
 	}
 	
+	protected long getDefaultPeriod() {
+		return 604800L;
+	}
+	
 }

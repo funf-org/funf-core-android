@@ -36,16 +36,17 @@ public class TelephonyProbe extends SynchronousProbe implements TelephonyKeys {
 			};
 	}
 	
-	
-
 	@Override
 	public String[] getRequiredFeatures() {
 		return new String[] {
 			"android.hardware.telephony"
 		};
 	}
-
-
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 604800L;
+	}
 
 	@Override
 	public Bundle getData() {

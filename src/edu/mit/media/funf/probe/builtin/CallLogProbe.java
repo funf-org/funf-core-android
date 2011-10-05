@@ -73,5 +73,9 @@ public class CallLogProbe extends DatedContentProviderProbe {
 		return Calls.DATE;
 	}
 	
+	@Override
+	protected long getDefaultPeriod() {
+		return 36000;
+	}
 
 }

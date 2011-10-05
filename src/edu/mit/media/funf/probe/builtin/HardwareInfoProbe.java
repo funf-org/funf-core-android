@@ -39,6 +39,12 @@ public class HardwareInfoProbe extends SynchronousProbe implements HardwareInfoK
 				android.Manifest.permission.BLUETOOTH
 		};
 	}
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 604800L;
+	}
+
 
 	protected Bundle getData() {
 		Bundle data = new Bundle();

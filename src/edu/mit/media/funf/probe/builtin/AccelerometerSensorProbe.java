@@ -52,5 +52,4 @@ public class AccelerometerSensorProbe extends SensorProbe implements Acceleromet
 		};
 	}
 
-
 }

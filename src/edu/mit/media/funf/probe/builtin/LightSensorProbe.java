@@ -22,8 +22,6 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import android.hardware.SensorManager;
-import android.os.Bundle;
 import edu.mit.media.funf.probe.SensorProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.LightSensorKeys;
 
@@ -44,6 +42,12 @@ public class LightSensorProbe extends SensorProbe implements LightSensorKeys {
 			LUX
 		};
 	}
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 300L;
+	}
+
 
 
 }

@@ -54,6 +54,15 @@ public class GyroscopeSensorProbe extends SensorProbe implements GyroscopeSensor
 			X, Y, Z
 		};
 	}
-
+	
+	@Override
+	protected long getDefaultDuration() {
+		return 60L;
+	}
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 1800;
+	}
 
 }

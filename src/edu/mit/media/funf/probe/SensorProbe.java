@@ -58,11 +58,19 @@ public abstract class SensorProbe extends Probe {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-				new Parameter(SystemParameter.DURATION, 60L),
-				new Parameter(SystemParameter.PERIOD, 3600L),
+				new Parameter(SystemParameter.DURATION, getDefaultDuration()),
+				new Parameter(SystemParameter.PERIOD, getDefaultPeriod()),
 				new Parameter(SystemParameter.START, 0L),
 				new Parameter(SystemParameter.END, 0L)
 		};
+	}
+	
+	protected long getDefaultPeriod() {
+		return 1800L;
+	}
+	
+	protected long getDefaultDuration() {
+		return 60;
 	}
 	
 	@Override

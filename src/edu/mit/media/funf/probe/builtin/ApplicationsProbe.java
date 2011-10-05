@@ -68,5 +68,10 @@ public class ApplicationsProbe extends SynchronousProbe implements ApplicationsK
 		data.putParcelableArrayList(UNINSTALLED_APPLICATIONS, getUninstalledApps(allApplications, installedApplications));
 		return data;
 	}
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 36000L;
+	}
 
 }

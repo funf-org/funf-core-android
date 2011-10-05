@@ -64,5 +64,10 @@ public class CellProbe extends SynchronousProbe implements CellKeys {
 		}
 		return data;
 	}
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 300L;
+	}
 
 }

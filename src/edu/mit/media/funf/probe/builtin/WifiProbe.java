@@ -40,7 +40,7 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.WifiKeys;
 
 public class WifiProbe extends Probe implements WifiKeys {
 
-	public static final long DEFAULT_PERIOD = 60L * 20L;
+	public static final long DEFAULT_PERIOD = 60L * 5L;
 	
 	private static final String TAG = WifiProbe.class.getName();
 	

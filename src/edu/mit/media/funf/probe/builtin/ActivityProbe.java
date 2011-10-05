@@ -39,9 +39,9 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.ActivityKeys;
 
 public class ActivityProbe extends Probe implements ActivityKeys {
 
-	private static long DEFAULT_DURATION = 5L;
-	private static long DEFAULT_PERIOD = 60L;
-	private static long INTERVAL = 1000L;  // Interval over which we calculate activity
+	private static long DEFAULT_DURATION = 15L;
+	private static long DEFAULT_PERIOD = 120L;
+	private static long INTERVAL = 1000L;  // Millis Interval over which we calculate activity
 	
 	private long duration = 0L;
 	private IntentFilter accelerometerProbeBroadcastFilter;

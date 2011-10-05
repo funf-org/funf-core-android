@@ -32,10 +32,14 @@ public abstract class SynchronousProbe extends Probe {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-			new Parameter(SystemParameter.PERIOD, 3600L),
+			new Parameter(SystemParameter.PERIOD, getDefaultPeriod()),
 			new Parameter(SystemParameter.START, 0L),
 			new Parameter(SystemParameter.END, 0L)
 		};
+	}
+	
+	protected long getDefaultPeriod() {
+		return 3600L;
 	}
 
 	@Override

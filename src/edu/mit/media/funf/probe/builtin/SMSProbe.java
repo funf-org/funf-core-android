@@ -47,6 +47,12 @@ public class SMSProbe extends DatedContentProviderProbe implements SMSKeys {
 	protected String getDataName() {
 		return MESSAGES;
 	}
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 36000;
+	}
+
 
 	@Override
 	protected Map<String, CursorCell<?>> getProjectionMap() {

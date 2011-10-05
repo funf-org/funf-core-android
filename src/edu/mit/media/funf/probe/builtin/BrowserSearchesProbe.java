@@ -64,5 +64,8 @@ public class BrowserSearchesProbe extends DatedContentProviderProbe {
 		return Browser.SearchColumns.DATE;
 	}
 
-	
+	@Override
+	protected long getDefaultPeriod() {
+		return 604800L;
+	}
 }

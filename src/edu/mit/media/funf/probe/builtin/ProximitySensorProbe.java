@@ -22,8 +22,6 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import android.hardware.SensorManager;
-import android.os.Bundle;
 import edu.mit.media.funf.probe.SensorProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ProximitySensorKeys;
 
@@ -44,6 +42,15 @@ public class ProximitySensorProbe extends SensorProbe implements ProximitySensor
 			DISTANCE
 		};
 	}
+	
+	@Override
+	protected long getDefaultDuration() {
+		return 15L;
+	}
 
+	@Override
+	protected long getDefaultPeriod() {
+		return 300L;
+	}
 
 }

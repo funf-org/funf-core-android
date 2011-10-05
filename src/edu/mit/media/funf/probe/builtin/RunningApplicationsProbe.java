@@ -47,4 +47,8 @@ public class RunningApplicationsProbe extends SynchronousProbe implements Runnin
 		return data;
 	}
 
+	@Override
+	protected long getDefaultPeriod() {
+		return 30L;
+	}
 }

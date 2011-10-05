@@ -50,5 +50,14 @@ public class TemperatureSensorProbe extends SensorProbe implements TemperatureSe
 		};
 	}
 
+	@Override
+	protected long getDefaultDuration() {
+		return 10L;
+	}
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 1200;
+	}
 
 }
