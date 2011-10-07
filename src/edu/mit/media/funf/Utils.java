@@ -22,7 +22,9 @@
 package edu.mit.media.funf;
 
 import static edu.mit.media.funf.AsyncSharedPrefs.async;
+
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,6 +36,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.os.PowerManager;
 import android.util.Log;
@@ -284,7 +287,7 @@ public final class Utils {
 	}
 
 	public static String getSdCardPath(Context context) {
-		return "/sdcard/" + context.getPackageName() + "/";
+		return new File(Environment.getExternalStorageDirectory(), context.getPackageName()) + "/";
 	}
 	
 	/**

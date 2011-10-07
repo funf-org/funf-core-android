@@ -21,6 +21,8 @@
  */
 package edu.mit.media.funf;
 
+import static edu.mit.media.funf.Utils.TAG;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -46,15 +48,15 @@ import java.util.zip.ZipOutputStream;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Environment;
 import android.util.Log;
-import static edu.mit.media.funf.Utils.TAG;
 
 public class FileUtils {
 
 	
 	public static boolean isSDCardReady() {
 		try {
-			return new File("/sdcard/").exists();
+			return Environment.getExternalStorageDirectory().exists();
 		} catch (Exception e) {
 		}
 		return false;
