@@ -23,8 +23,8 @@ package edu.mit.media.funf.probe.builtin;
 
 import android.os.Bundle;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
 public class CellProbeTest extends ProbeTestCase<CellProbe> {
 
@@ -37,7 +37,7 @@ public class CellProbeTest extends ProbeTestCase<CellProbe> {
 		params.putLong(SystemParameter.PERIOD.name, 0L);
 		startProbe(params);
 		Bundle data = getData(5);
-		assertNotNull(data.get(Probe.TIMESTAMP));
+		assertNotNull(data.get(BaseProbeKeys.TIMESTAMP));
 		System.out.println(Utils.join(Utils.getValues(data).keySet(), ", "));
 	}
 

@@ -29,8 +29,8 @@ import android.os.Parcelable;
 import android.provider.ContactsContract.Data;
 import android.util.Log;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
 public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 
@@ -44,7 +44,7 @@ public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 		params.putBoolean(ContactProbe.FULL_PARAM.getName(), true);
 		startProbe(params);
 		Bundle data = getData(10);
-		assertNotNull(data.get(Probe.TIMESTAMP));
+		assertNotNull(data.get(BaseProbeKeys.TIMESTAMP));
 		ArrayList<Parcelable> contactData = data.getParcelableArrayList(ContactProbe.CONTACT_DATA);
 		assertNotNull(contactData);
 		int count = 1;

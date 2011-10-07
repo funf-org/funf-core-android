@@ -51,14 +51,13 @@ import edu.mit.media.funf.OppProbe;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.OppProbe.Status;
 import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;
+import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 import static edu.mit.media.funf.AsyncSharedPrefs.async;
 
 public abstract class Probe extends Service {
 
 	
 	protected final String TAG = getClass().getName();
-	
-	public static final String TIMESTAMP = "TIMESTAMP";
 	
 	private static final String MOST_RECENT_RUN_KEY = "mostRecentTimeRun";
 	private static final String MOST_RECENT_KEY = "mostRecentTimeDataSent";
@@ -355,7 +354,7 @@ public abstract class Probe extends Service {
 		Log.i(TAG, "Sent probe data at " + epochTimestamp);
 		mostRecentTimeDataSent = System.currentTimeMillis();
 		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
-		dataBroadcast.putExtra(TIMESTAMP, epochTimestamp);
+		dataBroadcast.putExtra(BaseProbeKeys.TIMESTAMP, epochTimestamp);
 		// TODO: should we send parameters with data broadcast?
 		dataBroadcast.putExtras(data);
 		Set<String> requestingPackages = allRequests.getByRequesterByRequestId().keySet();
