@@ -114,8 +114,8 @@
 	                <arg value="rev-parse"/>
 	                <arg value="HEAD"/>
 	        </exec>
-	        <condition property="git.tag" value="none" else="${git.tagstring}">
-	                <contains string="${git.tagstring}" substring="cannot"/>
+	        <condition property="git.tag" value="dev" else="${git.tagstring}">
+	                <contains string="${git.tagstring}" substring="fatal"/>
 	        </condition>
 	</target>
 	
@@ -128,7 +128,7 @@
 	        <manifest file="bin/MANIFEST.MF">
 	        <attribute name="Built-By" value="${user.name}"/>
 	                <attribute name="Implementation-Title" value="Funf"/>
-	        <attribute name="Implementation-Version"  value="${version.num}r${git.revision}"/>
+	        <attribute name="Implementation-Version"  value="${git.tagstring}r${git.revision}"/>
 	                <attribute name="Implementation-Vendor"  value="Funf at MIT Media Lab"/>
 	                <attribute name="Built-Date" value="${now}"/>  
 	        </manifest>
@@ -147,7 +147,7 @@
 			keystore="${keystore}" 
 			alias="${keystore.alias}"
 			storepass="${keypass}"
-			signedjar="bin/funf-${version.num}.jar"></signjar>
+			signedjar="bin/funf-${git.tag}.jar"></signjar>
 	</target>
 	
 </project>
