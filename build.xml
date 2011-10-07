@@ -128,7 +128,7 @@
 	        <manifest file="bin/MANIFEST.MF">
 	        <attribute name="Built-By" value="${user.name}"/>
 	                <attribute name="Implementation-Title" value="Funf"/>
-	        <attribute name="Implementation-Version"  value="${git.tagstring}r${git.revision}"/>
+	        <attribute name="Implementation-Version"  value="${git.tag}r${git.revision}"/>
 	                <attribute name="Implementation-Vendor"  value="Funf at MIT Media Lab"/>
 	                <attribute name="Built-Date" value="${now}"/>  
 	        </manifest>
