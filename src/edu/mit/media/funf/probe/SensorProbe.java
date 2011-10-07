@@ -22,6 +22,7 @@
 package edu.mit.media.funf.probe;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -43,7 +44,7 @@ public abstract class SensorProbe extends Probe {
 	private Sensor sensor;
 	private SensorEventListener sensorListener;
 	
-	private BlockingQueue<SensorEvent> recentEvents;
+	private BlockingQueue<SensorEventCopy> recentEvents;
 	private Timer senderTimer;
 
 
@@ -85,12 +86,13 @@ public abstract class SensorProbe extends Probe {
 			disable();
 			return;
 		}
-		recentEvents = new LinkedBlockingQueue<SensorEvent>();
+		recentEvents = new LinkedBlockingQueue<SensorEventCopy>();
 		sensorListener = new SensorEventListener() {
 			
 			@Override
 			public void onSensorChanged(SensorEvent event) {
-				recentEvents.offer(event);
+				// TODO: the same event objects are reused
+				recentEvents.offer(new SensorEventCopy(event));
 			}
 			
 			@Override
@@ -144,7 +146,7 @@ public abstract class SensorProbe extends Probe {
 		Log.i(TAG, "RecentEvents before send:" + recentEvents.size());
 		if (!recentEvents.isEmpty()) {
 			Bundle data = new Bundle();
-			List<SensorEvent> events = new ArrayList<SensorEvent>();
+			List<SensorEventCopy> events = new ArrayList<SensorEventCopy>();
 			recentEvents.drainTo(events);
 			
 			if (!events.isEmpty()) {
@@ -163,14 +165,10 @@ public abstract class SensorProbe extends Probe {
 				int[] accuracy = new int[events.size()];
 				int valuesLength = Math.min(valueNames.length, events.get(0).values.length); // Accounts for optional values
 				float[][] values = new float[valuesLength][events.size()];
-				long previousTimestamp = 0L;
+
 				for (int i=0; i<events.size(); i++) {
-					SensorEvent event = events.get(i);
-					// We see repeating events from 
-					if (event.timestamp == previousTimestamp) {
-						continue;
-					}
-					previousTimestamp = event.timestamp;
+					SensorEventCopy event = events.get(i);
+					
 					timestamp[i] = event.timestamp;
 					accuracy[i] = event.accuracy;
 					for (int valueIndex=0; valueIndex<valuesLength; valueIndex++) {
@@ -184,7 +182,6 @@ public abstract class SensorProbe extends Probe {
 				for (int valueIndex=0; valueIndex<valuesLength; valueIndex++) {
 					data.putFloatArray(valueNames[valueIndex], values[valueIndex]);
 				}
-				
 				sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 			} else {
 				Log.i(TAG, "Recent events is empty.");
@@ -192,6 +189,27 @@ public abstract class SensorProbe extends Probe {
 		} else {
 			Log.i(TAG, "Recent events is empty.");
 		}
+	}
+	
+	/**
+	 * Local copy of sensor data to process.
+	 * TODO: May want to resuse these objects
+	 */
+	private class SensorEventCopy {
+		
+		public final long timestamp;
+		public final int accuracy;
+		public final float[] values;
+		public final Sensor sensor;
+		
+		public SensorEventCopy(SensorEvent event) {
+			this.timestamp = event.timestamp;
+			this.accuracy = event.accuracy;
+			this.values = new float[event.values.length];
+			System.arraycopy(event.values, 0, this.values, 0, event.values.length);
+			this.sensor = event.sensor;
+		}
+		
 	}
 	
 
