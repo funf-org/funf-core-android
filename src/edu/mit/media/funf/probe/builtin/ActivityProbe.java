@@ -41,7 +41,7 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 
 	private static long DEFAULT_DURATION = 15L;
 	private static long DEFAULT_PERIOD = 120L;
-	private static long INTERVAL = 1000L;  // Millis Interval over which we calculate activity
+	private static long INTERVAL = 1L;
 	
 	private long duration = 0L;
 	private IntentFilter accelerometerProbeBroadcastFilter;
@@ -123,12 +123,12 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 				if (varianceSum >= 10.0f) {
 					extremeIntervalCount++;
 				}
-				intervalStartTime += 1000; // Ensure 1 second intervals
+				intervalStartTime += 1; // Ensure 1 second intervals
 				varianceSum = avg = sum = count = 0;
 			}
 			
 			private void update(float x, float y, float z) {
-				Log.d(TAG, "UPDATE");
+				//Log.d(TAG, "UPDATE:(" + x + "," + y + "," + z + ")");
 				// Iteratively calculate variance sum
 				count++;
 				float magnitude = (float)Math.sqrt(x*x + y*y + z*z);
@@ -139,19 +139,23 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 					+ (count - 1) *(deltaAvg * deltaAvg);
 				sum += magnitude;
 				avg = newAvg;
+				//Log.d(TAG, "UPDATED VALUES:(count, varianceSum, sum, avg) " + count + ", " + varianceSum+ ", " + sum+ ", " + avg);
 			}
 			
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				Bundle data = intent.getExtras();
 
-				long timestamp = intent.getLongExtra("TIMESTAMP", 0);
+				long timestamp = intent.getLongExtra(TIMESTAMP, 0L);
+				Log.d(TAG, "Starttime: " + startTime + " IntervalStartTime: " + intervalStartTime);
 				Log.d(TAG, "RECEIVED:" + timestamp);
 				if (sendRunnable == null
-						|| timestamp > startTime + duration * 1000
+						|| timestamp > startTime + duration
 						|| timestamp >= intervalStartTime + 2 * INTERVAL) {
+					Log.d(TAG, "RESET:" + timestamp);
 					reset(timestamp);
 				} else if (timestamp >= intervalStartTime + INTERVAL) {
+					Log.d(TAG, "Interval Reset:" + timestamp);
 					intervalReset();
 				}
 				
@@ -203,6 +207,7 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 		Bundle data = new Bundle();
 		data.putInt(TOTAL_INTERVALS, intervalCount);
 		data.putInt(ACTIVE_INTERVALS, extremeIntervalCount);
+		Log.d(TAG, "(" + extremeIntervalCount + " Active / " + intervalCount + "Total)");
 		sendProbeData(Utils.millisToSeconds(startTime), new Bundle(), data); // starTime converted last minute for precision
 	}
 
