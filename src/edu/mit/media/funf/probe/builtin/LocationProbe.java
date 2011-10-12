@@ -142,14 +142,12 @@ public class LocationProbe extends Probe implements LocationKeys {
 	private class ProbeLocationListener implements LocationListener{
 		
 		public void onLocationChanged(Location newLocation) { 
-			if (newLocation.getLatitude() == 0.0 && newLocation.getLongitude() == 0.0){ 
+			if (newLocation == null || (newLocation.getLatitude() == 0.0 && newLocation.getLongitude() == 0.0)){ 
 			// Hack to filter out 0.0,0.0 locations 
 			    return; 
 			} 
 			Log.i(TAG, "New location to be evaluated: " + newLocation.getAccuracy() + "m @ " + newLocation.getTime() );
 			if (isBetterThanCurrent(newLocation)) {
-				Log.i(TAG, "New location better than: " +  latestLocation.getAccuracy() + "m @ " + latestLocation.getTime());
-				
 				latestLocation = newLocation;
 				// If not running then start a timer to send out the best location get in the next default duration
 				Log.i(TAG, "Is Running: " + isRunning());
