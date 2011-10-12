@@ -78,18 +78,18 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 	
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		Set<OnSharedPreferenceChangeListener> listeners = new HashSet<OnSharedPreferenceChangeListener>();
 		synchronized (this) {
 			if (prefs.contains(key)) {
 				mMap.put(key, sharedPreferences.getAll().get(key));
 			} else {
 				mMap.remove(key);
 			}
-			// Already will be running on main thread
-			Set<OnSharedPreferenceChangeListener> listeners = new HashSet<OnSharedPreferenceChangeListener>(mListeners.keySet());
-			for (OnSharedPreferenceChangeListener listener : listeners) {
-				if (listener != null) {
-					listener.onSharedPreferenceChanged(this, key);
-				}
+			listeners.addAll(mListeners.keySet());
+		}
+		for (OnSharedPreferenceChangeListener listener : listeners) {
+			if (listener != null) {
+				listener.onSharedPreferenceChanged(this, key);
 			}
 		}
 	}
