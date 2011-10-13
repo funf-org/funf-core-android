@@ -50,7 +50,8 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 
 	private long startTime;
 	private int intervalCount;
-	private int extremeIntervalCount;
+	private int lowActivityIntervalCount;
+	private int highActivityIntervalCount;
 	
 	@Override
 	public Parameter[] getAvailableParameters() {
@@ -99,7 +100,8 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 				startTime = intervalStartTime = timestamp;
 				varianceSum = avg = sum = count = 0;
 				intervalCount = 1;
-				extremeIntervalCount = 0;
+				lowActivityIntervalCount = 0;
+				highActivityIntervalCount = 0;
 				
 				// start timer to send results
 				if (sendRunnable == null) {
@@ -121,9 +123,11 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 				// Calculate activity and reset
 				intervalCount++;
 				if (varianceSum >= 10.0f) {
-					extremeIntervalCount++;
+					highActivityIntervalCount++;
+				} else if (varianceSum < 10.0f && varianceSum > 3.0f) {
+					lowActivityIntervalCount++;
 				}
-				intervalStartTime += 1; // Ensure 1 second intervals
+				intervalStartTime += INTERVAL; // Ensure 1 second intervals
 				varianceSum = avg = sum = count = 0;
 			}
 			
@@ -206,8 +210,10 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 	public void sendProbeData() {
 		Bundle data = new Bundle();
 		data.putInt(TOTAL_INTERVALS, intervalCount);
-		data.putInt(ACTIVE_INTERVALS, extremeIntervalCount);
-		Log.d(TAG, "(" + extremeIntervalCount + " Active / " + intervalCount + "Total)");
+		data.putInt(LOW_ACTIVITY_INTERVALS, lowActivityIntervalCount);
+		data.putInt(HIGH_ACTIVITY_INTERVALS, highActivityIntervalCount);
+		Log.d(TAG, "(" + lowActivityIntervalCount + " Low Active / " + intervalCount + "Total)");
+		Log.d(TAG, "(" + highActivityIntervalCount + " High Active / " + intervalCount + "Total)");
 		sendProbeData(Utils.millisToSeconds(startTime), new Bundle(), data); // starTime converted last minute for precision
 	}
 

@@ -22,7 +22,6 @@
 package edu.mit.media.funf.probe;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
