@@ -10,6 +10,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import edu.mit.media.funf.FFT;
+import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.Window;
 import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerFeaturesKeys;
@@ -276,7 +277,7 @@ public class AccelerometerFeaturesProbe extends Probe implements SensorEventList
         		}
         		
 	        	// Write out features
-        		sendProbeData(System.currentTimeMillis(), new Bundle(), data);
+        		sendProbeData(Utils.getTimestamp(), new Bundle(), data);
 	        	//writeFeatureFrame(featureBuffer, sensorStreamFeatures, OUTPUT_FORMAT_FLOAT);
 	        	
         		// Reset frame buffer counters
