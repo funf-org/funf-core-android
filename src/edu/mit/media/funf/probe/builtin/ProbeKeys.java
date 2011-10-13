@@ -57,6 +57,17 @@ public class ProbeKeys {
 		ACCURACY = "ACCURACY";
 	}
 	
+	public static interface AccelerometerFeaturesKeys extends BaseProbeKeys {
+		public static final String 
+		DIFF_FRAME_SECS = "DIFF_FRAME_SECS",
+		NUM_FRAME_SAMPLES = "NUM_FRAME_SAMPLES",
+		MEAN = "MEAN",
+		ABSOLUTE_CENTRAL_MOMENT = "ABSOLUTE_CENTRAL_MOMENT",
+		STANDARD_DEVIATION = "STANDARD_DEVIATION",
+		MAX_DEVIATION = "MAX_DEVIATION",
+		PSD_ACROSS_FREQUENCY_BANDS = "PSD_ACROSS_FREQUENCY_BANDS";
+	}
+	
 	public static interface AccelerometerSensorKeys extends SensorKeys {
 		public static final String 
 		X = "X", 
@@ -82,6 +93,16 @@ public class ProbeKeys {
 		public static final String 
 		INSTALLED_APPLICATIONS = "INSTALLED_APPLICATIONS",
 		UNINSTALLED_APPLICATIONS = "UNINSTALLED_APPLICATIONS";
+	}
+	
+	public static interface AudioFeaturesKeys extends BaseProbeKeys {
+		public static final String 
+		DIFF_SECS = "DIFF_SECS",
+		L1_NORM = "L1_NORM",
+		L2_NORM = "L2_NORM",
+		LINF_NORM = "LINF_NORM",
+		PSD_ACROSS_FREQUENCY_BANDS = "PSD_ACROSS_FREQUENCY_BANDS",
+		MFCCS = "MFCCS";
 	}
 	
 	public static interface AudioFilesKeys extends BaseProbeKeys, android.provider.MediaStore.Audio.AudioColumns {
