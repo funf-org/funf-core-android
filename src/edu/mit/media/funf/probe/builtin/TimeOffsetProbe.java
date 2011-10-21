@@ -114,7 +114,7 @@ public class TimeOffsetProbe extends Probe implements TimeOffsetKeys {
 		if (mostRecentTimeOffset != null) {
 			Bundle data = new Bundle();
 			data.putDouble(TIME_OFFSET, mostRecentTimeOffset);
-			sendProbeData(Utils.getTimestamp(), new Bundle(), data);
+			sendProbeData(Utils.getTimestamp(), data);
 		}
 	}
 

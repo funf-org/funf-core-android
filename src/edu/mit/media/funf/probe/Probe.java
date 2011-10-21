@@ -21,183 +21,204 @@
  */
 package edu.mit.media.funf.probe;
 
+import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import static edu.mit.media.funf.Utils.nonNullStrings;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.Queue;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.app.Service;
+import android.app.PendingIntent.CanceledException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.Binder;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
-import edu.mit.media.funf.HashCodeUtil;
+import edu.mit.media.funf.CustomizedIntentService;
 import edu.mit.media.funf.OppProbe;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.OppProbe.Status;
 import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
-import static edu.mit.media.funf.AsyncSharedPrefs.async;
 
-public abstract class Probe extends Service {
+public abstract class Probe extends CustomizedIntentService {
 
-	
+
 	protected final String TAG = getClass().getName();
 	
-	private static final String MOST_RECENT_RUN_KEY = "mostRecentTimeRun";
-	private static final String MOST_RECENT_KEY = "mostRecentTimeDataSent";
-	private static final String MOST_RECENT_PARAMS_KEY = "mostRecentParamsSent";
-	private static final String NEXT_RUN_TIME_KEY = "nextRunTime";
-	private static final String NONCES_KEY = "nonces";
+	public static final String
+	CALLBACK_KEY = "CALLBACK",
+	ACTION_SEND_DETAILS = "PROBE_SEND_DETAILS",
+	ACTION_SEND_CONFIGURATION = "PROBE_SEND_CONFIGURATION",
+	ACTION_SEND_STATUS = "PROBE_SEND_STATUS",
+	ACTION_REQUEST = "PROBE_REGISTER";
+	
+	private static final String 
+	MOST_RECENT_RUN_KEY = "mostRecentTimeRun",
+	MOST_RECENT_KEY = "mostRecentTimeDataSent",
+	MOST_RECENT_PARAMS_KEY = "mostRecentParamsSent",
+	NEXT_RUN_TIME_KEY = "nextRunTime",
+	
+	ACTION_INTERNAL_RUN = "PROBE_INTERNAL_RUN",
+	ACTION_INTERNAL_STOP = "PROBE_INTERNAL_STOP",
+	ACTION_INTERNAL_DISABLE = "PROBE_INTERNAL_DISABLE",
+	
+	INTERNAL_REQUESTS_KEY = "PROBE_INTERNAL_REQUESTS";
 	
 	private PowerManager.WakeLock lock;
-	private long mostRecentTimeRun;
-	private long mostRecentTimeDataSent;
-	private Bundle mostRecentParameters;
-	private long nextRunTime;
-	private SharedPreferences prefs;
+	private Intent runIntent;
 	private boolean enabled;
 	private boolean running;
-	private StopTimer stopTimer;
-	private Set<Nonce> nonces;
+	private SharedPreferences historyPrefs;
+	private Queue<Intent> pendingRequests;
 	
-	// TODO: keep list of all active requests to this probe
-	private ProbeRequests allRequests;
-	
-
 	@Override
 	public final void onCreate() {
 		Log.v(TAG, "CREATED");
-		prefs = async(getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE));
-		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
-		mostRecentTimeDataSent = prefs.getLong(MOST_RECENT_KEY, 0L);
-		mostRecentTimeRun = prefs.getLong(MOST_RECENT_RUN_KEY, 0L);
-		mostRecentParameters = Utils.getBundleFromPrefs(prefs, MOST_RECENT_PARAMS_KEY);
-		nextRunTime = prefs.getLong(NEXT_RUN_TIME_KEY, 0L);
-		Log.v(TAG, "Deserializing nonces: " + prefs.getString(NONCES_KEY, null));
-		nonces = Nonce.unserializeNonces(prefs.getString(NONCES_KEY, null));
+		super.onCreate();
+        historyPrefs = async(getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE));
 		enabled = false;
 		running = false;
-		stopTimer = new StopTimer();
+		pendingRequests = new ConcurrentLinkedQueue<Intent>();
 	}
-
+	
 	@Override
 	public final void onDestroy() {
 		Log.v(TAG, "DESTROYED");
-		if (enabled) {
-			disable();
-		}
-
-		if (prefs != null) {
-			SharedPreferences.Editor editor = prefs.edit();
-			editor.putLong(MOST_RECENT_KEY, mostRecentTimeDataSent);
-			editor.putLong(MOST_RECENT_RUN_KEY, mostRecentTimeRun);
-			editor.putLong(NEXT_RUN_TIME_KEY, nextRunTime);
-			Log.v(TAG, "Most recent run onDestroy: " + mostRecentTimeRun);
-			editor.putString(NONCES_KEY, Nonce.serializeNonces(nonces));
-			try {
-				Utils.putInPrefs(editor, MOST_RECENT_PARAMS_KEY, mostRecentParameters);
-			} catch (UnstorableTypeException e) {
-				Log.e(TAG, e.getLocalizedMessage());
+		// Ensure disable happens on message thread
+		queueIntent(new Intent(ACTION_INTERNAL_DISABLE, null, this, getClass()));
+		super.onDestroy();
+	}
+	
+	
+    protected void onHandleIntent(Intent intent) {String action = intent.getAction();
+		if (ACTION_INTERNAL_RUN.equals(action) || ACTION_INTERNAL_STOP.equals(action)) {
+			if (runIntent == null) {
+				runIntent = intent;
 			}
-			editor.commit();
-		}
-	}
-	
-	@Override
-	public final int onStartCommand(Intent intent, int flags, int startId) {
-		Bundle extras = intent.getExtras();
-		String requester = extras.getString(OppProbe.ReservedParamaters.PACKAGE.name);
-		Log.v(TAG, "Requester: " + String.valueOf(requester));
-		if (requester != null && packageHasRequiredPermissions(requester)) {
-			Log.v(TAG, "Updating requests");
-			updateRequests(intent);
-		}
-		run();
-		return START_REDELIVER_INTENT;
-	}
-	
-	private void updateRequests(Intent requestIntent) {
-		Bundle extras = requestIntent.getExtras();
-		String requester = extras.getString(OppProbe.ReservedParamaters.PACKAGE.name);
-		String requestId = extras.getString(OppProbe.ReservedParamaters.REQUEST_ID.name);
-		requestId = (requestId == null) ? "" : requestId;
-		long nonce = extras.getLong(OppProbe.ReservedParamaters.NONCE.name, -1L);
-		Log.v(TAG, "Updating request for " + requester + ":" + requestId);
-		if (redeemNonce(requester, nonce)) {
-			Log.v(TAG, "Nonce accepted for " + requester + ":" + requestId);
-			// null PACKAGE is internal (ProbeController does not allow null PACKAGE)
-			// TODO: may need to handle default top level bundle parameters
-			Bundle[] requests = Utils.copyBundleArray(extras.getParcelableArray(OppProbe.ReservedParamaters.REQUESTS.name));
-			
-			if (requests.length == 0) {
-				Log.v(TAG, "Removing requests for " + requester + ":" + requestId);
-				allRequests.remove(requester, requestId);
-			} else {
-				Log.v(TAG, "Storing requests for " + requester + ":" + requestId);
-				if (!allRequests.put(requester, requestId, requests)) {
-					Log.w(TAG, "Unable to store requests for probe.");
+			updateRequests();
+			ProbeScheduler scheduler = getScheduler();
+			ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+			if (scheduler.shouldBeEnabled(this, requests)) {
+				if(ACTION_INTERNAL_RUN.equals(action)) {
+					_run();
+				} else {
+					_stop();
 				}
+			} else {
+				_disable();
+			}
+			Long nextScheduledTime = scheduler.scheduleNextRun(this, requests);
+			// TODO: set next run time
+		} else if (ACTION_REQUEST.equals(action) || action == null) {
+			boolean succesfullyQueued = queueRequest(intent);
+			if (succesfullyQueued) {
+				run();
+			}
+		} else if(ACTION_SEND_DETAILS.equals(action)) {
+			// TODO:
+		} else if(ACTION_SEND_CONFIGURATION.equals(action)) {
+			// TODO:
+		} else if(ACTION_SEND_STATUS.equals(action)) {
+			// TODO:
+		} 
+    }
+    
+	
+	/**
+	 * Updates request list with items in queue, replacing duplicate pending intents for this probe.
+	 * @param requests
+	 */
+	private void updateRequests() {
+		assert runIntent != null;
+		ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+		if (requests == null) {
+			requests = new ArrayList<Intent>();
+		}
+		Map<PendingIntent,Intent> existingCallbacksToRequests = new HashMap<PendingIntent,Intent>();
+		for (Intent existingRequest : requests) {
+			PendingIntent callback = existingRequest.getParcelableExtra(CALLBACK_KEY);
+			existingCallbacksToRequests.put(callback, existingRequest);
+		}
+		for (Intent request = pendingRequests.poll(); request != null; request = pendingRequests.poll()) {
+			PendingIntent callback = request.getParcelableExtra(CALLBACK_KEY);
+			if (packageHasRequiredPermissions(this, callback.getTargetPackage(), getRequiredPermissions())) {
+				existingCallbacksToRequests.containsKey(callback);
+				int existingRequestIndex = requests.indexOf(existingCallbacksToRequests.get(callback));
+				if (existingRequestIndex >= 0) {
+					requests.set(existingRequestIndex, request);
+				} else {
+					requests.add(request);
+				}
+			} else {
+				Log.w(TAG, "Package '" + callback.getTargetPackage() + "' does not have the required permissions to get data from this probe.");
 			}
 		}
+		runIntent.putExtra(INTERNAL_REQUESTS_KEY, requests);
+		PendingIntent.getService(this, 0, runIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 	
 	/**
-	 * Resets all of the run data information
+	 * Returns true if request was successfully queued
+	 * @param request
+	 * @return
 	 */
-	public void reset() {
-		this.mostRecentParameters = new Bundle();
-		this.mostRecentTimeDataSent = 0;
-		this.mostRecentTimeRun = 0;
-		Log.v(TAG, "Most recent run reset: " + mostRecentTimeRun);
-		this.nextRunTime = 0;
-		this.nonces = new HashSet<Nonce>();
-		allRequests = ProbeRequests.getRequestsForProbe(this, getClass().getName());
-		cancelNextRun();
+	private boolean queueRequest(Intent request) {
+		// Check for pending intent
+		PendingIntent callback = null;
+		try {
+			callback = request.getParcelableExtra(CALLBACK_KEY);
+		} catch (Exception e) {
+			Log.e(TAG, "Request sent invalid callback.");
+		}
+
+		if (callback == null) {
+			Log.e(TAG, "Request did not send callback.");
+		} else {
+			boolean succesfullyQueued = pendingRequests.offer(request);
+			if (succesfullyQueued) {
+				Log.i(TAG, "Queued request from package '" + callback.getTargetPackage() + "'");
+				return true;
+			} else {
+				Log.e(TAG, "Unable to queue request from package '" + callback.getTargetPackage() + "'");
+			}
+		}
+		return false;
 	}
 	
-
-	private void cleanRequests() {
-		final long currentTime = System.currentTimeMillis();
-		for (Map.Entry<String, Map<String,List<Bundle>>> requesterToRequestIdToBundles : allRequests.getByRequesterByRequestId().entrySet()) {
-			final String requester = requesterToRequestIdToBundles.getKey();
-			final Map<String,List<Bundle>> requestIdsToBundles = requesterToRequestIdToBundles.getValue();
-			for (Map.Entry<String, List<Bundle>> requestIdToBundles : requestIdsToBundles.entrySet()) {
-				final String requestId = requestIdToBundles.getKey();
-				final List<Bundle> bundles = requestIdToBundles.getValue();
-				Set<Bundle> bundlesToRemove = new HashSet<Bundle>();
-				for (Bundle bundle : bundles) {
-					Bundle params = getCompleteParams(bundle);
-					long period = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.PERIOD.name, 0L));
-					long startTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.START.name, 0L));
-					long endTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.END.name, 0L));
-					if (((startTime == 0L || startTime < currentTime) && period == 0L) 
-							|| endTime > currentTime) {
-						bundlesToRemove.add(bundle);
-					}
-				}
-				if (!bundlesToRemove.isEmpty()) {
-					bundles.removeAll(bundlesToRemove);
-					Bundle[] cleanedBundles = new Bundle[bundles.size()];
-					bundles.toArray(cleanedBundles);
-					allRequests.put(requester, requestId, cleanedBundles);
-				}
-			}
+	private void setHistory(Long previousDataSentTime, Long previousRunTime, Bundle previousRunParams, Long nextRunTime) {
+		SharedPreferences.Editor editor = historyPrefs.edit();
+		editor.clear();
+		if (previousDataSentTime != null) editor.putLong(MOST_RECENT_KEY, previousDataSentTime);
+		if (previousRunTime != null) editor.putLong(MOST_RECENT_RUN_KEY, previousRunTime);
+		if (nextRunTime != null) editor.putLong(NEXT_RUN_TIME_KEY, nextRunTime);
+		try {
+			if (previousRunParams != null) Utils.putInPrefs(editor, MOST_RECENT_PARAMS_KEY, previousRunParams);
+		} catch (UnstorableTypeException e) {
+			Log.e(TAG, e.getLocalizedMessage());
+		}
+		editor.commit();
+	}
+	
+	/**
+	 * Resets all of the run data information, and removes all requests
+	 */
+	public void reset() {
+		setHistory(null, null, null, null);
+		runIntent.removeExtra(INTERNAL_REQUESTS_KEY);
+		Intent internalRunIntent = new Intent(ACTION_INTERNAL_RUN, null, this, getClass());
+		PendingIntent selfLaunchingIntent = PendingIntent.getService(this, 0, internalRunIntent, PendingIntent.FLAG_NO_CREATE);
+		if (selfLaunchingIntent != null) {
+			selfLaunchingIntent.cancel();
 		}
 	}
 	
@@ -205,80 +226,237 @@ public abstract class Probe extends Service {
 	 * @return a timestamp (in millis since epoch) of the most recent time this probe sent data
 	 */
 	public long getPreviousDataSentTime() {
-		return mostRecentTimeDataSent;
+		return historyPrefs.getLong(MOST_RECENT_KEY, 0L);
 	}
 
 	/**
 	 * @return a timestamp (in millis since epoch) of the most recent time this probe was run 
 	 */
 	public long getPreviousRunTime() {
-		return mostRecentTimeRun;
+		return historyPrefs.getLong(MOST_RECENT_RUN_KEY, 0L);
 	}
 	
 	/**
 	 * @return the bundle of params used to run the probe the most recent time it was run
 	 */
 	public Bundle getPreviousRunParams() {
-		return mostRecentParameters;
+		return Utils.getBundleFromPrefs(historyPrefs, MOST_RECENT_PARAMS_KEY);
+	}
+	
+	/**
+	 * @return a timestamp (in millis since epoch) of the most recent time this probe was run 
+	 */
+	public long getNextRunTime() {
+		return historyPrefs.getLong(NEXT_RUN_TIME_KEY, 0L);
+	}
+	
+	/**
+	 * Return the required set of permissions needed to run this probe
+	 * @return
+	 */
+	public abstract String[] getRequiredPermissions();
+	
+	/**
+	 * Return the required set of features needed to run this probe
+	 * @return
+	 */
+	public abstract String[] getRequiredFeatures();
+	
+	/**
+	 * @return Bundle of key value pairs that represent default parameters
+	 */
+	public abstract Parameter[] getAvailableParameters();
+
+
+    /**
+     * Safe method to run probe, which ensures that requests are preserved.
+     */
+    protected void run() {
+    	// If we have not set runIntent yet, attempt to grab pending intent and send
+		// Otherwise initialize runIntent and create corresponding PendingIntent
+    	boolean internalRunSent = false;
+    	if (runIntent == null) {
+			Intent internalRunIntent = new Intent(ACTION_INTERNAL_RUN, null, this, getClass());
+			PendingIntent selfLaunchingIntent = PendingIntent.getService(this, 0, internalRunIntent, PendingIntent.FLAG_NO_CREATE);
+			if (selfLaunchingIntent == null) {
+				runIntent = internalRunIntent;
+			} else {
+				try {
+					selfLaunchingIntent.send();
+					internalRunSent = true;
+				} catch (CanceledException e) {
+					runIntent = internalRunIntent;
+				}
+			}
+		}
+    	if (runIntent != null) {
+			updateRequests(); // Creates pending intent if it doesn't exist
+			if (!internalRunSent) {
+				startService(runIntent);
+			}
+		}
+    }
+	
+	
+	protected final void stop() {
+		startService(new Intent(ACTION_INTERNAL_STOP, null, this, getClass()));
+	}
+	
+	/**
+	 * Enables probe.  Can only be called from intent handler thread
+	 */
+	private void _enable() {
+		assert isIntentHandlerThread();
+		if (!enabled) {
+			Log.i(TAG, "Enabling probe: " + getClass().getName());
+			enabled = true;
+			running = false;
+			sendProbeStatus();
+			onEnable();
+		}
+	}
+	
+	/**
+	 * Runs probe.  Can only be called from intent handler thread
+	 */
+	private void _run() {
+		assert isIntentHandlerThread();
+		if (!enabled) {
+			_enable();
+		}
+		ProbeScheduler scheduler = getScheduler();
+		ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+		Bundle parameters = scheduler.startRunningNow(this, requests);
+		if (parameters != null) {
+			running = true;
+			if (lock == null) {
+				lock = Utils.getWakeLock(this);
+			}
+			sendProbeStatus();
+			// TODO: set mostRecentRun time
+			onRun(parameters);
+		}
+		// Schedule before stop to ensure schedule exists if crash happens, or if not run
+		Long nextScheduledTime = scheduler.scheduleNextRun(this, requests);
+		// TODO: set next run time
+	}
+	
+	/**
+	 * Stops probe.  Can only be called from intent handler thread
+	 */
+	private void _stop() {
+		assert isIntentHandlerThread();
+		if (enabled && running) {
+			Log.i(TAG, "Stopping probe: " + getClass().getName());
+			onStop();
+			running = false;  // TODO: possibly this should go before onStop, to keep with convention
+			sendProbeStatus();
+			if (lock != null && lock.isHeld()) {
+				lock.release();
+				lock = null;
+			}
+		}
+	}
+	
+	/**
+	 * Disables probe.  Can only be called from intent handler thread
+	 */
+	private void _disable() {
+		assert isIntentHandlerThread();
+		if (enabled) {
+			Log.i(TAG, "Disabling probe: " + getClass().getName());
+			if (running) {
+				stop();
+			}
+			enabled = false;
+			sendProbeStatus();
+			onDisable();
+		}
+	}
+	
+	/**
+	 * @return true if actively running, otherwise false
+	 */
+	public boolean isRunning() {
+		return enabled ? running : false;
+	}
+	
+	@Override
+	protected boolean shouldStop() {
+		return enabled == false;
 	}
 
-	public void sendProbeStatus() {
-		sendProbeStatus(null, false);
-	}
-	
-	
-	private Status mostRecentStatus;
 	/**
-	 * Sends a STATUS broadcast for the probe.
+	 * Start actively running the probe.  Send data broadcast when done (or when appropriate) and stop.
 	 */
-	public void sendProbeStatus(final String packageName, final boolean includeNonce) {
+	protected abstract void onEnable();
+	
+	/**
+	 * Start actively running the probe.  Send data broadcast when done (or when appropriate) and stop.
+	 * @param params
+	 */
+	protected abstract void onRun(Bundle params);
+	
+	/**
+	 * Stop actively running the probe.  Any passive listeners should continue running.
+	 */
+	protected abstract void onStop();
+	
+	/**
+	 * Disable any passive listeners and tear down the service.  Will be called when probe service is destroyed.
+	 */
+	protected abstract void onDisable();
+	
+
+	
+	/* TODO: may be a good way to make sure your configuration is set correctly
+	public void sendProbeConfiguration() {
 		
-		if (mostRecentStatus == null) {
-			String name = getClass().getName();
-			String displayName = getDisplayName();
-			
-			List<String> requiredPermissionsList = new ArrayList<String>(Arrays.asList(nonNullStrings(getRequiredPermissions())));
-			if (!requiredPermissionsList.contains(android.Manifest.permission.WAKE_LOCK)) {
-				requiredPermissionsList.add(android.Manifest.permission.WAKE_LOCK);
-			}
-			String[] requiredPermissions = new String[requiredPermissionsList.size()];
-			requiredPermissionsList.toArray(requiredPermissions);
-			List<OppProbe.Parameter> parameters = new ArrayList<OppProbe.Parameter>();
-			for (Parameter param : getAvailableParametersNotNull()) {
-				parameters.add(param);
-			}
-			mostRecentStatus = new Status(
-					name,
-					displayName,
-					enabled,
-					isRunning(),
-					Utils.millisToSeconds(nextRunTime), // millis to seconds
-					Utils.millisToSeconds(mostRecentTimeRun), // millis to seconds
-					requiredPermissions,
-					nonNullStrings(getRequiredFeatures()),
-					parameters
-					);
-		} else {
-			mostRecentStatus = new Status(
-					mostRecentStatus, 
-					enabled, 
-					isRunning(), 
-					Utils.millisToSeconds(nextRunTime), // millis to seconds
-					Utils.millisToSeconds(mostRecentTimeRun)); // millis to seconds
-		}
-		Log.i(TAG, "Sending status with next run time: " + mostRecentStatus.getNextRun());
-		Intent statusBroadcast = new Intent(OppProbe.getStatusAction());
-		statusBroadcast.putExtras(mostRecentStatus.getBundle());
-		if (packageName != null) {
-			statusBroadcast.setPackage(packageName);
-			if (includeNonce && packageHasRequiredPermissions(packageName)) {
-				statusBroadcast.putExtra(OppProbe.ReservedParamaters.NONCE.name, createNonce(packageName));
-			}
-		}
-		Log.i(TAG, "Sending probe status to '" + statusBroadcast.getPackage() + '"');
-		sendBroadcast(statusBroadcast);
+	}
+	*/
+
+	public void sendProbeDetails() {
+		// TODO: create details object for probe and send to each pending intent
+	}
+
+	
+	public void sendProbeStatus() {
+		// TODO: create status object for probe and send to each pending intent
 	}
 	
+	/**
+	 * Sends a DATA broadcast of the current data from the probe, if it is available.
+	 */
+	public abstract void sendProbeData();
+	// TODO: not sure we want this anymore
+	// This requires probes keep caches of last data sent.
+	// May not be useful unless we have a "send last data" feature.
+	
+	
+	/**
+	 * Sends a DATA broadcast for the probe, and records the time.
+	 */
+	protected void sendProbeData(long epochTimestamp, Bundle data) {
+		Log.d(TAG, "Sent probe data at " + epochTimestamp);
+		// TODO: send probe data to each pending request
+		
+		/*  OLD implementation
+		mostRecentTimeDataSent = System.currentTimeMillis();
+		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
+		dataBroadcast.putExtra(BaseProbeKeys.TIMESTAMP, epochTimestamp);
+		// TODO: should we send parameters with data broadcast?
+		dataBroadcast.putExtras(data);
+		Set<String> requestingPackages = allRequests.getByRequesterByRequestId().keySet();
+		Log.i(TAG, "Sending probe data to: " + Utils.join(requestingPackages, ", "));
+		for (String requestingPackage : requestingPackages) {
+			Intent scopedDataBroadcast = new Intent(dataBroadcast);
+			scopedDataBroadcast.setPackage(requestingPackage);
+			sendBroadcast(dataBroadcast);
+		}*/
+	}
+	
+	
+
 	protected String getDisplayName() {
 		String className = getClass().getName().replace(getClass().getPackage().getName() + ".", "");
 		return className.replaceAll("(\\p{Ll})(\\p{Lu})","$1 $2"); // Insert spaces
@@ -301,451 +479,36 @@ public abstract class Probe extends Service {
 		return null;
 	}
 	
-	private boolean packageHasRequiredPermissions(String packageName) {
-		//Log.v(TAG, "Getting package info for '" + packageName + "'");
-		PackageInfo info = getPackageInfo(this, packageName);
+	private static boolean packageHasRequiredPermissions(Context context, String packageName, String[] requiredPermissions) {
+		Log.v(Utils.TAG, "Getting package info for '" + packageName + "'");
+		PackageInfo info = getPackageInfo(context, packageName);
 		if (info == null) {
-			Log.w(TAG, "Package '" + packageName + "' is not installed.");
+			Log.w(Utils.TAG, "Package '" + packageName + "' is not installed.");
 			return false;
 		}
 		
 		Set<String> packagePermissions = new HashSet<String>(Arrays.asList(info.requestedPermissions));
-		//Log.v(TAG, "Package permissions for '" + packageName + "': " + Utils.join(packagePermissions, ", "));
-		for (String permission :  nonNullStrings(getRequiredPermissions())) {
+		Log.v(Utils.TAG, "Package permissions for '" + packageName + "': " + Utils.join(packagePermissions, ", "));
+		for (String permission :  nonNullStrings(requiredPermissions)) {
 			if (!packagePermissions.contains(permission)) {
-				Log.w(TAG, "Package '" + packageName + "' does not have the required permission '" + permission + "' to run this probe.");
+				Log.w(Utils.TAG, "Package '" + packageName + "' does not have the required permission '" + permission + "' to run this probe.");
 				return false;
 			}
 		}
 		return true;
 	}
 	
-	private void removeInvalidNonces() {
-		synchronized (nonces) {
-		List<Nonce> noncesToRemove = new ArrayList<Nonce>();
-		for (Nonce oldNonce : nonces) {
-			if(!oldNonce.isValid()) {
-				noncesToRemove.add(oldNonce);
-			}
-		}
-		nonces.removeAll(noncesToRemove);
-		}
-	}
-	
-
 	/**
-	 * Access to all outstanding requests for this probe
+	 * Returns the scheduler object used to schedule this probe.
+	 * Probes should override this to change how their probe gets scheduled.
 	 * @return
 	 */
-	public ProbeRequests getAllRequests() {
-		return allRequests;
+	protected ProbeScheduler getScheduler() {
+		return new DefaultProbeScheduler();
 	}
 	
-	
-	/**
-	 * Sends a DATA broadcast of the current data from the probe, if it is available.
-	 */
-	public abstract void sendProbeData();
-	
-	/**
-	 * Sends a DATA broadcast for the probe, and records the time.
-	 */
-	protected void sendProbeData(long epochTimestamp, Bundle params, Bundle data) {
-		Log.i(TAG, "Sent probe data at " + epochTimestamp);
-		mostRecentTimeDataSent = System.currentTimeMillis();
-		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
-		dataBroadcast.putExtra(BaseProbeKeys.TIMESTAMP, epochTimestamp);
-		// TODO: should we send parameters with data broadcast?
-		dataBroadcast.putExtras(data);
-		Set<String> requestingPackages = allRequests.getByRequesterByRequestId().keySet();
-		Log.i(TAG, "Sending probe data to: " + Utils.join(requestingPackages, ", "));
-		for (String requestingPackage : requestingPackages) {
-			Intent scopedDataBroadcast = new Intent(dataBroadcast);
-			scopedDataBroadcast.setPackage(requestingPackage);
-			sendBroadcast(dataBroadcast);
-		}
-	}
-	
-	/**
-	 * Returns the set of probe interfaces this probe implements.  
-	 * By default every probe implements a unique interface based on its name.
-	 * However, probes can agree on a name and set of parameters that they respond to to implement the same probe interface.
-	 * @return
-	 */
-	protected String[] getProbeInterfaces() {
-		return new String[]{getClass().getName()};
-	}
-	
-	
-	/**
-	 * Return the required set of permissions needed to run this probe
-	 * @return
-	 */
-	public abstract String[] getRequiredPermissions();
-	
-	/**
-	 * Return the required set of features needed to run this probe
-	 * @return
-	 */
-	public abstract String[] getRequiredFeatures();
-	
-	/**
-	 * @return Bundle of key value pairs that represent default parameters
-	 */
-	public abstract Parameter[] getAvailableParameters();
-	private Parameter[] getAvailableParametersNotNull() {
-		Parameter[] availableParameters = getAvailableParameters();
-		return (availableParameters == null) ? new Parameter[] {} : availableParameters;
-	}
-	
-	/**
-	 * Enables the probe start gathering data and sending broadcasts as appropriate.
-	 * Multiple calls to this method will alter the parameters with which the probe is running.
-	 * Depending on the probe implementation, the probe may stop automatically after it runs.
-	 * @param params
-	 */
-	public final void run() {
-		Log.i(TAG, "Running probe: " + getClass().getName());
-
-		if (!enabled) {
-			enable();
-		}
-		Log.i(TAG, "Is Running: " + running);
-		if (!running) {
-			// Merge all schedules and run if necessary
-			ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
-			Bundle completeParams = getCompleteParams(scheduleResolver.getNextRunParams());
-			Log.i(TAG, "Should run: " + shouldRunNow(completeParams));
-			if (shouldRunNow(completeParams)) {
-				running = true;
-				if (lock == null) {
-					lock = Utils.getWakeLock(this);
-				}
-				sendProbeStatus();
-				Log.i(TAG, "Started Running " + getClass().getCanonicalName());
-				mostRecentTimeRun = System.currentTimeMillis();
-				Parameter durationParam = getAvailableSystemParameter(SystemParameter.DURATION);
-				if (durationParam != null && !durationParam.isSupportedByProbe()) {
-					long duration = Utils.secondsToMillis(Utils.getLong(completeParams, SystemParameter.DURATION.name, 0L));
-					if (duration > 0) {
-						stopTimer.scheduleStop(duration);
-					}
-				}
-				Log.i(TAG, "Calling onRun for probe: " + getClass().getName());
-				onRun(completeParams); // call onRun to update parameters
-			} else {
-				scheduleOrDisable();
-			}
-		}
-	}
-	
-	private void scheduleOrDisable() {
-		cleanRequests(); // Cleaning currently removes any existing 0 period requests
-		// TODO: need to be smarter about this.  Probe may handle period, but not start or end times.
-		if (allRequests.getAll().size() > 0) {
-			Log.i(TAG, "Scheduling");
-			scheduleNextRun();
-			sendProbeStatus();
-		} else {
-			Log.i(TAG, "Disabling");
-			cancelNextRun();
-			disable();
-		}
-	}
-	
-	/**
-	 * Schedules a stop for the latest delay time it receives.  Delay time is always
-	 * measured from the time 'schedule' is called.
-	 *
-	 */
-	private class StopTimer  {
-		// TODO: may need to synchronize for multithreaded case
-		private Timer timer;
-		private long latestRunToTime = 0;
-		
-		public void cancel() {
-			if (timer != null) {
-				timer.cancel();
-				timer.purge();
-				timer = null;
-			}
-		}
-
-		public void scheduleStop(long delay) {
-			long newRunToTime = System.currentTimeMillis() + delay;
-			if (newRunToTime > latestRunToTime) {
-				latestRunToTime = newRunToTime;
-				cancel();
-				timer = new Timer();
-				timer.schedule(new TimerTask() {
-					@Override
-					public void run() {
-						stop();
-					}
-				}, delay);
-			}
-		}
-	}
-	
-	private Parameter getAvailableSystemParameter(SystemParameter systemParam) {
-		for (Parameter p : getAvailableParametersNotNull()) {
-			if(systemParam.name.equals(p.getName())) {
-				return p;
-			}
-		}
-		return null;
-	}
-	
-	private Bundle getDefaultParameters() {
-		Bundle params = new Bundle();
-		for(Parameter param :getAvailableParametersNotNull()) {
-			Utils.putInBundle(params, param.getName(), param.getValue());
-		}
-		return params;
-	}
-	
-	protected Bundle getCompleteParams(Bundle params) {
-		if (params == null) {
-			return null;
-		}
-		Bundle completeParams = getDefaultParameters();
-		// TODO: only use parameters that are specified
-		// for (Parameter param : probe.getAvailableParameters()) {
-    	// Utils.putInBundle(params, param.getName(), param.getValue());
-        //}
-		completeParams.putAll(params);
-		return completeParams;
-	}
-	
-	private boolean shouldRunNow(Bundle params) {
-		if (params == null) {
-			Log.v(TAG, "shouldRunNow is false because no params were specified");
-			return false;
-		}
-		long period = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.PERIOD.name, 0L));
-		long startTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.START.name, 0L));
-		long endTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.END.name, 0L));
-		long currentTime = System.currentTimeMillis();
-		Log.v(TAG, "Period, Start, End, Current, LastRun ->" + Utils.join(Arrays.asList(period, startTime, endTime, currentTime, mostRecentTimeRun), ", "));
-		return (startTime == 0 || startTime <= currentTime) // After start time (if exists)
-			&& (endTime == 0 || currentTime <= endTime)   // Before end time (if exists)
-			&& (period == 0 || (mostRecentTimeRun + period) <= currentTime); // At least one period since last run
-	}	
-	
-	private void scheduleNextRun() {
-		Parameter periodParam = getAvailableSystemParameter(SystemParameter.PERIOD);
-		if (periodParam == null) {
-			Log.v(TAG, "PERIOD parameter is not valid for this probe");
-			return;
-		}
-		if (periodParam.isSupportedByProbe()) {
-			Log.v(TAG, "PERIOD parameter schedule is supported by probe");
-			return;
-		}
-		
-		ProbeScheduleResolver scheduleResolver = new ProbeScheduleResolver(allRequests.getAll(), getDefaultParameters(), getPreviousRunTime(), getPreviousRunParams());
-		Bundle nextRunParams = scheduleResolver.getNextRunParams();
-		if (nextRunParams != null) {
-			Intent nextRunIntent = new Intent(this, getClass());
-			nextRunIntent.putExtras(nextRunParams);
-			AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
-			PendingIntent pendingIntent = PendingIntent.getService(this, 0, nextRunIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-			nextRunTime = scheduleResolver.getNextRunTime();
-			Log.d(TAG, "Next run time: " + nextRunTime);
-			if (nextRunTime != 0L) {
-				Log.d(TAG, "LAST_TIME: " + mostRecentTimeRun);
-				Log.d(TAG, "CURRENT_TIME: " + System.currentTimeMillis());
-				Log.d(TAG, "DIFFERENCE: " + (nextRunTime - System.currentTimeMillis()));
-				am.set(AlarmManager.RTC_WAKEUP, nextRunTime, pendingIntent);
-			}
-		}
-	}
-	
-	private void cancelNextRun() {
-		Intent nextRunIntent = new Intent(this, getClass());
-		AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
-		PendingIntent pendingIntent = PendingIntent.getService(this, 0, nextRunIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-		am.cancel(pendingIntent);
-		this.nextRunTime = 0L;
-	}
-	
-	/**
-	 * Start actively running the probe.  Send data broadcast when done (or when appropriate) and stop.
-	 * @param params
-	 */
-	protected abstract void onRun(Bundle params);
-	
-	/**
-	 * Disables the probe from collecting data.  The probe may send out one last broadcast, but no more afterwards.
-	 * Only one call to this method is required to disable the probe, regardless of how many time start as been called.
-	 * If this method is called when the probe is already disabled, the method returns gracefully.
-	 * @param params
-	 */
-	public final void stop() {
-		if (enabled && running) {
-			Log.i(TAG, "Stopping probe: " + getClass().getName());
-			onStop();
-			running = false;
-			scheduleOrDisable();
-			if (lock != null && lock.isHeld()) {
-				lock.release();
-				lock = null;
-			}
-		}
-	}
-	
-	/**
-	 * Stop actively running the probe.  Any passive listeners should continue running.
-	 */
-	protected abstract void onStop();
-	
-	
-	/**
-	 * Turn on probe, setting it up to be run and registering passive listeners (if any).
-	 */
-	public final void enable() {
-		if (!enabled) {
-			Log.i(TAG, "Enabling probe: " + getClass().getName());
-			enabled = true;
-			running = false;
-			sendProbeStatus();
-			onEnable();
-		}
-	}
-	/**
-	 * Start actively running the probe.  Send data broadcast when done (or when appropriate) and stop.
-	 */
-	protected abstract void onEnable();
-	
-	/**
-	 * Turn off probe, stopping if currently running and disabling all passive listeners.
-	 */
-	public final void disable() {
-		if (enabled) {
-			Log.i(TAG, "Disabling probe: " + getClass().getName());
-			if (running) {
-				stop();
-			}
-			enabled = false;
-			sendProbeStatus();
-			onDisable();
-			stopSelf();
-		}
-	}
-	
-	/**
-	 * Disable any passive listeners and tear down the service.  Will be called when probe service is destroyed.
-	 */
-	protected abstract void onDisable();
-	
-	/**
-	 * @return true if actively running, otherwise false
-	 */
-	public boolean isRunning() {
-		return enabled ? running : false;
-	}
-	
-	/**
-	 * Binder interface to the probe
-	 */
-	public class LocalBinder extends Binder {
-		Probe getService() {
-            return Probe.this;
-        }
-    }
-	private final IBinder mBinder = new LocalBinder();
-	@Override
-	public IBinder onBind(Intent intent) {
-		return mBinder;
-	}
 	
 
-	/**
-	 * Create a new valid nonce
-	 * @return long value of the nonce
-	 */
-	protected long createNonce(String requester) {
-		synchronized (nonces) {
-			removeInvalidNonces();
-			Nonce nonce = new Nonce(requester);
-			nonces.add(nonce);
-			return nonce.value;
-		}
-	}
-	
-	/**
-	 * Checks if the nonce and valid and invalidates it if it exists.
-	 * @param nonce
-	 * @return true if valid nonce, false otherwise
-	 */
-	protected boolean redeemNonce(String requester, long nonce) {
-		synchronized (nonces) {
-		removeInvalidNonces();
-		Nonce redeemedNonce = null;
-		for (Nonce existingNonce : nonces) {
-			if (existingNonce.value == nonce && existingNonce.requester.equals(requester)) {
-				redeemedNonce = existingNonce;
-				break;
-			}
-		}
-		nonces.remove(redeemedNonce);
-		return redeemedNonce != null;
-		}
-	}
-	
-
-	private static class Nonce {
-		public final String requester;
-		public final long value;
-		public final long timestamp;
-		public Nonce(String requester) {
-			this(requester, Math.abs(new Random().nextLong()), System.currentTimeMillis());
-		}
-		public Nonce(String requester, long value, long timestamp) {
-			assert requester != null;
-			this.requester = requester;
-			this.value = value;
-			this.timestamp = timestamp;
-		}
-		public boolean isValid() {
-			return System.currentTimeMillis() < (timestamp + 10000); // 10 second expiration
-		}
-		@Override
-		public boolean equals(Object o) {
-			return o != null && o instanceof Nonce 
-			&& this.requester.equals(((Nonce)o).requester) 
-			&& this.value == ((Nonce)o).value;
-		}
-		@Override
-		public int hashCode() {
-			return HashCodeUtil.hash(HashCodeUtil.SEED, value);
-		}
-		
-		public static final String FIELD_SEPARATOR = "@";
-		public static final String NONCE_SEPARATOR = ",";
-
-		public static String serializeNonces(Set<Nonce> nonces) {
-			Set<String> nonceStrings = new HashSet<String>();
-			for (Nonce nonce : nonces) {
-				nonceStrings.add(nonce.requester + FIELD_SEPARATOR + nonce.value + FIELD_SEPARATOR + nonce.timestamp);
-			}
-			return Utils.join(nonceStrings, NONCE_SEPARATOR);
-		}
-		
-		public static Set<Nonce> unserializeNonces(String noncesString) {
-			Set<Nonce> nonces = new HashSet<Nonce>();
-			if (noncesString != null && !noncesString.trim().equals("")) {
-				String[] nonceStrings = noncesString.split(NONCE_SEPARATOR);
-				for (String nonceString : nonceStrings) {
-					String[] nonceParts = nonceString.split(FIELD_SEPARATOR);
-					nonces.add(new Nonce(nonceParts[0], Long.valueOf(nonceParts[1]), Long.valueOf(nonceParts[2])));
-				}
-			}
-			return nonces;
-		}
-	}
-
-	
 	/**
 	 * Represents a parameter that can be passed to a probe
 	 * @author alangardner
@@ -806,6 +569,5 @@ public abstract class Probe extends Service {
 			this.description = description;
 		}
 	}
-	
 
 }

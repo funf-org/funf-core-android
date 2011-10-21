@@ -100,7 +100,7 @@ public class ScreenProbe extends Probe implements ScreenKeys {
 		if (screenOn != null) {
 			Bundle data = new Bundle();
 			data.putBoolean(SCREEN_ON, screenOn);
-			sendProbeData(Utils.getTimestamp(), new Bundle(), data);
+			sendProbeData(Utils.getTimestamp(), data);
 		}
 	}
 	

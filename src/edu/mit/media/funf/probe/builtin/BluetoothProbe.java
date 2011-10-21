@@ -130,7 +130,7 @@ public class BluetoothProbe extends Probe implements BluetoothKeys {
 		if (deviceDiscoveries != null) {
 			Bundle data = new Bundle();
 			data.putParcelableArrayList(DEVICES, deviceDiscoveries);
-			sendProbeData(Utils.getTimestamp(), new Bundle(), data);
+			sendProbeData(Utils.getTimestamp(), data);
 		}
 	}
 

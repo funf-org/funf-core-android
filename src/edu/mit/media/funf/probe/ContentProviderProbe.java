@@ -117,7 +117,7 @@ public abstract class ContentProviderProbe extends Probe {
 			if (sendEachRowSeparately()) {
 				for (Bundle data : mostRecentScan) {
 					if (data != null) {
-						sendProbeData(getTimestamp(data), new Bundle(), data);
+						sendProbeData(getTimestamp(data), data);
 						throttle();
 					}
 				}
@@ -132,13 +132,13 @@ public abstract class ContentProviderProbe extends Probe {
 					if (results.size() >= 100) {
 						Bundle data = new Bundle();
 						data.putParcelableArrayList(getDataName(), results);
-						sendProbeData(getTimestamp(results), new Bundle(), data);
+						sendProbeData(getTimestamp(results), data);
 						results = new ArrayList<Bundle>();
 					}
 				}
 				Bundle data = new Bundle();
 				data.putParcelableArrayList(getDataName(), results);
-				sendProbeData(getTimestamp(results), new Bundle(), data);
+				sendProbeData(getTimestamp(results), data);
 			}
 		}
 	}
