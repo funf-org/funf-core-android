@@ -50,7 +50,7 @@ import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
-public abstract class Probe extends CustomizedIntentService {
+public abstract class Probe extends CustomizedIntentService implements BaseProbeKeys {
 
 
 	protected final String TAG = getClass().getName();
@@ -66,8 +66,9 @@ public abstract class Probe extends CustomizedIntentService {
 	MOST_RECENT_RUN_KEY = "mostRecentTimeRun",
 	MOST_RECENT_KEY = "mostRecentTimeDataSent",
 	MOST_RECENT_PARAMS_KEY = "mostRecentParamsSent",
-	NEXT_RUN_TIME_KEY = "nextRunTime",
+	NEXT_RUN_TIME_KEY = "nextRunTime";
 	
+	static final String
 	ACTION_INTERNAL_RUN = "PROBE_INTERNAL_RUN",
 	ACTION_INTERNAL_STOP = "PROBE_INTERNAL_STOP",
 	ACTION_INTERNAL_DISABLE = "PROBE_INTERNAL_DISABLE",
@@ -118,7 +119,7 @@ public abstract class Probe extends CustomizedIntentService {
 				_disable();
 			}
 			Long nextScheduledTime = scheduler.scheduleNextRun(this, requests);
-			// TODO: set next run time
+			setHistory(getPreviousDataSentTime(), getPreviousRunTime(), getPreviousRunParams(), nextScheduledTime);
 		} else if (ACTION_REQUEST.equals(action) || action == null) {
 			boolean succesfullyQueued = queueRequest(intent);
 			if (succesfullyQueued) {
@@ -333,12 +334,10 @@ public abstract class Probe extends CustomizedIntentService {
 				lock = Utils.getWakeLock(this);
 			}
 			sendProbeStatus();
-			// TODO: set mostRecentRun time
+			long nowTimestamp = Utils.millisToSeconds(System.currentTimeMillis());
+			setHistory(getPreviousDataSentTime(), nowTimestamp, parameters, getNextRunTime());
 			onRun(parameters);
 		}
-		// Schedule before stop to ensure schedule exists if crash happens, or if not run
-		Long nextScheduledTime = scheduler.scheduleNextRun(this, requests);
-		// TODO: set next run time
 	}
 	
 	/**
