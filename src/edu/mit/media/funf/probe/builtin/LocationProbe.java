@@ -135,7 +135,7 @@ public class LocationProbe extends Probe implements LocationKeys {
 		if (latestLocation != null) {
 			Bundle data = new Bundle();
 			data.putParcelable(LOCATION, latestLocation);
-			sendProbeData(Utils.millisToSeconds(latestLocation.getTime()), new Bundle(), data);
+			sendProbeData(Utils.millisToSeconds(latestLocation.getTime()), data);
 		}
 	}
 

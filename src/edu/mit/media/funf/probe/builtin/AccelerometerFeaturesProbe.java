@@ -277,7 +277,7 @@ public class AccelerometerFeaturesProbe extends Probe implements SensorEventList
         		}
         		
 	        	// Write out features
-        		sendProbeData(Utils.getTimestamp(), new Bundle(), data);
+        		sendProbeData(Utils.getTimestamp(), data);
 	        	//writeFeatureFrame(featureBuffer, sensorStreamFeatures, OUTPUT_FORMAT_FLOAT);
 	        	
         		// Reset frame buffer counters

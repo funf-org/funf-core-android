@@ -41,7 +41,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Binder;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 import edu.mit.media.funf.CustomizedIntentService;
@@ -55,12 +57,18 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 
 	protected final String TAG = getClass().getName();
 	
+	private static final String PREFIX = Probe.class.getName();
+	
 	public static final String
 	CALLBACK_KEY = "CALLBACK",
-	ACTION_SEND_DETAILS = "PROBE_SEND_DETAILS",
-	ACTION_SEND_CONFIGURATION = "PROBE_SEND_CONFIGURATION",
-	ACTION_SEND_STATUS = "PROBE_SEND_STATUS",
-	ACTION_REQUEST = "PROBE_REGISTER";
+	REQUESTS_KEY = "REQUESTS",
+	ACTION_SEND_DETAILS = PREFIX + ".SEND_DETAILS",
+	ACTION_SEND_CONFIGURATION = PREFIX + ".SEND_CONFIGURATION",
+	ACTION_SEND_STATUS = PREFIX + ".SEND_STATUS",
+	ACTION_REQUEST = PREFIX + ".REQUEST",
+	ACTION_DATA = PREFIX + ".DATA",
+	ACTION_DETAILS = PREFIX + ".DETAILS",
+	ACTION_STATUS = PREFIX + ".STATUS";
 	
 	private static final String 
 	MOST_RECENT_RUN_KEY = "mostRecentTimeRun",
@@ -81,6 +89,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	private boolean running;
 	private SharedPreferences historyPrefs;
 	private Queue<Intent> pendingRequests;
+	private Queue<Intent> deadRequests;
 	
 	@Override
 	public final void onCreate() {
@@ -90,6 +99,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		enabled = false;
 		running = false;
 		pendingRequests = new ConcurrentLinkedQueue<Intent>();
+		deadRequests = new ConcurrentLinkedQueue<Intent>();
 	}
 	
 	@Override
@@ -109,7 +119,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			updateRequests();
 			ProbeScheduler scheduler = getScheduler();
 			ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
-			if (scheduler.shouldBeEnabled(this, requests)) {
+			if (isAvailableOnDevice() && scheduler.shouldBeEnabled(this, requests)) {
 				if(ACTION_INTERNAL_RUN.equals(action)) {
 					_run();
 				} else {
@@ -126,12 +136,23 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 				run();
 			}
 		} else if(ACTION_SEND_DETAILS.equals(action)) {
-			// TODO:
+			sendProbeDetails();
 		} else if(ACTION_SEND_CONFIGURATION.equals(action)) {
 			// TODO:
 		} else if(ACTION_SEND_STATUS.equals(action)) {
-			// TODO:
-		} 
+			sendProbeStatus();
+		} else {
+			onHandleCustomIntent(intent);
+		}
+    }
+    
+    /**
+     * Probe subclasses can override this to receive custom intents that the base probe does not handle.
+     * For instance, data intents from other probes.
+     * @param intent
+     */
+    protected void onHandleCustomIntent(Intent intent) {
+    	
     }
     
 	
@@ -145,25 +166,35 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		if (requests == null) {
 			requests = new ArrayList<Intent>();
 		}
-		Map<PendingIntent,Intent> existingCallbacksToRequests = new HashMap<PendingIntent,Intent>();
-		for (Intent existingRequest : requests) {
-			PendingIntent callback = existingRequest.getParcelableExtra(CALLBACK_KEY);
-			existingCallbacksToRequests.put(callback, existingRequest);
-		}
-		for (Intent request = pendingRequests.poll(); request != null; request = pendingRequests.poll()) {
-			PendingIntent callback = request.getParcelableExtra(CALLBACK_KEY);
-			if (packageHasRequiredPermissions(this, callback.getTargetPackage(), getRequiredPermissions())) {
-				existingCallbacksToRequests.containsKey(callback);
-				int existingRequestIndex = requests.indexOf(existingCallbacksToRequests.get(callback));
-				if (existingRequestIndex >= 0) {
-					requests.set(existingRequestIndex, request);
-				} else {
-					requests.add(request);
-				}
-			} else {
-				Log.w(TAG, "Package '" + callback.getTargetPackage() + "' does not have the required permissions to get data from this probe.");
+
+		if (!deadRequests.isEmpty()) {
+			for (Intent deadRequest = deadRequests.poll(); deadRequest != null; deadRequest = deadRequests.poll()) {
+				requests.remove(deadRequest);
 			}
 		}
+
+		if (!pendingRequests.isEmpty()) {
+			Map<PendingIntent,Intent> existingCallbacksToRequests = new HashMap<PendingIntent,Intent>();
+			for (Intent existingRequest : requests) {
+				PendingIntent callback = existingRequest.getParcelableExtra(CALLBACK_KEY);
+				existingCallbacksToRequests.put(callback, existingRequest);
+			}
+			for (Intent request = pendingRequests.poll(); request != null; request = pendingRequests.poll()) {
+				PendingIntent callback = request.getParcelableExtra(CALLBACK_KEY);
+				if (packageHasRequiredPermissions(this, callback.getTargetPackage(), getRequiredPermissions())) {
+					existingCallbacksToRequests.containsKey(callback);
+					int existingRequestIndex = requests.indexOf(existingCallbacksToRequests.get(callback));
+					if (existingRequestIndex >= 0) {
+						requests.set(existingRequestIndex, request);
+					} else {
+						requests.add(request);
+					}
+				} else {
+					Log.w(TAG, "Package '" + callback.getTargetPackage() + "' does not have the required permissions to get data from this probe.");
+				}
+			}
+		}
+		
 		runIntent.putExtra(INTERNAL_REQUESTS_KEY, requests);
 		PendingIntent.getService(this, 0, runIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 	}
@@ -268,6 +299,12 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 */
 	public abstract Parameter[] getAvailableParameters();
 
+	/**
+	 * @return true if the necessary hardware or features are available on this device to run this probe.
+	 */
+	public boolean isAvailableOnDevice() {
+		return true;
+	}
 
     /**
      * Safe method to run probe, which ensures that requests are preserved.
@@ -293,7 +330,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
     	if (runIntent != null) {
 			updateRequests(); // Creates pending intent if it doesn't exist
 			if (!internalRunSent) {
-				startService(runIntent);
+				startService(runIntent); // TODO: may need to directly queue intent to prevent service from shutting down
 			}
 		}
     }
@@ -416,11 +453,19 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 
 	public void sendProbeDetails() {
 		// TODO: create details object for probe and send to each pending intent
+		Bundle details = new Bundle();
+		Intent detailsIntent = new Intent(ACTION_DETAILS);
+		detailsIntent.putExtras(details);
+		callback(Utils.millisToSeconds(System.currentTimeMillis()), detailsIntent);
 	}
 
 	
 	public void sendProbeStatus() {
 		// TODO: create status object for probe and send to each pending intent
+		Bundle status = new Bundle();
+		Intent statusValuesIntent = new Intent(ACTION_STATUS);
+		statusValuesIntent.putExtras(status);
+		callback(Utils.millisToSeconds(System.currentTimeMillis()),statusValuesIntent);
 	}
 	
 	/**
@@ -436,22 +481,31 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 * Sends a DATA broadcast for the probe, and records the time.
 	 */
 	protected void sendProbeData(long epochTimestamp, Bundle data) {
+		// Should always be loaded when enabled
 		Log.d(TAG, "Sent probe data at " + epochTimestamp);
-		// TODO: send probe data to each pending request
-		
-		/*  OLD implementation
-		mostRecentTimeDataSent = System.currentTimeMillis();
-		Intent dataBroadcast = new Intent(OppProbe.getDataAction(getClass()));
-		dataBroadcast.putExtra(BaseProbeKeys.TIMESTAMP, epochTimestamp);
-		// TODO: should we send parameters with data broadcast?
-		dataBroadcast.putExtras(data);
-		Set<String> requestingPackages = allRequests.getByRequesterByRequestId().keySet();
-		Log.i(TAG, "Sending probe data to: " + Utils.join(requestingPackages, ", "));
-		for (String requestingPackage : requestingPackages) {
-			Intent scopedDataBroadcast = new Intent(dataBroadcast);
-			scopedDataBroadcast.setPackage(requestingPackage);
-			sendBroadcast(dataBroadcast);
-		}*/
+		Intent dataIntent = new Intent(ACTION_DATA);
+		dataIntent.putExtras(data);
+		callback(epochTimestamp, dataIntent);
+	}
+	
+	/**
+	 * Send some values to each requesting pending intent
+	 * @param valuesIntent
+	 */
+	protected void callback(long epochTimestamp, Intent valuesIntent) {
+		assert runIntent != null;
+		valuesIntent.putExtra(PROBE, getClass().getName());
+		valuesIntent.putExtra(TIMESTAMP, epochTimestamp);
+		ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+		for (Intent request : requests) {
+			PendingIntent callback = request.getParcelableExtra(CALLBACK_KEY);
+			try {
+				callback.send(this, 0, valuesIntent);
+			} catch (CanceledException e) {
+				deadRequests.add(request);
+			}
+		}
+		updateRequests();
 	}
 	
 	
@@ -567,6 +621,21 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			this.displayName = displayName;
 			this.description = description;
 		}
+	}
+
+	
+	/**
+	 * Binder interface to the probe
+	*/
+	public class LocalBinder extends Binder {
+		Probe getService() {
+			return Probe.this;
+		}
+	}
+	private final IBinder mBinder = new LocalBinder();
+	@Override
+	public IBinder onBind(Intent intent) {
+		return mBinder;
 	}
 
 }

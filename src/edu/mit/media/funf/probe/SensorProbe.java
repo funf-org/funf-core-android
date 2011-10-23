@@ -79,12 +79,14 @@ public abstract class SensorProbe extends Probe {
 	}
 
 	@Override
+	public boolean isAvailableOnDevice() {
+		return getSensorManager().getDefaultSensor(getSensorType()) == null;
+	}
+
+
+	@Override
 	protected void onEnable() {
 		sensor = getSensorManager().getDefaultSensor(getSensorType());
-		if (sensor == null) {
-			disable();
-			return;
-		}
 		recentEvents = new LinkedBlockingQueue<SensorEventCopy>();
 		sensorListener = new SensorEventListener() {
 			
@@ -109,10 +111,6 @@ public abstract class SensorProbe extends Probe {
 
 	@Override
 	public void onRun(Bundle params) {
-		if (sensor == null) {
-			disable();
-			return;
-		}
 		Log.i(TAG, "SensorKeys listener:" + sensorListener + " SensorKeys:" + sensor + " SensorManager:" + getSensorManager());
 		getSensorManager().registerListener(sensorListener,sensor, getSensorDelay(params));
 		Log.i(TAG, "RecentEvents before clear:" + recentEvents.size());
@@ -181,7 +179,7 @@ public abstract class SensorProbe extends Probe {
 				for (int valueIndex=0; valueIndex<valuesLength; valueIndex++) {
 					data.putFloatArray(valueNames[valueIndex], values[valueIndex]);
 				}
-				sendProbeData(Utils.getTimestamp(), new Bundle(), data);
+				sendProbeData(Utils.getTimestamp(), data);
 			} else {
 				Log.i(TAG, "Recent events is empty.");
 			}
@@ -219,5 +217,6 @@ public abstract class SensorProbe extends Probe {
 	}
 	
 	public abstract String[] getValueNames();
+
 	
 }

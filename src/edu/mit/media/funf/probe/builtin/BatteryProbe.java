@@ -95,7 +95,7 @@ public class BatteryProbe extends Probe implements BatteryKeys {
 	@Override
 	public void sendProbeData() {
 		if (mostRecentData != null) {
-			sendProbeData(mostRecentTimestamp, new Bundle(), mostRecentData);
+			sendProbeData(mostRecentTimestamp, mostRecentData);
 		}
 	}
 

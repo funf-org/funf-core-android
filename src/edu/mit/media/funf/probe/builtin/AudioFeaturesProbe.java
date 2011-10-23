@@ -249,7 +249,7 @@ public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
 //	    		}
 
 	    		// Write out features
-	    		sendProbeData((long)currentSecs, new Bundle(), data);
+	    		sendProbeData((long)currentSecs, data);
 	    		
 	    	}
 	    }

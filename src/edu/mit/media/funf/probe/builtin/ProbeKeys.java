@@ -40,6 +40,8 @@ public class ProbeKeys {
 	
 	public static interface BaseProbeKeys {
 		public static final String 
+		PROBE = "PROBE",
+		// TODO: add probe version
 		TIMESTAMP = "TIMESTAMP";
 	}
 	

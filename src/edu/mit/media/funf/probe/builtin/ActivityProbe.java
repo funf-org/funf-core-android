@@ -21,37 +21,31 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import edu.mit.media.funf.OppProbe;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.client.ProbeCommunicator;
 import edu.mit.media.funf.probe.Probe;
+import edu.mit.media.funf.probe.ProbeScheduler;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ActivityKeys;
 
 public class ActivityProbe extends Probe implements ActivityKeys {
 
-	private static long DEFAULT_DURATION = 15L;
-	private static long DEFAULT_PERIOD = 120L;
-	private static long INTERVAL = 1L;
+	private static final long DEFAULT_DURATION = 15L;
+	private static final long DEFAULT_PERIOD = 120L;
+	private static final long INTERVAL = 1L;
+	private static final String DELEGATE_PROBE_NAME = AccelerometerSensorProbe.class.getName();
 	
 	private long duration = 0L;
-	private IntentFilter accelerometerProbeBroadcastFilter;
-	private BroadcastReceiver accelerometerProbeListener;
 	private Handler handler;
 
 	private long startTime;
 	private int intervalCount;
 	private int lowActivityIntervalCount;
 	private int highActivityIntervalCount;
+	
+	private ActivityCounter activityCounter;
 	
 	@Override
 	public Parameter[] getAvailableParameters() {
@@ -81,124 +75,119 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 	}
 	
 	@Override
-	protected void onEnable() {
-		handler = new Handler();
-		accelerometerProbeBroadcastFilter = new IntentFilter(OppProbe.getDataAction(AccelerometerSensorProbe.class));
-		accelerometerProbeListener = new BroadcastReceiver() {
-
-			private long intervalStartTime;
-			private float varianceSum;
-			private float avg;
-			private float sum;
-			private int count;
+	protected void onHandleCustomIntent(Intent intent) {
+		if (Probe.ACTION_DATA.equals(intent.getAction()) && DELEGATE_PROBE_NAME.equals(intent.getStringExtra(PROBE))) {
+			if (handler == null) {
+				handler = new Handler(); // Make sure handler is created on message thread
+			}
+			if (activityCounter == null) {
+				activityCounter = new ActivityCounter();
+			}
+			activityCounter.handleAccelerometerData(intent.getExtras());
+		}
+	}
+	
+	private class ActivityCounter {
+		private long intervalStartTime;
+		private float varianceSum;
+		private float avg;
+		private float sum;
+		private int count;
+		
+		private Runnable sendRunnable;
+		
+		private void reset(long timestamp) {
+			Log.d(TAG, "RESET:" + timestamp);
+			// If more than an INTERVAL away, start a new scan
+			startTime = intervalStartTime = timestamp;
+			varianceSum = avg = sum = count = 0;
+			intervalCount = 1;
+			lowActivityIntervalCount = 0;
+			highActivityIntervalCount = 0;
 			
-			private Runnable sendRunnable;
-			
-			private void reset(long timestamp) {
+			// start timer to send results
+			if (sendRunnable == null) {
+				Log.d(TAG, "CREATING SEND DATA RUNNABLE");
+				sendRunnable = new Runnable() {
+					public void run() {
+						Log.d(TAG, "SENDING DATA");
+						sendProbeData();
+						sendRunnable = null;
+						stop();
+					}
+				};
+				handler.postDelayed(sendRunnable, Utils.secondsToMillis(duration));
+			}
+		}
+		
+		private void intervalReset() {
+			Log.d(TAG, "INTERVAL RESET");
+			// Calculate activity and reset
+			intervalCount++;
+			if (varianceSum >= 10.0f) {
+				highActivityIntervalCount++;
+			} else if (varianceSum < 10.0f && varianceSum > 3.0f) {
+				lowActivityIntervalCount++;
+			}
+			intervalStartTime += INTERVAL; // Ensure 1 second intervals
+			varianceSum = avg = sum = count = 0;
+		}
+		
+		private void update(float x, float y, float z) {
+			//Log.d(TAG, "UPDATE:(" + x + "," + y + "," + z + ")");
+			// Iteratively calculate variance sum
+			count++;
+			float magnitude = (float)Math.sqrt(x*x + y*y + z*z);
+			float newAvg = (count - 1)*avg/count + magnitude/count;
+			float deltaAvg = newAvg - avg;
+			varianceSum += (magnitude - newAvg) * (magnitude - newAvg)
+				- 2*(sum - (count-1)*avg) 
+				+ (count - 1) *(deltaAvg * deltaAvg);
+			sum += magnitude;
+			avg = newAvg;
+			//Log.d(TAG, "UPDATED VALUES:(count, varianceSum, sum, avg) " + count + ", " + varianceSum+ ", " + sum+ ", " + avg);
+		}
+		
+		public void handleAccelerometerData(Bundle data) {
+			long timestamp = data.getLong(TIMESTAMP, 0L);
+			Log.d(TAG, "Starttime: " + startTime + " IntervalStartTime: " + intervalStartTime);
+			Log.d(TAG, "RECEIVED:" + timestamp);
+			if (sendRunnable == null
+					|| timestamp > startTime + duration
+					|| timestamp >= intervalStartTime + 2 * INTERVAL) {
 				Log.d(TAG, "RESET:" + timestamp);
-				// If more than an INTERVAL away, start a new scan
-				startTime = intervalStartTime = timestamp;
-				varianceSum = avg = sum = count = 0;
-				intervalCount = 1;
-				lowActivityIntervalCount = 0;
-				highActivityIntervalCount = 0;
-				
-				// start timer to send results
-				if (sendRunnable == null) {
-					Log.d(TAG, "CREATING SEND DATA RUNNABLE");
-					sendRunnable = new Runnable() {
-						public void run() {
-							Log.d(TAG, "SENDING DATA");
-							sendProbeData();
-							sendRunnable = null;
-							stop();
-						}
-					};
-					handler.postDelayed(sendRunnable, Utils.secondsToMillis(duration));
-				}
+				reset(timestamp);
+			} else if (timestamp >= intervalStartTime + INTERVAL) {
+				Log.d(TAG, "Interval Reset:" + timestamp);
+				intervalReset();
 			}
 			
-			private void intervalReset() {
-				Log.d(TAG, "INTERVAL RESET");
-				// Calculate activity and reset
-				intervalCount++;
-				if (varianceSum >= 10.0f) {
-					highActivityIntervalCount++;
-				} else if (varianceSum < 10.0f && varianceSum > 3.0f) {
-					lowActivityIntervalCount++;
-				}
-				intervalStartTime += INTERVAL; // Ensure 1 second intervals
-				varianceSum = avg = sum = count = 0;
+			long[] eventTimestamp = data.getLongArray("EVENT_TIMESTAMP");
+			//int[] accuracy = data.getIntArray("ACCURACY");
+			float[] x = data.getFloatArray("X");
+			float[] y = data.getFloatArray("Y");
+			float[] z = data.getFloatArray("Z");
+			for (int i=0; i<eventTimestamp.length; i++) {
+				update(x[i], y[i], z[i]);
 			}
-			
-			private void update(float x, float y, float z) {
-				//Log.d(TAG, "UPDATE:(" + x + "," + y + "," + z + ")");
-				// Iteratively calculate variance sum
-				count++;
-				float magnitude = (float)Math.sqrt(x*x + y*y + z*z);
-				float newAvg = (count - 1)*avg/count + magnitude/count;
-				float deltaAvg = newAvg - avg;
-				varianceSum += (magnitude - newAvg) * (magnitude - newAvg)
-					- 2*(sum - (count-1)*avg) 
-					+ (count - 1) *(deltaAvg * deltaAvg);
-				sum += magnitude;
-				avg = newAvg;
-				//Log.d(TAG, "UPDATED VALUES:(count, varianceSum, sum, avg) " + count + ", " + varianceSum+ ", " + sum+ ", " + avg);
-			}
-			
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				Bundle data = intent.getExtras();
+		}
+	}
 
-				long timestamp = intent.getLongExtra(TIMESTAMP, 0L);
-				Log.d(TAG, "Starttime: " + startTime + " IntervalStartTime: " + intervalStartTime);
-				Log.d(TAG, "RECEIVED:" + timestamp);
-				if (sendRunnable == null
-						|| timestamp > startTime + duration
-						|| timestamp >= intervalStartTime + 2 * INTERVAL) {
-					Log.d(TAG, "RESET:" + timestamp);
-					reset(timestamp);
-				} else if (timestamp >= intervalStartTime + INTERVAL) {
-					Log.d(TAG, "Interval Reset:" + timestamp);
-					intervalReset();
-				}
-				
-				long[] eventTimestamp = data.getLongArray("EVENT_TIMESTAMP");
-				//int[] accuracy = data.getIntArray("ACCURACY");
-				float[] x = data.getFloatArray("X");
-				float[] y = data.getFloatArray("Y");
-				float[] z = data.getFloatArray("Z");
-				for (int i=0; i<eventTimestamp.length; i++) {
-					update(x[i], y[i], z[i]);
-				}
-			}
-		};
-		registerReceiver(accelerometerProbeListener, accelerometerProbeBroadcastFilter);
+	@Override
+	protected void onEnable() {
+		// Nothing
 	}
 
 
 	@Override
 	protected void onDisable() {
-		unregisterReceiver(accelerometerProbeListener);
-		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerSensorProbe.class);
-		probe.unregisterDataRequest(getClass().getName());
+		// Nothing
 	}
+
 	
 	@Override
 	public void onRun(Bundle params) {
-		long newDuration = Utils.getLong(params, SystemParameter.DURATION.name, DEFAULT_DURATION);
-		duration = Math.max(newDuration, duration);
-		ProbeCommunicator probe = new ProbeCommunicator(this, AccelerometerSensorProbe.class);
-		List<Bundle> rawParams = new ArrayList<Bundle>(getAllRequests().getAll());
-		Bundle[] completeParams = new Bundle[rawParams.size()];
-		for (int i=0; i<rawParams.size(); i++) {
-			completeParams[i] = getCompleteParams(rawParams.get(i));
-		}
-		probe.registerDataRequest(getClass().getName(), completeParams);
-		// TODO: temporary solution to fix 0 PERIOD one shot requests from getting removed before data is sent
-		if (Utils.getLong(params, SystemParameter.PERIOD.name, DEFAULT_PERIOD) != 0L) {
-			stop();
-		}
+		// Nothing
 	}
 
 	@Override
@@ -214,8 +203,14 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 		data.putInt(HIGH_ACTIVITY_INTERVALS, highActivityIntervalCount);
 		Log.d(TAG, "(" + lowActivityIntervalCount + " Low Active / " + intervalCount + "Total)");
 		Log.d(TAG, "(" + highActivityIntervalCount + " High Active / " + intervalCount + "Total)");
-		sendProbeData(Utils.millisToSeconds(startTime), new Bundle(), data); // starTime converted last minute for precision
+		sendProbeData(Utils.millisToSeconds(startTime), data); // starTime converted last minute for precision
+	}
+	
+	@Override
+	protected ProbeScheduler getScheduler() {
+		return new DelegateProbeScheduler(AccelerometerSensorProbe.class);
 	}
 
+	
 
 }

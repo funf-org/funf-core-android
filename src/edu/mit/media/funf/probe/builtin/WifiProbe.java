@@ -89,7 +89,7 @@ public class WifiProbe extends Probe implements WifiKeys {
 			nonNullResults.addAll(results);
 		}
 		data.putParcelableArrayList(SCAN_RESULTS, nonNullResults);
-		sendProbeData(Utils.getTimestamp(), new Bundle(), data);
+		sendProbeData(Utils.getTimestamp(), data);
 	}
 	
 	@Override

@@ -97,14 +97,10 @@ public class ProbeController extends Service  {
 				for (Class<? extends Probe> probeClass : getAvailableProbeClasses()) {
 					if (action.equals(OppProbe.getGlobalPollAction()) 
 							|| probeClass.getName().equals(OppProbe.getProbeName(action))) {
-						new ProbeCommandServiceConnection(ProbeController.this, probeClass) {
-							@Override
-							public void runCommand() {
-								// TODO: verify the sender is on the white list of packages
-								boolean includeNonce = intent.getBooleanExtra(OppProbe.ReservedParamaters.NONCE.name, false);
-								getProbe().sendProbeStatus(requestingPackage, includeNonce);
-							}
-						};
+						Intent statusIntent = new Intent(Probe.ACTION_SEND_STATUS, null, getApplicationContext(), probeClass);
+						startService(statusIntent);
+						// boolean includeNonce = intent.getBooleanExtra(OppProbe.ReservedParamaters.NONCE.name, false);
+						// TODO: have opp communicator deal with nonces.
 					}
 				}
 			} else if (OppProbe.isGetAction(action)) {

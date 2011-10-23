@@ -74,7 +74,7 @@ public abstract class SynchronousProbe extends Probe {
 	@Override
 	public void sendProbeData() {
 		if (mostRecentData != null) {
-			sendProbeData(mostRecentTimestamp, new Bundle(), mostRecentData);
+			sendProbeData(mostRecentTimestamp, mostRecentData);
 		}
 	}
 

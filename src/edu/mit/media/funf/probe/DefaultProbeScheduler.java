@@ -21,6 +21,7 @@
  */
 package edu.mit.media.funf.probe;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import android.app.AlarmManager;
@@ -73,10 +74,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 			// Register stop alarm
 			// 0L duration if duration param is not supported for probe.  Stop queued up immediately.
 			long duration = Utils.secondsToMillis(params.getLong(SystemParameter.DURATION.name, 0L));
-			Intent stopIntent = new Intent(Probe.ACTION_INTERNAL_STOP, null, probe, probe.getClass());
-			PendingIntent pi = PendingIntent.getService(probe, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-			AlarmManager manager = (AlarmManager)probe.getSystemService(Context.ALARM_SERVICE);
-			manager.set(AlarmManager.RTC_WAKEUP, currentTime + duration, pi);
+			scheduleAlarm(probe, Probe.ACTION_INTERNAL_STOP, currentTime + duration);
 			return params;
 		} else {
 			return null;
@@ -100,11 +98,21 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		
 		long period = Utils.secondsToMillis(params.getLong(SystemParameter.PERIOD.name, 0L));
 		long mostRecentTimeRun = Utils.secondsToMillis(probe.getPreviousRunTime());
-		Intent stopIntent = new Intent(Probe.ACTION_INTERNAL_RUN, null, probe, probe.getClass());
-		PendingIntent pi = PendingIntent.getService(probe, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		AlarmManager manager = (AlarmManager)probe.getSystemService(Context.ALARM_SERVICE);
-		manager.set(AlarmManager.RTC_WAKEUP, mostRecentTimeRun + period, pi);
+		scheduleAlarm(probe, Probe.ACTION_INTERNAL_RUN, mostRecentTimeRun + period);
 		return Utils.millisToSeconds(mostRecentTimeRun + period);
+	}
+	
+	/**
+	 * Sets the alarm for this probe.	
+	 * @param probe
+	 * @param action
+	 * @param time
+	 */
+	protected void scheduleAlarm(Probe probe, String action, long time) {
+		Intent intent = new Intent(action, null, probe, probe.getClass());
+		PendingIntent pi = PendingIntent.getService(probe, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		AlarmManager manager = (AlarmManager)probe.getSystemService(Context.ALARM_SERVICE);
+		manager.set(AlarmManager.RTC_WAKEUP, time, pi);
 	}
 	
 	/**
@@ -122,7 +130,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		return params;
 	}
 	
-	protected static void putMergedParam(Bundle params, Probe.Parameter parameter, Collection<Intent> requests, boolean returnLargest) {
+	public static void putMergedParam(Bundle params, Probe.Parameter parameter, Collection<Intent> requests, boolean returnLargest) {
 		if (parameter == null || requests == null || requests.isEmpty()) {
 			return;
 		}
@@ -130,15 +138,18 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		String paramName = parameter.getName();
 		long mergedValue = returnLargest ? Long.MIN_VALUE : Long.MAX_VALUE;
 		for(Intent request : requests) {
-			long value = request.getLongExtra(paramName, defaultValue);
-			if ((returnLargest && value > mergedValue) || (!returnLargest && value < mergedValue)) {
-				mergedValue = value;
+			ArrayList<Bundle> dataRequests = request.getParcelableArrayListExtra(Probe.REQUESTS_KEY);
+			for (Bundle dataRequest : dataRequests) {
+				long value = Utils.getLong(dataRequest, paramName, defaultValue);
+				if ((returnLargest && value > mergedValue) || (!returnLargest && value < mergedValue)) {
+					mergedValue = value;
+				}
 			}
 		}
 		params.putLong(paramName, mergedValue);
 	}
 	
-	protected static Parameter getAvailableSystemParameter(Probe probe, SystemParameter systemParam) {
+	public static Parameter getAvailableSystemParameter(Probe probe, SystemParameter systemParam) {
 		for (Parameter p : getParametersNotNull(probe.getAvailableParameters())) {
 			if(systemParam.name.equals(p.getName())) {
 				return p;
@@ -147,11 +158,11 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		return null;
 	}
 	
-	protected static Parameter[] getParametersNotNull(Parameter[] availableParameters) {
+	public static Parameter[] getParametersNotNull(Parameter[] availableParameters) {
 		return (availableParameters == null) ? new Parameter[] {} : availableParameters;
 	}
 	
-	protected static Bundle getDefaultParameters(Probe probe) {
+	public static Bundle getDefaultParameters(Probe probe) {
 		Bundle params = new Bundle();
 		for(Parameter param : getParametersNotNull(probe.getAvailableParameters())) {
 			Utils.putInBundle(params, param.getName(), param.getValue());
@@ -159,7 +170,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		return params;
 	}
 	
-	protected static Bundle getCompleteParams(Probe probe, Bundle params) {
+	public static Bundle getCompleteParams(Probe probe, Bundle params) {
 		if (params == null) {
 			return null;
 		}
