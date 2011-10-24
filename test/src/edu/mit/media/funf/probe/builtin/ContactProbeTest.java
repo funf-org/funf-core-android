@@ -29,7 +29,7 @@ import android.os.Parcelable;
 import android.provider.ContactsContract.Data;
 import android.util.Log;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
 public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
@@ -40,7 +40,7 @@ public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 
 	public void testProbe() {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.PERIOD.name, 0L);
+		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		params.putBoolean(ContactProbe.FULL_PARAM.getName(), true);
 		startProbe(params);
 		Bundle data = getData(10);
@@ -68,7 +68,7 @@ public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 	public void testFullParameter() {
 		// Run a full scan
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.PERIOD.name, 0L);
+		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		params.putBoolean(ContactProbe.FULL_PARAM.getName(), true);
 		startProbe(params);
 		Bundle data = getData(10);

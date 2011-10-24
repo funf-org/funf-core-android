@@ -50,10 +50,10 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-			new Parameter(Probe.SystemParameter.DURATION, DEFAULT_DURATION, true),
-			new Parameter(Probe.SystemParameter.PERIOD, DEFAULT_PERIOD, true),
-			new Parameter(SystemParameter.START, 0L, true),
-			new Parameter(SystemParameter.END, 0L, true)
+			new Parameter(Parameter.Builtin.DURATION, DEFAULT_DURATION),
+			new Parameter(Parameter.Builtin.PERIOD, DEFAULT_PERIOD),
+			new Parameter(Parameter.Builtin.START, 0L),
+			new Parameter(Parameter.Builtin.END, 0L)
 		};
 	}
 

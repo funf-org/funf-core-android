@@ -25,7 +25,7 @@ import java.util.ArrayList;
 
 import android.os.Bundle;
 import android.os.Parcelable;
-import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 
 public class SMSProbeTest extends ProbeTestCase<SMSProbe> {
 
@@ -35,7 +35,7 @@ public class SMSProbeTest extends ProbeTestCase<SMSProbe> {
 	
 	public void testData() {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.PERIOD.name, 0L);
+		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
 		Bundle data = getData(10);
 		ArrayList<Parcelable> messages = data.getParcelableArrayList(SMSProbe.MESSAGES);

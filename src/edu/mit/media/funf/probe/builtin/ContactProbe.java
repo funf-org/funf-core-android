@@ -63,9 +63,9 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-			new Parameter(SystemParameter.PERIOD, 36000L),
-			new Parameter(SystemParameter.START, 0L),
-			new Parameter(SystemParameter.END, 0L),
+			new Parameter(Parameter.Builtin.PERIOD, 36000L),
+			new Parameter(Parameter.Builtin.START, 0L),
+			new Parameter(Parameter.Builtin.END, 0L),
 			FULL_PARAM
 		};
 	}

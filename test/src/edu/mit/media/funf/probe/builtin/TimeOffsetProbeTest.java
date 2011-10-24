@@ -21,7 +21,7 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
-import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 import android.os.Bundle;
 
 public class TimeOffsetProbeTest extends ProbeTestCase<TimeOffsetProbe> {
@@ -32,7 +32,7 @@ public class TimeOffsetProbeTest extends ProbeTestCase<TimeOffsetProbe> {
 
 	public void testProbe() {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.PERIOD.name, 0L);
+		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
 		Bundle data = getData(20);
 		assertNotNull(data.get(TimeOffsetProbe.TIME_OFFSET));

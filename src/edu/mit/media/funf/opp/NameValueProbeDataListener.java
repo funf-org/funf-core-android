@@ -19,13 +19,15 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf.storage;
+package edu.mit.media.funf.opp;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import edu.mit.media.funf.opp.OppProbe;
+import edu.mit.media.funf.storage.BundleSerializer;
+import edu.mit.media.funf.storage.DatabaseService;
+import edu.mit.media.funf.storage.NameValueDatabaseService;
 
 public class NameValueProbeDataListener extends BroadcastReceiver {
 	

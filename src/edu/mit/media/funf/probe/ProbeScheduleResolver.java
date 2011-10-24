@@ -56,13 +56,13 @@ public class ProbeScheduleResolver {
 				Bundle completeRequest = new Bundle();
 				completeRequest.putAll(defaults);
 				completeRequest.putAll(request);
-				long period = Utils.secondsToMillis(Utils.getLong(completeRequest, Probe.SystemParameter.PERIOD.name, NO_PERIOD));
+				long period = Utils.secondsToMillis(Utils.getLong(completeRequest, Probe.Parameter.Builtin.PERIOD.name, NO_PERIOD));
 				Log.i("ProbeScheduleResolver", "" + " Period:" + period);
-				long start = Utils.getLong(completeRequest, Probe.SystemParameter.START.name, Long.MIN_VALUE);
+				long start = Utils.getLong(completeRequest, Probe.Parameter.Builtin.START.name, Long.MIN_VALUE);
 				if (start == 0L) {
 					start = Long.MIN_VALUE;
 				}
-				long end = Utils.getLong(completeRequest, Probe.SystemParameter.END.name, Long.MAX_VALUE);
+				long end = Utils.getLong(completeRequest, Probe.Parameter.Builtin.END.name, Long.MAX_VALUE);
 				if (end == 0L) {
 					end = Long.MAX_VALUE;
 				}

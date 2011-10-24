@@ -22,7 +22,7 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.os.Bundle;
-import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 
 public class LightSensorProbeTest extends ProbeTestCase<LightSensorProbe> {
 
@@ -33,8 +33,8 @@ public class LightSensorProbeTest extends ProbeTestCase<LightSensorProbe> {
 	
 	public void testData() throws InterruptedException {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 10L);
-		params.putLong(SystemParameter.PERIOD.name, 10L);
+		params.putLong(Parameter.Builtin.DURATION.name, 10L);
+		params.putLong(Parameter.Builtin.PERIOD.name, 10L);
 		startProbe(params);
 		
 		Bundle data = getData(10);

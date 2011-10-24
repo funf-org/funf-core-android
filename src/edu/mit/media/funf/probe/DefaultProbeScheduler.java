@@ -31,7 +31,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.Parameter;
-import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 
 /**
  * Schedules probes based on PERIOD, DURATION, START, END,and PASSIVE parameters.
@@ -61,9 +61,9 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		}
 
 		// Check if should run now
-		long period = Utils.secondsToMillis(params.getLong(SystemParameter.PERIOD.name, 0L));
-		long startTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.START.name, 0L));
-		long endTime = Utils.secondsToMillis(Utils.getLong(params, SystemParameter.END.name, 0L));
+		long period = Utils.secondsToMillis(params.getLong(Parameter.Builtin.PERIOD.name, 0L));
+		long startTime = Utils.secondsToMillis(Utils.getLong(params, Parameter.Builtin.START.name, 0L));
+		long endTime = Utils.secondsToMillis(Utils.getLong(params, Parameter.Builtin.END.name, 0L));
 		long mostRecentTimeRun = Utils.secondsToMillis(probe.getPreviousRunTime());
 		long currentTime = System.currentTimeMillis();
 		boolean shouldRun = (startTime == 0 || startTime <= currentTime) // After start time (if exists)
@@ -73,7 +73,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		if (shouldRun) {
 			// Register stop alarm
 			// 0L duration if duration param is not supported for probe.  Stop queued up immediately.
-			long duration = Utils.secondsToMillis(params.getLong(SystemParameter.DURATION.name, 0L));
+			long duration = Utils.secondsToMillis(params.getLong(Parameter.Builtin.DURATION.name, 0L));
 			scheduleAlarm(probe, Probe.ACTION_INTERNAL_STOP, currentTime + duration);
 			return params;
 		} else {
@@ -87,7 +87,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 	 */
 	@Override
 	public Long scheduleNextRun(Probe probe, Collection<Intent> requests) {
-		Parameter periodParam = getAvailableSystemParameter(probe, SystemParameter.PERIOD);
+		Parameter periodParam = getAvailableParameter(probe, Parameter.Builtin.PERIOD);
 		if (periodParam == null) {
 			return null;
 		}
@@ -96,7 +96,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 			return null;
 		}
 		
-		long period = Utils.secondsToMillis(params.getLong(SystemParameter.PERIOD.name, 0L));
+		long period = Utils.secondsToMillis(params.getLong(Parameter.Builtin.PERIOD.name, 0L));
 		long mostRecentTimeRun = Utils.secondsToMillis(probe.getPreviousRunTime());
 		scheduleAlarm(probe, Probe.ACTION_INTERNAL_RUN, mostRecentTimeRun + period);
 		return Utils.millisToSeconds(mostRecentTimeRun + period);
@@ -123,10 +123,10 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 	 */
 	protected Bundle mergeParameters(Probe probe, Collection<Intent> requests) {
 		Bundle params = new Bundle();
-		putMergedParam(params, getAvailableSystemParameter(probe, SystemParameter.PERIOD), requests, false);
-		putMergedParam(params, getAvailableSystemParameter(probe, SystemParameter.DURATION), requests, true);
-		putMergedParam(params, getAvailableSystemParameter(probe, SystemParameter.START), requests, false);
-		putMergedParam(params, getAvailableSystemParameter(probe, SystemParameter.END), requests, true);
+		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.PERIOD), requests, false);
+		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.DURATION), requests, true);
+		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.START), requests, false);
+		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.END), requests, true);
 		return params;
 	}
 	
@@ -149,7 +149,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		params.putLong(paramName, mergedValue);
 	}
 	
-	public static Parameter getAvailableSystemParameter(Probe probe, SystemParameter systemParam) {
+	public static Parameter getAvailableParameter(Probe probe, Parameter.Builtin systemParam) {
 		for (Parameter p : getParametersNotNull(probe.getAvailableParameters())) {
 			if(systemParam.name.equals(p.getName())) {
 				return p;

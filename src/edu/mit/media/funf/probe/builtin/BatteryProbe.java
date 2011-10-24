@@ -39,9 +39,9 @@ public class BatteryProbe extends Probe implements BatteryKeys {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-			new Parameter(SystemParameter.PERIOD, 300L),
-			new Parameter(SystemParameter.START, 0L),
-			new Parameter(SystemParameter.END, 0L)
+			new Parameter(Parameter.Builtin.PERIOD, 300L),
+			new Parameter(Parameter.Builtin.START, 0L),
+			new Parameter(Parameter.Builtin.END, 0L)
 		};
 	}
 

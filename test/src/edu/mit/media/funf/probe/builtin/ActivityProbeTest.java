@@ -23,7 +23,7 @@ package edu.mit.media.funf.probe.builtin;
 
 import android.os.Bundle;
 import android.util.Log;
-import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 
 public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 
@@ -33,8 +33,8 @@ public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 
 	public void testData() throws InterruptedException {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 10L);
-		params.putLong(SystemParameter.PERIOD.name, 0L);
+		params.putLong(Parameter.Builtin.DURATION.name, 10L);
+		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		sendDataRequestBroadcast(params);
 		Bundle data = getData(30);
 		assertTrue(data.containsKey("TOTAL_INTERVALS"));
@@ -46,8 +46,8 @@ public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 		sendDataRequestBroadcast(AccelerometerSensorProbe.class, new Bundle());
 		
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 2L);
-		params.putLong(SystemParameter.PERIOD.name, 0L);
+		params.putLong(Parameter.Builtin.DURATION.name, 2L);
+		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		sendDataRequestBroadcast(params);
 		Bundle data = getData(20);
 		assertTrue(data.containsKey("TOTAL_INTERVALS"));

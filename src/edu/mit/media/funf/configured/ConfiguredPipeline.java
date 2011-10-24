@@ -47,12 +47,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import edu.mit.media.funf.CustomizedIntentService;
 import edu.mit.media.funf.EqualsUtil;
 import edu.mit.media.funf.FileUtils;
 import edu.mit.media.funf.IOUtils;
-import edu.mit.media.funf.OppProbe;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.client.ProbeCommunicator;
+import edu.mit.media.funf.opp.OppProbe;
+import edu.mit.media.funf.opp.ProbeCommunicator;
 import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.ProbeUtils;
 import edu.mit.media.funf.storage.BundleSerializer;
@@ -64,7 +65,7 @@ import edu.mit.media.funf.storage.NameValueProbeDataListener;
 import edu.mit.media.funf.storage.UploadService;
 import static edu.mit.media.funf.Utils.TAG;
 
-public abstract class ConfiguredPipeline extends IntentService implements OnSharedPreferenceChangeListener {
+public abstract class ConfiguredPipeline extends CustomizedIntentService implements OnSharedPreferenceChangeListener {
 
 
 	private static final String PREFIX = "edu.mit.media.funf.";
@@ -91,7 +92,6 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 
 	public ConfiguredPipeline() {
 		super("ConfiguredPipeline");
-		setIntentRedelivery(true);
 	}
 
 	@Override
@@ -108,7 +108,6 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		unregisterListeners();
 		getConfig().getPrefs().unregisterOnSharedPreferenceChangeListener(this);
 		getSystemPrefs().unregisterOnSharedPreferenceChangeListener(this);
 	}
@@ -124,9 +123,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		String action = intent.getAction();
-		if (action == null) {
-			ensureServicesAreRunning();
-		} else if (action.equals(ACTION_RELOAD)) {
+		if (action.equals(ACTION_RELOAD)) {
 			reload();
 		} else if(action.equals(ACTION_UPDATE_CONFIG)) {
 			String config = intent.getStringExtra(CONFIG);
@@ -154,6 +151,12 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 			setEnabled(true);
 		} else if(action.equals(ACTION_DISABLE)) {
 			setEnabled(false);
+		} else if (action.equals(Probe.ACTION_DATA)) {
+			onDataReceived(intent.getExtras());
+		} else if (action.equals(Probe.ACTION_STATUS)) {
+			onStatusReceived(intent.getExtras());
+		} else if (action.equals(Probe.ACTION_DETAILS)) {
+			onDetailsReceived(intent.getExtras());
 		}
 	}
 
@@ -165,10 +168,8 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 			onConfigChange(getConfig().toString(true));
 			if (FunfConfig.isDataRequestKey(key)) {
 				if (isEnabled()) {
-					sendProbeRequests(false);
-					// Reregister listeners
-					unregisterListeners(); 
-					registerListeners();
+					String probeName = FunfConfig.keyToProbename(key);
+					sendProbeRequest(probeName);
 				}
 			} else if (FunfConfig.CONFIG_UPDATE_PERIOD_KEY.equals(key)) {
 				cancelAlarm(ACTION_UPDATE_CONFIG);
@@ -187,25 +188,12 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 		}
 	}
 	
-	private long lastRun = 0L;
-	private static final long STARTUP_DELAY = 5000L;
 	public void reload() {
-		long now = System.currentTimeMillis();
-		if (lastRun + STARTUP_DELAY < now) {
-			lastRun = now;
-			cancelAlarms();
-			unregisterListeners();
-			removeProbeRequests();
-			sentProbeRequests = null;
-			if (isEnabled()) {
-				// Schedule this for the future to prevent race conditions
-				handler.postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						ensureServicesAreRunning();
-					}
-				}, STARTUP_DELAY);
-			}
+		cancelAlarms();
+		removeProbeRequests();
+		sentProbeRequests = null;
+		if (isEnabled()) {
+			ensureServicesAreRunning();
 		}
 	}
 	
@@ -250,8 +238,7 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	public void ensureServicesAreRunning() {
 		if (isEnabled()) {
 			scheduleAlarms();
-			registerListeners();
-			sendProbeRequests(false);
+			sendProbeRequests();
 		}
 	}
 	
@@ -259,105 +246,34 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 		DefaultArchive.getArchive(this, getPipelineName()).setEncryptionPassword(password);
 	}
 	
-	/**
-	 * By default only sends probe requests that are different than the last probe requests.
-	 * If the send all flag is specified then all will be sent.
-	 */
-	public void sendProbeRequests(boolean sendAll) {
-		if (sentProbeRequests == null) {
-			Log.i(TAG, "Pipeline sending first probe requests since created.");
-			sendAll = true;
-			sentProbeRequests = new HashMap<String, Bundle[]>();
+	private PendingIntent getCallback() {
+		// TODO: Maybe do a callback per probe, so they can be cancelled individually
+		return PendingIntent.getService(this, 0, new Intent(this, getClass()), PendingIntent.FLAG_UPDATE_CURRENT);
+	}
+	
+	public void sendProbeRequests() {
+		Map<String,Bundle[]> dataRequests = getConfig().getDataRequests();
+		for (String probeName : dataRequests.keySet()) {
+			sendProbeRequest(probeName);
 		}
-		final boolean shouldSendAll = sendAll;
-		final Map<String,Bundle[]> localSentProbeRequests = sentProbeRequests;
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				synchronized (localSentProbeRequests) {
-				final Map<String,Bundle[]> configuredDataRequests = getConfig().getDataRequests();
-				final Set<String> allRequests = new HashSet<String>();
-				allRequests.addAll(configuredDataRequests.keySet());
-				allRequests.addAll(localSentProbeRequests.keySet());
-				final String requestId = getPipelineName();
-				int updateCount = 0;
-				for (String probeName : allRequests) {
-					if (sentProbeRequests != localSentProbeRequests) {
-						// Another thread has reloaded the probe
-						return;
-					}
-					Bundle[] oldRequest = localSentProbeRequests.get(probeName);
-					Bundle[] newRequest = configuredDataRequests.get(probeName);
-					if(shouldSendAll || !EqualsUtil.areEqual(oldRequest, newRequest)) {
-						updateCount++;
-						ProbeCommunicator probe = new ProbeCommunicator(ConfiguredPipeline.this, probeName);
-						if (newRequest == null) {
-							probe.unregisterDataRequest(requestId);
-						} else {
-							probe.registerDataRequest(requestId, newRequest);
-						}
-						// Throttled to prevent binder exceptions
-						try {
-							Thread.sleep(5000L);
-						} catch (InterruptedException e) {
-							Log.e(TAG, "Throttle interrupted", e);
-						}
-					}
-				}
-				Log.i(TAG, "Sent update requests for " + updateCount + " probes.");
-				localSentProbeRequests.clear();
-				localSentProbeRequests.putAll(getConfig().getDataRequests());
-				}
-			}
-		}).start();
+	}
+	
+	public void sendProbeRequest(String probeName) {
+		Bundle[] dataRequest = getConfig().getDataRequests().get(probeName);
+		Intent request = new Intent(Probe.ACTION_REQUEST);
+		request.setClassName(this, probeName);
+		request.putExtra(Probe.CALLBACK_KEY, getCallback());
+		request.putExtra(Probe.REQUESTS_KEY, dataRequest);
+		startService(request);
 	}
 	
 	private void removeProbeRequests() {
-		// TODO: Use a more general approach to remove data registration in all probes in all packages
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				Log.w(TAG, "Only removing requests for probes that are registered in this package.");
-				String requestId = getPipelineName();
-				for (Class<? extends Probe> probeClass : ProbeUtils.getAvailableProbeClasses(ConfiguredPipeline.this)) {
-					ProbeCommunicator probe = new ProbeCommunicator(ConfiguredPipeline.this, probeClass);
-					probe.unregisterDataRequest(requestId);
-					try {
-						Thread.sleep(100L); // Rate limit
-					} catch (InterruptedException e) {}
-				}
-			}
-		}).start();
+		getCallback().cancel();
 	}
 	
 	public static final String DEFAULT_PIPELINE_NAME = "mainPipeline";
 	public String getPipelineName() {
 		return DEFAULT_PIPELINE_NAME;
-	}
-	
-	private synchronized void registerListeners() {
-		if (dataListener == null) {
-			Log.i(TAG, "Creating data listeners");
-			FunfConfig config = getConfig();
-			if (config == null) {
-				Log.i(TAG, "No Config");
-				return;
-			}
-			dataListener = getProbeDataListener();
-			Set<String> probes = config.getDataRequests().keySet();
-			IntentFilter filter = new IntentFilter();
-			for (String probe : probes) {
-				filter.addAction(OppProbe.getDataAction(probe));
-			}
-			registerReceiver(dataListener, filter);
-		}
-	}
-	
-	private synchronized void unregisterListeners() {
-		if (dataListener != null) {
-			unregisterReceiver(dataListener);
-			dataListener = null;
-		}
 	}
 	
 	public void updateConfig() {
@@ -456,6 +372,29 @@ public abstract class ConfiguredPipeline extends IntentService implements OnShar
 	
 	public BroadcastReceiver getProbeDataListener() {
 		return new NameValueProbeDataListener(getPipelineName(), getDatabaseServiceClass(), getBundleSerializer());
+	}
+	
+	public void onDataReceived(Bundle data) {
+		String dataJson = getBundleSerializer().serialize(data);
+		String probeName = data.getString(Probe.PROBE);
+		long timestamp = data.getLong(Probe.TIMESTAMP, 0L);
+		Bundle b = new Bundle();
+		b.putString(NameValueDatabaseService.DATABASE_NAME_KEY, getPipelineName());
+		b.putLong(NameValueDatabaseService.TIMESTAMP_KEY, timestamp);
+		b.putString(NameValueDatabaseService.NAME_KEY, probeName);
+		b.putString(NameValueDatabaseService.VALUE_KEY, dataJson);
+		Intent i = new Intent(this, getDatabaseServiceClass());
+		i.setAction(DatabaseService.ACTION_RECORD);
+		i.putExtras(b);
+		startService(i);
+	}
+	
+	public void onStatusReceived(Bundle status) {
+		// TODO:
+	}
+	
+	public void onDetailsReceived(Bundle details) {
+		// TODO:
 	}
 	
 	// TODO: enable json serialization of bundles to eliminate the need for this class to be abstract

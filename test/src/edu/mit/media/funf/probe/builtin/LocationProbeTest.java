@@ -23,7 +23,7 @@ package edu.mit.media.funf.probe.builtin;
 
 import android.location.Location;
 import android.os.Bundle;
-import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 
 public class LocationProbeTest extends ProbeTestCase<LocationProbe> {
 
@@ -36,7 +36,7 @@ public class LocationProbeTest extends ProbeTestCase<LocationProbe> {
 
 	public void testData() {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 30L);
+		params.putLong(Parameter.Builtin.DURATION.name, 30L);
 		startProbe(params);
 		Bundle data = getData(30 + FUDGE_FACTOR);
 		Location location = (Location)data.get("LOCATION");
@@ -46,7 +46,7 @@ public class LocationProbeTest extends ProbeTestCase<LocationProbe> {
 	
 	public void testReturningCachedLocation() {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 1L);
+		params.putLong(Parameter.Builtin.DURATION.name, 1L);
 		startProbe(params);
 		Bundle data = getData(1 + FUDGE_FACTOR);
 		Location location = (Location)data.get("LOCATION");
@@ -56,8 +56,8 @@ public class LocationProbeTest extends ProbeTestCase<LocationProbe> {
 	
 	public void testUsingBroadcasts() throws InterruptedException {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 30L);
-		//params.putLong(Probe.SystemParameter.PERIOD.name, 10L);
+		params.putLong(Parameter.Builtin.DURATION.name, 30L);
+		//params.putLong(Probe.Parameter.Builtin.PERIOD.name, 10L);
 		// TODO: come back to configuration parameters
 		//params.putLong(LocationProbe.PARAM_MAX_WAIT_TIME, 10);
 		//params.putLong(LocationProbe.PARAM_DESIRED_ACCURACY, 100);

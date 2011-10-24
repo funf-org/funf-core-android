@@ -25,7 +25,7 @@ import java.util.ArrayList;
 
 import android.os.Bundle;
 import android.os.Parcelable;
-import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 
 public class ImagesProbeTest extends ProbeTestCase<ImagesProbe> {
 
@@ -35,7 +35,7 @@ public class ImagesProbeTest extends ProbeTestCase<ImagesProbe> {
 	
 	public void testData() {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.PERIOD.name, 0L);
+		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
 		Bundle data = getData(10);
 		ArrayList<Parcelable> images = data.getParcelableArrayList(ImagesProbe.IMAGES);

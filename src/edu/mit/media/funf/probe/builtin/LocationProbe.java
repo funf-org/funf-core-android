@@ -51,10 +51,10 @@ public class LocationProbe extends Probe implements LocationKeys {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-			new Parameter(SystemParameter.PERIOD, DEFAULT_PERIOD),
-			new Parameter(SystemParameter.DURATION, DEFAULT_DURATION),
-			new Parameter(SystemParameter.START, 0L),
-			new Parameter(SystemParameter.END, 0L)
+			new Parameter(Parameter.Builtin.PERIOD, DEFAULT_PERIOD),
+			new Parameter(Parameter.Builtin.DURATION, DEFAULT_DURATION),
+			new Parameter(Parameter.Builtin.START, 0L),
+			new Parameter(Parameter.Builtin.END, 0L)
 			// TODO: come back to configuration parameters such as desiredAccuracy or duration
 		};
 	}

@@ -23,7 +23,7 @@ package edu.mit.media.funf.probe.builtin;
 
 import junit.framework.AssertionFailedError;
 import android.os.Bundle;
-import edu.mit.media.funf.probe.Probe.SystemParameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 
 public class TemperatureSensorProbeTest extends ProbeTestCase<TemperatureSensorProbe> {
 
@@ -34,8 +34,8 @@ public class TemperatureSensorProbeTest extends ProbeTestCase<TemperatureSensorP
 	
 	public void testData() throws InterruptedException {
 		Bundle params = new Bundle();
-		params.putLong(SystemParameter.DURATION.name, 10L);
-		params.putLong(SystemParameter.PERIOD.name, 10L);
+		params.putLong(Parameter.Builtin.DURATION.name, 10L);
+		params.putLong(Parameter.Builtin.PERIOD.name, 10L);
 		startProbe(params);
 		try {
 			Bundle data = getData(10);

@@ -47,7 +47,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 import edu.mit.media.funf.CustomizedIntentService;
-import edu.mit.media.funf.OppProbe;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
@@ -136,11 +135,14 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 				run();
 			}
 		} else if(ACTION_SEND_DETAILS.equals(action)) {
-			sendProbeDetails();
+			PendingIntent callback = intent.getParcelableExtra(CALLBACK_KEY);
+			sendProbeDetails(callback);
 		} else if(ACTION_SEND_CONFIGURATION.equals(action)) {
-			// TODO:
+			//PendingIntent callback = intent.getParcelableExtra(CALLBACK_KEY);
+			//sendProbeConfiguration(callback);
 		} else if(ACTION_SEND_STATUS.equals(action)) {
-			sendProbeStatus();
+			PendingIntent callback = intent.getParcelableExtra(CALLBACK_KEY);
+			sendProbeStatus(callback);
 		} else {
 			onHandleCustomIntent(intent);
 		}
@@ -349,7 +351,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			Log.i(TAG, "Enabling probe: " + getClass().getName());
 			enabled = true;
 			running = false;
-			sendProbeStatus();
+			sendProbeStatus(null);
 			onEnable();
 		}
 	}
@@ -370,7 +372,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			if (lock == null) {
 				lock = Utils.getWakeLock(this);
 			}
-			sendProbeStatus();
+			sendProbeStatus(null);
 			long nowTimestamp = Utils.millisToSeconds(System.currentTimeMillis());
 			setHistory(getPreviousDataSentTime(), nowTimestamp, parameters, getNextRunTime());
 			onRun(parameters);
@@ -386,7 +388,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			Log.i(TAG, "Stopping probe: " + getClass().getName());
 			onStop();
 			running = false;  // TODO: possibly this should go before onStop, to keep with convention
-			sendProbeStatus();
+			sendProbeStatus(null);
 			if (lock != null && lock.isHeld()) {
 				lock.release();
 				lock = null;
@@ -405,7 +407,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 				stop();
 			}
 			enabled = false;
-			sendProbeStatus();
+			sendProbeStatus(null);
 			onDisable();
 		}
 	}
@@ -451,21 +453,21 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	}
 	*/
 
-	public void sendProbeDetails() {
+	public void sendProbeDetails(PendingIntent callback) {
 		// TODO: create details object for probe and send to each pending intent
 		Bundle details = new Bundle();
 		Intent detailsIntent = new Intent(ACTION_DETAILS);
 		detailsIntent.putExtras(details);
-		callback(Utils.millisToSeconds(System.currentTimeMillis()), detailsIntent);
+		callback(Utils.millisToSeconds(System.currentTimeMillis()), detailsIntent, callback);
 	}
 
 	
-	public void sendProbeStatus() {
+	public void sendProbeStatus(PendingIntent callback) {
 		// TODO: create status object for probe and send to each pending intent
 		Bundle status = new Bundle();
 		Intent statusValuesIntent = new Intent(ACTION_STATUS);
 		statusValuesIntent.putExtras(status);
-		callback(Utils.millisToSeconds(System.currentTimeMillis()),statusValuesIntent);
+		callback(Utils.millisToSeconds(System.currentTimeMillis()),statusValuesIntent, callback);
 	}
 	
 	/**
@@ -485,24 +487,32 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		Log.d(TAG, "Sent probe data at " + epochTimestamp);
 		Intent dataIntent = new Intent(ACTION_DATA);
 		dataIntent.putExtras(data);
-		callback(epochTimestamp, dataIntent);
+		callback(epochTimestamp, dataIntent, null);
 	}
 	
 	/**
 	 * Send some values to each requesting pending intent
 	 * @param valuesIntent
 	 */
-	protected void callback(long epochTimestamp, Intent valuesIntent) {
+	protected void callback(long epochTimestamp, Intent valuesIntent, PendingIntent callback) {
 		assert runIntent != null;
 		valuesIntent.putExtra(PROBE, getClass().getName());
 		valuesIntent.putExtra(TIMESTAMP, epochTimestamp);
-		ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
-		for (Intent request : requests) {
-			PendingIntent callback = request.getParcelableExtra(CALLBACK_KEY);
+		if (callback == null) {
+			// Send to all requesters
+			ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+			for (Intent request : requests) {
+				callback = request.getParcelableExtra(CALLBACK_KEY);
+				try {
+					callback.send(this, 0, valuesIntent);
+				} catch (CanceledException e) {
+					deadRequests.add(request);
+				}
+			}
+		} else {
 			try {
 				callback.send(this, 0, valuesIntent);
 			} catch (CanceledException e) {
-				deadRequests.add(request);
 			}
 		}
 		updateRequests();
@@ -561,67 +571,189 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	}
 	
 	
+	public final static class Status {
+		private Bundle bundle;
+		public Status(String name,
+				boolean enabled, boolean running, 
+				long nextRun, long previousRun) {
+			this.bundle = new Bundle();
+			bundle.putBoolean("ENABLED", enabled);
+			bundle.putBoolean("RUNNING", running);
+			bundle.putLong("NEXT_RUN", nextRun);
+			bundle.putLong("PREVIOUS_RUN", previousRun);
+			bundle.putString(Probe.PROBE, name);
+		}
+		
+		public Status(Bundle bundle) {
+			this.bundle = new Bundle(bundle);
+		}
+		
+		public String getProbe() {
+			return bundle.getString(Probe.PROBE);
+		}
+		public boolean isEnabled() {
+			return bundle.getBoolean("ENABLED");
+		}
+		public boolean isRunning() {
+			return bundle.getBoolean("RUNNING");
+		}
+		public long getNextRun() {
+			return bundle.getLong("NEXT_RUN");
+		}
+		public long getPreviousRun() {
+			return bundle.getLong("PREVIOUS_RUN");
+		}
+		public Bundle getBundle() {
+			return bundle;
+		}
+		@Override
+		public boolean equals(Object o) {
+			return o != null 
+			&& o instanceof Status 
+			&& getProbe().equals(((Status)o).getProbe());
+		}
+		@Override
+		public int hashCode() {
+			return getProbe().hashCode();
+		}
+	}
+	
+	public final static class Details {
+		private Bundle bundle;
+		public Details(String name, String displayName, 
+				String[] requiredPermissions, 
+				String[] requiredFeatures, 
+				List<Parameter> parameters) {
+			this.bundle = new Bundle();
+			bundle.putString("NAME", name);
+			bundle.putString("DISPLAY_NAME", displayName);
+			bundle.putStringArray("REQUIRED_PERMISSIONS", requiredPermissions == null ? new String[]{} : requiredPermissions);
+			bundle.putStringArray("REQUIRED_FEATURES", requiredFeatures == null ? new String[]{} : requiredFeatures);
+			ArrayList<Bundle> paramBundles = new ArrayList<Bundle>();
+			if (parameters != null) {
+				for (Parameter param : parameters) {
+					paramBundles.add(param.getBundle());
+				}
+			}
+			bundle.putParcelableArrayList("PARAMETERS", paramBundles);
+			
+		}
+		
+		public String[] getRequiredPermissions() {
+			return bundle.getStringArray("REQUIRED_PERMISSIONS");
+		}
+		public String[] getRequiredFeatures() {
+			return bundle.getStringArray("REQUIRED_FEATURES");
+		}
+		public Parameter getParameter(final String name) {
+			for(Parameter parameter : getParameters()) {
+				if (parameter.getName().equalsIgnoreCase(name)) {
+					return parameter;
+				}
+			}
+			return null;
+		}
+		public Parameter[] getParameters() {
+			ArrayList<Bundle> paramBundles = bundle.getParcelableArrayList("PARAMETERS");
+			List<Parameter> paramList = new ArrayList<Parameter>();
+			for (Bundle paramBundle : paramBundles) {
+				paramList.add(new Parameter(paramBundle));
+			}
+			Parameter[] parameters = new Parameter[paramBundles.size()];
+			paramList.toArray(parameters);
+			return parameters;
+		}
+	}
+	
 
 	/**
 	 * Represents a parameter that can be passed to a probe
 	 * @author alangardner
 	 *
 	 */
-	public final static class Parameter extends OppProbe.Parameter {
+	public final static class Parameter {
+		/**
+		 * The built-in parameters that the Funf system knows how to handle
+		 * @author alangardner
+		 *
+		 */
+		public enum Builtin {
+			PASSIVE("PASSIVE", "Passive", "Whether the requester wants data they did not specifically request."),
+			DURATION("DURATION", "Duration", "Length of time probe will run for (seconds)"),
+			START("START_DATE", "Start Timestamp", "Date after which probe is allowed to run (seconds since epoch)"),
+			END("END_DATE", "End Timestamp", "Date before which probe is allowed to run (seconds since epoch)"),
+			PERIOD("PERIOD", "Period", "Length of time between probe runs (seconds)");
+			
+			public final String name, displayName, description;
+			
+			private  Builtin(String name, String displayName, String description) {
+				this.name = name;
+				this.displayName = displayName;
+				this.description = description;
+			}
+		}
 		
-		private boolean supportedByProbe = true;
 		
-		public Parameter(final String name, final Object defaultValue, final String displayName, final String description) {
-			super(name, defaultValue, displayName, description);
+		public static final String NAME_KEY = "NAME";
+		public static final String DEFAULT_VALUE_KEY = "DEFAULT_VALUE";
+		public static final String DISPLAY_NAME_KEY = "DISPLAY_NAME";
+		public static final String DESCRIPTION_KEY = "DESCRIPTION";
+		
+		private final Bundle paramBundle;
+		
+		/**
+		 * Custom parameter constructor
+		 * @param name
+		 * @param value
+		 * @param displayName
+		 * @param description
+		 */
+		public Parameter(final String name, final Object value, final String displayName, final String description) {
+			paramBundle = new Bundle();
+			paramBundle.putString(NAME_KEY, name);
+			paramBundle.putString(DISPLAY_NAME_KEY, displayName);
+			paramBundle.putString(DESCRIPTION_KEY, description);
+			Utils.putInBundle(paramBundle, DEFAULT_VALUE_KEY, value);
+		}
+		
+		public Parameter(final Bundle paramBundle) {
+			// TODO: we might want to ensure that the bundle has the appropriate keys
+			this.paramBundle = paramBundle;
 		}
 		
 		/**
 		 * System parameter constructor, to be handled by system
 		 * @param paramType
 		 * @param defaultValue
-		 */
-		public Parameter(final SystemParameter paramType, final Object defaultValue) {
-			this(paramType, defaultValue, false);
-		}
-		
-		/**
-		 * System parameter constructor, with option to specify that probe will handle system parameter
-		 * instead of system.
-		 * @param paramType
-		 * @param defaultValue
 		 * @param supportedByProbe
 		 */
-		public Parameter(final SystemParameter paramType, final Object defaultValue, final boolean supportedByProbe) {
-			super(paramType.name, defaultValue, paramType.displayName, paramType.description);
-			this.supportedByProbe = supportedByProbe;
+		public Parameter(final Parameter.Builtin paramType, final Object defaultValue) {
+			this(paramType.name, defaultValue, paramType.displayName, paramType.description);
 		}
 
-		public boolean isSupportedByProbe() {
-			return supportedByProbe;
+		public String getName() {
+			return paramBundle.getString(NAME_KEY);
+		}
+
+		public Object getValue() {
+			return paramBundle.get(DEFAULT_VALUE_KEY);
+		}
+
+		public String getDisplayName() {
+			return paramBundle.getString(DISPLAY_NAME_KEY);
+		}
+
+		public String getDescription() {
+			return paramBundle.getString(DESCRIPTION_KEY);
 		}
 		
+		public Bundle getBundle() {
+			return paramBundle;
+		}
 	}
 	
-	/**
-	 * The built-in parameters that the Funf system knows how to handle
-	 * @author alangardner
-	 *
-	 */
-	public enum SystemParameter {
-		PASSIVE("PASSIVE", "Passive", "Whether the requester wants data they did not specifically request."),
-		DURATION("DURATION", "Duration", "Length of time probe will run for (seconds)"),
-		START("START_DATE", "Start Timestamp", "Date after which probe is allowed to run (seconds since epoch)"),
-		END("END_DATE", "End Timestamp", "Date before which probe is allowed to run (seconds since epoch)"),
-		PERIOD("PERIOD", "Period", "Length of time between probe runs (seconds)");
-		
-		public final String name, displayName, description;
-		
-		private  SystemParameter(String name, String displayName, String description) {
-			this.name = name;
-			this.displayName = displayName;
-			this.description = description;
-		}
-	}
+
+
 
 	
 	/**

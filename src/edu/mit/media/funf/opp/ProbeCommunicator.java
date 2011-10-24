@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf.client;
+package edu.mit.media.funf.opp;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,7 +30,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
-import edu.mit.media.funf.OppProbe;
 import edu.mit.media.funf.probe.Probe;
 
 public class ProbeCommunicator {

@@ -53,9 +53,9 @@ public class WifiProbe extends Probe implements WifiKeys {
 	@Override
 	public Parameter[] getAvailableParameters() {
 		return new Parameter[] {
-				new Parameter(SystemParameter.PERIOD, DEFAULT_PERIOD),
-				new Parameter(SystemParameter.START, 0L),
-				new Parameter(SystemParameter.END, 0L)
+				new Parameter(Parameter.Builtin.PERIOD, DEFAULT_PERIOD),
+				new Parameter(Parameter.Builtin.START, 0L),
+				new Parameter(Parameter.Builtin.END, 0L)
 		};
 	}
 

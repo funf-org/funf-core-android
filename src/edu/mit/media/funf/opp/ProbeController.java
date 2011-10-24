@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf.probe;
+package edu.mit.media.funf.opp;
 
 import java.util.Set;
 
@@ -30,7 +30,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
-import edu.mit.media.funf.OppProbe;
+import edu.mit.media.funf.probe.Probe;
+import edu.mit.media.funf.probe.ProbeCommandServiceConnection;
+import edu.mit.media.funf.probe.ProbeUtils;
 
 /**
  * Discovers probes that are defined in the app manifest, 
