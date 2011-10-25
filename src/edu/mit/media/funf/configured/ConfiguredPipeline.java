@@ -26,6 +26,8 @@ import java.io.File;
 import java.io.ObjectOutputStream.PutField;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -123,9 +125,9 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		String action = intent.getAction();
-		if (action.equals(ACTION_RELOAD)) {
+		if (ACTION_RELOAD.equals(action)) {
 			reload();
-		} else if(action.equals(ACTION_UPDATE_CONFIG)) {
+		} else if(ACTION_UPDATE_CONFIG.equals(action)) {
 			String config = intent.getStringExtra(CONFIG);
 			String configUrl = intent.getStringExtra(CONFIG_URL);
 			String configFilePath = intent.getStringExtra(CONFIG_FILE);
@@ -143,19 +145,19 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 			} else {
 				updateConfig();
 			}
-		} else if(action.equals(ACTION_UPLOAD_DATA)) {
+		} else if(ACTION_UPLOAD_DATA.equals(action)) {
 			uploadData();
-		} else if(action.equals(ACTION_ARCHIVE_DATA)) {
+		} else if(ACTION_ARCHIVE_DATA.equals(action)) {
 			archiveData();
-		} else if(action.equals(ACTION_ENABLE)) {
+		} else if(ACTION_ENABLE.equals(action)) {
 			setEnabled(true);
-		} else if(action.equals(ACTION_DISABLE)) {
+		} else if(ACTION_DISABLE.equals(action)) {
 			setEnabled(false);
-		} else if (action.equals(Probe.ACTION_DATA)) {
+		} else if (Probe.ACTION_DATA.equals(action)) {
 			onDataReceived(intent.getExtras());
-		} else if (action.equals(Probe.ACTION_STATUS)) {
+		} else if (Probe.ACTION_STATUS.equals(action)) {
 			onStatusReceived(new Probe.Status(intent.getExtras()));
-		} else if (action.equals(Probe.ACTION_DETAILS)) {
+		} else if (Probe.ACTION_DETAILS.equals(action)) {
 			onDetailsReceived(new Probe.Details(intent.getExtras()));
 		}
 	}
@@ -246,7 +248,7 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 		DefaultArchive.getArchive(this, getPipelineName()).setEncryptionPassword(password);
 	}
 	
-	private PendingIntent getCallback() {
+	protected PendingIntent getCallback() {
 		// TODO: Maybe do a callback per probe, so they can be cancelled individually
 		return PendingIntent.getService(this, 0, new Intent(this, getClass()), PendingIntent.FLAG_UPDATE_CURRENT);
 	}
@@ -259,7 +261,7 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 	}
 	
 	public void sendProbeRequest(String probeName) {
-		Bundle[] dataRequest = getConfig().getDataRequests().get(probeName);
+		ArrayList<Bundle> dataRequest = new ArrayList<Bundle>(Arrays.asList(getConfig().getDataRequests().get(probeName)));
 		Intent request = new Intent(Probe.ACTION_REQUEST);
 		request.setClassName(this, probeName);
 		request.putExtra(Probe.CALLBACK_KEY, getCallback());

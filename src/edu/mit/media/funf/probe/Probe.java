@@ -420,6 +420,13 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	/**
 	 * @return true if actively running, otherwise false
 	 */
+	public boolean isEnabled() {
+		return enabled;
+	}
+	
+	/**
+	 * @return true if actively running, otherwise false
+	 */
 	public boolean isRunning() {
 		return enabled ? running : false;
 	}
@@ -459,19 +466,17 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	*/
 
 	public void sendProbeDetails(PendingIntent callback) {
-		// TODO: create details object for probe and send to each pending intent
-		Bundle details = new Bundle();
+		Details details = new Details(getClass().getName(), getDisplayName(), getRequiredPermissions(), getRequiredFeatures(), getAvailableParameters());
 		Intent detailsIntent = new Intent(ACTION_DETAILS);
-		detailsIntent.putExtras(details);
+		detailsIntent.putExtras(details.getBundle());
 		callback(Utils.millisToSeconds(System.currentTimeMillis()), detailsIntent, callback);
 	}
 
 	
 	public void sendProbeStatus(PendingIntent callback) {
-		// TODO: create status object for probe and send to each pending intent
-		Bundle status = new Bundle();
+		Status status = new Status(getClass().getName(), enabled, isRunning(), getNextRunTime(), getPreviousRunTime());
 		Intent statusValuesIntent = new Intent(ACTION_STATUS);
-		statusValuesIntent.putExtras(status);
+		statusValuesIntent.putExtras(status.getBundle());
 		callback(Utils.millisToSeconds(System.currentTimeMillis()),statusValuesIntent, callback);
 	}
 	
@@ -514,13 +519,13 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 					deadRequests.add(request);
 				}
 			}
+			updateRequests();
 		} else {
 			try {
 				callback.send(this, 0, valuesIntent);
 			} catch (CanceledException e) {
 			}
 		}
-		updateRequests();
 	}
 	
 	
@@ -628,7 +633,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		public Details(String name, String displayName, 
 				String[] requiredPermissions, 
 				String[] requiredFeatures, 
-				List<Parameter> parameters) {
+				Parameter[] parameters) {
 			this.bundle = new Bundle();
 			bundle.putString(PROBE, name);
 			bundle.putString("DISPLAY_NAME", displayName);
@@ -641,7 +646,6 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 				}
 			}
 			bundle.putParcelableArrayList("PARAMETERS", paramBundles);
-			
 		}
 		public Details(Bundle bundle) {
 			this.bundle = bundle;
@@ -684,8 +688,8 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		@Override
 		public boolean equals(Object o) {
 			return o != null 
-			&& o instanceof Status 
-			&& getName().equals(((Status)o).getProbe());
+			&& o instanceof Details 
+			&& getName().equals(((Details)o).getName());
 		}
 		@Override
 		public int hashCode() {
