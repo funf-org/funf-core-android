@@ -22,26 +22,22 @@
 package edu.mit.media.funf.configured;
 
 import static edu.mit.media.funf.AsyncSharedPrefs.async;
+import static edu.mit.media.funf.Utils.TAG;
+
 import java.io.File;
-import java.io.ObjectOutputStream.PutField;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.json.JSONException;
 
 import android.app.AlarmManager;
-import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Binder;
@@ -50,14 +46,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import edu.mit.media.funf.CustomizedIntentService;
-import edu.mit.media.funf.EqualsUtil;
 import edu.mit.media.funf.FileUtils;
 import edu.mit.media.funf.IOUtils;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.opp.OppProbe;
-import edu.mit.media.funf.opp.ProbeCommunicator;
 import edu.mit.media.funf.probe.Probe;
-import edu.mit.media.funf.probe.ProbeUtils;
 import edu.mit.media.funf.storage.BundleSerializer;
 import edu.mit.media.funf.storage.DatabaseService;
 import edu.mit.media.funf.storage.DefaultArchive;
@@ -65,7 +57,6 @@ import edu.mit.media.funf.storage.HttpUploadService;
 import edu.mit.media.funf.storage.NameValueDatabaseService;
 import edu.mit.media.funf.storage.NameValueProbeDataListener;
 import edu.mit.media.funf.storage.UploadService;
-import static edu.mit.media.funf.Utils.TAG;
 
 public abstract class ConfiguredPipeline extends CustomizedIntentService implements OnSharedPreferenceChangeListener {
 
