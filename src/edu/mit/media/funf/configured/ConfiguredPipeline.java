@@ -154,9 +154,9 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 		} else if (action.equals(Probe.ACTION_DATA)) {
 			onDataReceived(intent.getExtras());
 		} else if (action.equals(Probe.ACTION_STATUS)) {
-			onStatusReceived(intent.getExtras());
+			onStatusReceived(new Probe.Status(intent.getExtras()));
 		} else if (action.equals(Probe.ACTION_DETAILS)) {
-			onDetailsReceived(intent.getExtras());
+			onDetailsReceived(new Probe.Details(intent.getExtras()));
 		}
 	}
 
@@ -389,11 +389,11 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 		startService(i);
 	}
 	
-	public void onStatusReceived(Bundle status) {
+	public void onStatusReceived(Probe.Status status) {
 		// TODO:
 	}
 	
-	public void onDetailsReceived(Bundle details) {
+	public void onDetailsReceived(Probe.Details details) {
 		// TODO:
 	}
 	

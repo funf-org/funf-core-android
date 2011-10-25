@@ -187,7 +187,12 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 					existingCallbacksToRequests.containsKey(callback);
 					int existingRequestIndex = requests.indexOf(existingCallbacksToRequests.get(callback));
 					if (existingRequestIndex >= 0) {
-						requests.set(existingRequestIndex, request);
+						ArrayList<Bundle> dataRequests = request.getParcelableArrayListExtra(REQUESTS_KEY);
+						if (dataRequests == null || dataRequests.isEmpty()) {
+							requests.remove(existingRequestIndex);
+						} else {
+							requests.set(existingRequestIndex, request);
+						}
 					} else {
 						requests.add(request);
 					}
@@ -625,7 +630,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 				String[] requiredFeatures, 
 				List<Parameter> parameters) {
 			this.bundle = new Bundle();
-			bundle.putString("NAME", name);
+			bundle.putString(PROBE, name);
 			bundle.putString("DISPLAY_NAME", displayName);
 			bundle.putStringArray("REQUIRED_PERMISSIONS", requiredPermissions == null ? new String[]{} : requiredPermissions);
 			bundle.putStringArray("REQUIRED_FEATURES", requiredFeatures == null ? new String[]{} : requiredFeatures);
@@ -637,6 +642,16 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			}
 			bundle.putParcelableArrayList("PARAMETERS", paramBundles);
 			
+		}
+		public Details(Bundle bundle) {
+			this.bundle = bundle;
+		}
+		
+		public String getName() {
+			return bundle.getString(PROBE);
+		}
+		public String getDisplayName() {
+			return bundle.getString("DISPLAY_NAME");
 		}
 		
 		public String[] getRequiredPermissions() {
@@ -662,6 +677,19 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			Parameter[] parameters = new Parameter[paramBundles.size()];
 			paramList.toArray(parameters);
 			return parameters;
+		}
+		public Bundle getBundle() {
+			return bundle;
+		}
+		@Override
+		public boolean equals(Object o) {
+			return o != null 
+			&& o instanceof Status 
+			&& getName().equals(((Status)o).getProbe());
+		}
+		@Override
+		public int hashCode() {
+			return getName().hashCode();
 		}
 	}
 	
