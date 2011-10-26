@@ -1,5 +1,6 @@
 package edu.mit.media.funf;
 
+import static edu.mit.media.funf.Utils.TAG;
 import java.util.Random;
 
 import android.app.Service;
@@ -9,6 +10,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 public abstract class CustomizedIntentService extends Service {
 	
@@ -23,6 +25,7 @@ public abstract class CustomizedIntentService extends Service {
 
         @Override
         public void handleMessage(Message msg) {
+        	Log.d(TAG, "Handling msg " + msg.arg1);
             onHandleIntent((Intent)msg.obj);
             if (shouldStop()) {
             	stopSelf(msg.arg1);
@@ -58,7 +61,9 @@ public abstract class CustomizedIntentService extends Service {
     	Message msg = mServiceHandler.obtainMessage();
         msg.arg1 = new Random().nextInt();
         msg.obj = intent;
-        mServiceHandler.sendMessage(msg);
+        boolean success = mServiceHandler.sendMessage(msg);
+        Log.d(TAG, "Message: " + intent.getComponent() + " " + intent.getAction());
+        Log.d(TAG, "Queued message "  + msg.arg1 + "? " + success);
     }
 
     @Override
@@ -66,7 +71,9 @@ public abstract class CustomizedIntentService extends Service {
         Message msg = mServiceHandler.obtainMessage();
         msg.arg1 = startId;
         msg.obj = intent;
-        mServiceHandler.sendMessage(msg);
+        boolean success = mServiceHandler.sendMessage(msg);
+        Log.d(TAG, "onStart queued message "  + msg.arg1 + "? " + success);
+        Log.d(TAG, "Message: " + intent.getComponent() + " " + intent.getAction());
     }
 
     @Override
@@ -77,6 +84,7 @@ public abstract class CustomizedIntentService extends Service {
 
     @Override
     public void onDestroy() {
+    	Log.d(TAG, "Destroying service " + getClass().getName());
         mServiceLooper.quit();
     }
 

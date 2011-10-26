@@ -21,9 +21,9 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
+import edu.mit.media.funf.probe.ProbeTestCase;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.util.Log;
 
 public class BatteryProbeTest extends ProbeTestCase<BatteryProbe> {
 

@@ -26,6 +26,9 @@ import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -212,6 +215,19 @@ public final class Utils {
 		return values;
 	}
 	
+	public static <T extends Parcelable> ArrayList<T> getArrayList(Bundle bundle, String key) {
+        Object o = bundle.get(key);
+        try {
+        	return (ArrayList<T>) o;
+        } catch (ClassCastException e) {
+        	try {
+        		return new ArrayList<T>(Arrays.asList((T[])o));
+        	} catch (ClassCastException e2) {
+        		Log.w(TAG, "Unable to succesfully parse ArrayList from '" + key + "'");
+                return null;
+			}
+        }
+	}
 	/**
 	 * Convenience function for returning an empty string array if null is returned
 	 * @param array

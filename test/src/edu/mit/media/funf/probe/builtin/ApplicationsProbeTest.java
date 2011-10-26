@@ -21,8 +21,8 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
+import edu.mit.media.funf.probe.ProbeTestCase;
 import android.os.Bundle;
-import android.util.Log;
 
 public class ApplicationsProbeTest extends ProbeTestCase<ApplicationsProbe> {
 
@@ -33,7 +33,7 @@ public class ApplicationsProbeTest extends ProbeTestCase<ApplicationsProbe> {
 	public void testProbe() {
 		Bundle params = new Bundle();
 		startProbe(params);
-		Bundle data = getData(20);
+		Bundle data = getData(1000);
 		assertNotNull(data.get("INSTALLED_APPLICATIONS"));
 		assertNotNull(data.get("UNINSTALLED_APPLICATIONS"));
 	}

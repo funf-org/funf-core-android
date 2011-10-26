@@ -29,7 +29,8 @@ import android.os.Parcelable;
 import android.provider.ContactsContract.Data;
 import android.util.Log;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
+import edu.mit.media.funf.probe.ProbeTestCase;
+import edu.mit.media.funf.probe.Probe.Parameter;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
 public class ContactProbeTest extends ProbeTestCase<ContactProbe> {

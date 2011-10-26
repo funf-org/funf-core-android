@@ -21,6 +21,7 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
+import edu.mit.media.funf.probe.ProbeTestCase;
 import android.os.Bundle;
 
 public class TelephonyProbeTest extends ProbeTestCase<TelephonyProbe> {

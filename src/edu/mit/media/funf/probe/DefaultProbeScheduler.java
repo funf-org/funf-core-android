@@ -46,7 +46,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 	 */
 	@Override
 	public boolean shouldBeEnabled(Probe probe, Collection<Intent> requests) {
-		return !requests.isEmpty(); // Has a requester
+		return requests != null && !requests.isEmpty(); // Has a requester
 	}
 
 	/* (non-Javadoc)
@@ -138,7 +138,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		String paramName = parameter.getName();
 		long mergedValue = returnLargest ? Long.MIN_VALUE : Long.MAX_VALUE;
 		for(Intent request : requests) {
-			ArrayList<Bundle> dataRequests = request.getParcelableArrayListExtra(Probe.REQUESTS_KEY);
+			ArrayList<Bundle> dataRequests = Utils.getArrayList(request.getExtras(), Probe.REQUESTS_KEY);
 			for (Bundle dataRequest : dataRequests) {
 				long value = Utils.getLong(dataRequest, paramName, defaultValue);
 				if ((returnLargest && value > mergedValue) || (!returnLargest && value < mergedValue)) {

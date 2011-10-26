@@ -23,7 +23,8 @@ package edu.mit.media.funf.probe.builtin;
 
 import android.location.Location;
 import android.os.Bundle;
-import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
+import edu.mit.media.funf.probe.ProbeTestCase;
+import edu.mit.media.funf.probe.Probe.Parameter;
 
 public class LocationProbeTest extends ProbeTestCase<LocationProbe> {
 
@@ -54,19 +55,5 @@ public class LocationProbeTest extends ProbeTestCase<LocationProbe> {
 		System.out.println("Accuracy: " + String.valueOf(location.getAccuracy()));
 	}
 	
-	public void testUsingBroadcasts() throws InterruptedException {
-		Bundle params = new Bundle();
-		params.putLong(Parameter.Builtin.DURATION.name, 30L);
-		//params.putLong(Probe.Parameter.Builtin.PERIOD.name, 10L);
-		// TODO: come back to configuration parameters
-		//params.putLong(LocationProbe.PARAM_MAX_WAIT_TIME, 10);
-		//params.putLong(LocationProbe.PARAM_DESIRED_ACCURACY, 100);
-		sendDataRequestBroadcast(params);
-		
-		Bundle data = getData(30 + FUDGE_FACTOR);
-		Location location = (Location)data.get("LOCATION");
-		assertNotNull(location);
-		System.out.println("Accuracy: " + String.valueOf(location.getAccuracy()));
-	}
 	
 }

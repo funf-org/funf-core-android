@@ -22,7 +22,8 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.os.Bundle;
-import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
+import edu.mit.media.funf.probe.ProbeTestCase;
+import edu.mit.media.funf.probe.Probe.Parameter;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BrowserSearchesKeys;
 

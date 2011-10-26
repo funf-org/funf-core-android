@@ -21,7 +21,6 @@
  */
 package edu.mit.media.funf.probe;
 
-import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import static edu.mit.media.funf.Utils.nonNullStrings;
 
 import java.util.ArrayList;
@@ -94,7 +93,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	public final void onCreate() {
 		Log.v(TAG, "CREATED");
 		super.onCreate();
-        historyPrefs = async(getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE));
+        historyPrefs = getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE);
 		enabled = false;
 		running = false;
 		pendingRequests = new ConcurrentLinkedQueue<Intent>();
@@ -110,15 +109,19 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	}
 	
 	
-    protected void onHandleIntent(Intent intent) {String action = intent.getAction();
-		if (ACTION_INTERNAL_RUN.equals(action) || ACTION_INTERNAL_STOP.equals(action)) {
+    protected void onHandleIntent(Intent intent) {
+    	String action = intent.getAction();
+    	if (intent.getComponent().getClassName().equals(Probe.class.getName())) { // Internally queued, not available outside of probe class
+    		intent.setClassName(this, "");
+    		_callback_registered(intent);
+    	} else if (ACTION_INTERNAL_RUN.equals(action) || ACTION_INTERNAL_STOP.equals(action) || ACTION_INTERNAL_DISABLE.equals(action)) {
 			if (runIntent == null) {
 				runIntent = intent;
 			}
 			updateRequests();
 			ProbeScheduler scheduler = getScheduler();
 			ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
-			if (isAvailableOnDevice() && scheduler.shouldBeEnabled(this, requests)) {
+			if (isAvailableOnDevice() && !ACTION_INTERNAL_DISABLE.equals(action) && scheduler.shouldBeEnabled(this, requests)) {
 				if(ACTION_INTERNAL_RUN.equals(action)) {
 					_run();
 				} else {
@@ -187,7 +190,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 					existingCallbacksToRequests.containsKey(callback);
 					int existingRequestIndex = requests.indexOf(existingCallbacksToRequests.get(callback));
 					if (existingRequestIndex >= 0) {
-						ArrayList<Bundle> dataRequests = request.getParcelableArrayListExtra(REQUESTS_KEY);
+						ArrayList<Bundle> dataRequests = Utils.getArrayList(request.getExtras(), REQUESTS_KEY);
 						if (dataRequests == null || dataRequests.isEmpty()) {
 							requests.remove(existingRequestIndex);
 						} else {
@@ -253,7 +256,9 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 */
 	public void reset() {
 		setHistory(null, null, null, null);
-		runIntent.removeExtra(INTERNAL_REQUESTS_KEY);
+		if (runIntent != null) {
+			runIntent.removeExtra(INTERNAL_REQUESTS_KEY);
+		}
 		Intent internalRunIntent = new Intent(ACTION_INTERNAL_RUN, null, this, getClass());
 		PendingIntent selfLaunchingIntent = PendingIntent.getService(this, 0, internalRunIntent, PendingIntent.FLAG_NO_CREATE);
 		if (selfLaunchingIntent != null) {
@@ -509,22 +514,36 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		valuesIntent.putExtra(PROBE, getClass().getName());
 		valuesIntent.putExtra(TIMESTAMP, epochTimestamp);
 		if (callback == null) {
-			// Send to all requesters
-			ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
-			for (Intent request : requests) {
-				callback = request.getParcelableExtra(CALLBACK_KEY);
-				try {
-					callback.send(this, 0, valuesIntent);
-				} catch (CanceledException e) {
-					deadRequests.add(request);
-				}
-			}
-			updateRequests();
+			// Run on message queue to avoid concurrent modification of requests
+			valuesIntent.setClass(this, Probe.class);
+			queueIntent(valuesIntent); 
 		} else {
 			try {
 				callback.send(this, 0, valuesIntent);
 			} catch (CanceledException e) {
 			}
+		}
+	}
+	
+	/**
+	 * Send some values to each requesting pending intent
+	 * @param valuesIntent
+	 */
+	protected void _callback_registered(Intent valuesIntent) {
+		// Send to all requesters
+		if (runIntent != null) {
+			ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+			if (requests != null && !requests.isEmpty()) {
+				for (Intent request : requests) {
+					PendingIntent callback = request.getParcelableExtra(CALLBACK_KEY);
+					try {
+						callback.send(this, 0, valuesIntent);
+					} catch (CanceledException e) {
+						deadRequests.add(request);
+					}
+				}
+			}
+			updateRequests();
 		}
 	}
 	

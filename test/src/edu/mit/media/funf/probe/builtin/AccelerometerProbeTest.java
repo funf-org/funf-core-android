@@ -21,13 +21,29 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
+import android.app.PendingIntent;
+import android.app.PendingIntent.CanceledException;
+import android.content.Intent;
 import android.os.Bundle;
-import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
+import edu.mit.media.funf.probe.Probe;
+import edu.mit.media.funf.probe.ProbeTestCase;
+import edu.mit.media.funf.probe.Probe.Parameter;
 
 public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerSensorProbe> {
 
 	public AccelerometerProbeTest() {
 		super(AccelerometerSensorProbe.class);
+	}
+	
+	public void testEmptyBroadcast() throws CanceledException {
+		Intent empty = new Intent();
+		empty.putExtra("TEST", "Test");
+		getContext().sendBroadcast(empty);
+		PendingIntent emptyPendingIntent = PendingIntent.getBroadcast(getContext(), 0, empty, PendingIntent.FLAG_CANCEL_CURRENT);
+		emptyPendingIntent.send();
+		
+		emptyPendingIntent.send(getContext(), 0, new Intent(Probe.ACTION_DATA));
+		getData(3);
 	}
 	
 	
@@ -64,13 +80,5 @@ public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerSensorPro
 		stopProbe();
 	}
 	
-	public void testBroadcast() throws InterruptedException {
-		Bundle params = new Bundle();
-		params.putLong(Parameter.Builtin.DURATION.name, 3L);
-		params.putLong(Parameter.Builtin.PERIOD.name, 3L);
-		sendDataRequestBroadcast(params);
-		Bundle data = getData(15);
-		assertNotNull(data);
-	}
 
 }

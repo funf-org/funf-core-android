@@ -80,7 +80,7 @@ public abstract class SensorProbe extends Probe {
 
 	@Override
 	public boolean isAvailableOnDevice() {
-		return getSensorManager().getDefaultSensor(getSensorType()) == null;
+		return getSensorManager().getDefaultSensor(getSensorType()) != null;
 	}
 
 

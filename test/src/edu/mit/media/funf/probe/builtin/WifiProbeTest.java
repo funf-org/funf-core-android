@@ -26,7 +26,8 @@ import java.util.ArrayList;
 import android.net.wifi.ScanResult;
 import android.os.Bundle;
 import android.os.Parcelable;
-import edu.mit.media.funf.OppProbe;
+import edu.mit.media.funf.opp.OppProbe;
+import edu.mit.media.funf.probe.ProbeTestCase;
 
 public class WifiProbeTest extends ProbeTestCase<WifiProbe> {
 
