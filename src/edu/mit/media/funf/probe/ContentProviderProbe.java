@@ -31,6 +31,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
 import android.os.Bundle;
+import android.provider.MediaStore.Images;
 import android.util.Log;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.CursorCell.AnyCell;
@@ -104,7 +105,7 @@ public abstract class ContentProviderProbe extends Probe {
 		disable();
 	}
 
-	private static final long THROTTLE_SLEEP_MILLIS = 50;
+	private static final long THROTTLE_SLEEP_MILLIS = 10;
 	private void throttle() {
 		try {
 			Thread.sleep(THROTTLE_SLEEP_MILLIS);
@@ -126,21 +127,28 @@ public abstract class ContentProviderProbe extends Probe {
 			} else {
 				ArrayList<Bundle> results = new ArrayList<Bundle>();
 				
+				long timestamp = 0L;
 				for (Bundle item : mostRecentScan) {
 					if (item != null) {
+						if (timestamp == 0L) {
+							timestamp = getTimestamp(item); // use first item for timestamp
+						}
 						results.add(item);
 						throttle();
 					}
 					if (results.size() >= 100) {
 						Bundle data = new Bundle();
 						data.putParcelableArrayList(getDataName(), results);
-						sendProbeData(getTimestamp(results), data);
+						sendProbeData(timestamp, data);
 						results = new ArrayList<Bundle>();
 					}
 				}
 				Bundle data = new Bundle();
 				data.putParcelableArrayList(getDataName(), results);
-				sendProbeData(getTimestamp(results), data);
+				if (timestamp == 0L) {
+					timestamp = Utils.getTimestamp(); // use current time if no results
+				}
+				sendProbeData(timestamp, data);
 			}
 		}
 	}

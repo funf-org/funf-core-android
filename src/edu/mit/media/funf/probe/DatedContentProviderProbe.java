@@ -50,7 +50,7 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 				getContentProviderUri(),
 				projection, // TODO: different platforms have different fields supported for content providers, need to resolve this
                 dateColumn + " > ?", 
-                new String[] {String.valueOf(getDateColumnTimeUnit().convert(getPreviousDataSentTime(), TimeUnit.SECONDS))}, 
+                new String[] {String.valueOf(getDateColumnTimeUnit().convert(getPreviousDataSentTime() + 1, TimeUnit.SECONDS))}, // Add one because of unit truncation
                 dateColumn + " DESC");
 	}
 	
