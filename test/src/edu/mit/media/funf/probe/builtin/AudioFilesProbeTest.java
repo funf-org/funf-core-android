@@ -25,6 +25,7 @@ import java.util.ArrayList;
 
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Log;
 import edu.mit.media.funf.probe.ProbeTestCase;
 import edu.mit.media.funf.probe.Probe.Parameter;
 
@@ -34,7 +35,7 @@ public class AudioFilesProbeTest extends ProbeTestCase<AudioFilesProbe> {
 		super(AudioFilesProbe.class);
 	}
 	
-	public void testData() {
+	public void testData() throws InterruptedException {
 		Bundle params = new Bundle();
 		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
@@ -42,12 +43,14 @@ public class AudioFilesProbeTest extends ProbeTestCase<AudioFilesProbe> {
 		ArrayList<Parcelable> audioFiles = data.getParcelableArrayList(AudioFilesProbe.AUDIO_FILES);
 		assertNotNull(audioFiles);
 		assertTrue(audioFiles.size() > 0);
-		
+		Log.i(TAG, "Audio files: " + audioFiles.size());
+
 		// Running again should return an empty result
 		startProbe(params);
 		data = getData(10);
 		audioFiles = data.getParcelableArrayList(AudioFilesProbe.AUDIO_FILES);
 		assertNotNull(audioFiles);
+		Log.i(TAG, "Audio files: " + audioFiles.size());
 		assertTrue(audioFiles.isEmpty());
 	}
 

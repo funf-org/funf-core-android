@@ -1,5 +1,7 @@
 package edu.mit.media.funf.probe;
 
+import java.util.concurrent.TimeUnit;
+
 import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
 import android.content.Intent;
@@ -40,5 +42,25 @@ public class ProbeTest extends AndroidTestCase {
 		}
 		
 		Thread.sleep(5000L);
+	}
+	
+	
+	public void testStartServiceIntentOrder() {
+		Intent intent = new Intent(getContext(), ExampleService.class);
+		for (int i=0; i<50; i++) {
+			intent.putExtra("ORDER", i);
+			getContext().startService(intent);
+		}
+		try {
+			Thread.sleep(5000L);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void testTimeUnit() {
+		assertEquals(1311937252000L, TimeUnit.SECONDS.convert(1311937252000L, TimeUnit.SECONDS));
+		assertEquals(1311937252, TimeUnit.SECONDS.convert(1311937252000L, TimeUnit.MILLISECONDS));
 	}
 }

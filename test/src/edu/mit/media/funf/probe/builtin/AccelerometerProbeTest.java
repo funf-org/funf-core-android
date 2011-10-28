@@ -25,6 +25,7 @@ import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.ProbeTestCase;
 import edu.mit.media.funf.probe.Probe.Parameter;
@@ -43,7 +44,7 @@ public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerSensorPro
 		emptyPendingIntent.send();
 		
 		emptyPendingIntent.send(getContext(), 0, new Intent(Probe.ACTION_DATA));
-		getData(3);
+
 	}
 	
 	

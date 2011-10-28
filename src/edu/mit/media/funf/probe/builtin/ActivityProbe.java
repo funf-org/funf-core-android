@@ -37,7 +37,7 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 	private static final long INTERVAL = 1L;
 	private static final String DELEGATE_PROBE_NAME = AccelerometerSensorProbe.class.getName();
 	
-	private long duration = 0L;
+	//private long duration = 0L;
 	private Handler handler;
 
 	private long startTime;
@@ -83,6 +83,9 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 			if (activityCounter == null) {
 				activityCounter = new ActivityCounter();
 			}
+			if (!activityCounter.isRunning()) { // Ensure  probe stays alive
+				run();
+			}
 			activityCounter.handleAccelerometerData(intent.getExtras());
 		}
 	}
@@ -94,7 +97,11 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 		private float sum;
 		private int count;
 		
-		private Runnable sendRunnable;
+		private Runnable disableRunnable;
+		
+		public boolean isRunning() {
+			return disableRunnable != null;
+		}
 		
 		private void reset(long timestamp) {
 			Log.d(TAG, "RESET:" + timestamp);
@@ -104,20 +111,22 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 			intervalCount = 1;
 			lowActivityIntervalCount = 0;
 			highActivityIntervalCount = 0;
-			
-			// start timer to send results
-			if (sendRunnable == null) {
+		}
+		
+		private void resetDisableTimer() {
+			if (disableRunnable == null) {
 				Log.d(TAG, "CREATING SEND DATA RUNNABLE");
-				sendRunnable = new Runnable() {
+				disableRunnable = new Runnable() {
 					public void run() {
 						Log.d(TAG, "SENDING DATA");
 						sendProbeData();
-						sendRunnable = null;
-						stop();
+						disableRunnable = null;
+						disable();
 					}
 				};
-				handler.postDelayed(sendRunnable, Utils.secondsToMillis(duration));
 			}
+			handler.removeCallbacks(disableRunnable);
+			handler.postDelayed(disableRunnable, Utils.secondsToMillis(2 * INTERVAL));
 		}
 		
 		private void intervalReset() {
@@ -152,8 +161,8 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 			long timestamp = data.getLong(TIMESTAMP, 0L);
 			Log.d(TAG, "Starttime: " + startTime + " IntervalStartTime: " + intervalStartTime);
 			Log.d(TAG, "RECEIVED:" + timestamp);
-			if (sendRunnable == null
-					|| timestamp > startTime + duration
+			if (!this.isRunning()
+					//|| timestamp > startTime + duration // we don't know how to determine duration anymore, since onRun is never called
 					|| timestamp >= intervalStartTime + 2 * INTERVAL) {
 				Log.d(TAG, "RESET:" + timestamp);
 				reset(timestamp);
@@ -161,6 +170,7 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 				Log.d(TAG, "Interval Reset:" + timestamp);
 				intervalReset();
 			}
+			resetDisableTimer();
 			
 			long[] eventTimestamp = data.getLongArray("EVENT_TIMESTAMP");
 			//int[] accuracy = data.getIntArray("ACCURACY");
@@ -203,7 +213,7 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 		data.putInt(HIGH_ACTIVITY_INTERVALS, highActivityIntervalCount);
 		Log.d(TAG, "(" + lowActivityIntervalCount + " Low Active / " + intervalCount + "Total)");
 		Log.d(TAG, "(" + highActivityIntervalCount + " High Active / " + intervalCount + "Total)");
-		sendProbeData(Utils.millisToSeconds(startTime), data); // starTime converted last minute for precision
+		sendProbeData(startTime, data); // Timestamp already in seconds
 	}
 	
 	@Override
@@ -211,6 +221,15 @@ public class ActivityProbe extends Probe implements ActivityKeys {
 		return new DelegateProbeScheduler(AccelerometerSensorProbe.class);
 	}
 
+	@Override
+	public boolean isEnabled() {
+		return activityCounter != null && activityCounter.isRunning();
+	}
+
+	@Override
+	public boolean isRunning() {
+		return activityCounter != null && activityCounter.isRunning();
+	}
 	
 
 }

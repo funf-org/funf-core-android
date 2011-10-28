@@ -37,7 +37,7 @@ public class BrowserSearchesProbeTest extends ProbeTestCase<BrowserSearchesProbe
 		Bundle params = new Bundle();
 		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
-		Bundle data = getData(5);
+		Bundle data = getData(10);
 		assertNotNull(data.get(BaseProbeKeys.TIMESTAMP));
 		assertNotNull(data.get(BrowserSearchesKeys.SEARCHES));
 	}

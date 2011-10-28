@@ -63,7 +63,7 @@ public abstract class SynchronousProbe extends Probe {
 		mostRecentTimestamp = getTimestamp();
 		mostRecentData = getData();
 		sendProbeData();
-		//stopSelf();
+		disable();
 	}
 
 	@Override

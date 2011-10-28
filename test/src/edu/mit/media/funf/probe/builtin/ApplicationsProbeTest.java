@@ -21,6 +21,7 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
+import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.ProbeTestCase;
 import android.os.Bundle;
 
@@ -33,8 +34,18 @@ public class ApplicationsProbeTest extends ProbeTestCase<ApplicationsProbe> {
 	public void testProbe() {
 		Bundle params = new Bundle();
 		startProbe(params);
-		Bundle data = getData(1000);
+		Bundle data = getData(1);
 		assertNotNull(data.get("INSTALLED_APPLICATIONS"));
 		assertNotNull(data.get("UNINSTALLED_APPLICATIONS"));
+	}
+	
+	public void testRunOnceProbe() {
+		Bundle params = new Bundle();
+		params.putLong(Probe.Parameter.Builtin.PERIOD.name, 0L);
+		startProbe(params);
+		Bundle data = getData(1);
+		assertNotNull(data.get("INSTALLED_APPLICATIONS"));
+		assertNotNull(data.get("UNINSTALLED_APPLICATIONS"));
+		shouldNotReturnData(5);
 	}
 }

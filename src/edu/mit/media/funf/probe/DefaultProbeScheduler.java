@@ -29,9 +29,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.Parameter;
-import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 
 /**
  * Schedules probes based on PERIOD, DURATION, START, END,and PASSIVE parameters.
@@ -74,7 +74,9 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 			// Register stop alarm
 			// 0L duration if duration param is not supported for probe.  Stop queued up immediately.
 			long duration = Utils.secondsToMillis(params.getLong(Parameter.Builtin.DURATION.name, 0L));
-			scheduleAlarm(probe, Probe.ACTION_INTERNAL_STOP, currentTime + duration);
+			if (duration > 0L) {
+				scheduleAlarm(probe, Probe.ACTION_STOP, currentTime + duration);
+			}
 			return params;
 		} else {
 			return null;
@@ -88,7 +90,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 	@Override
 	public Long scheduleNextRun(Probe probe, Collection<Intent> requests) {
 		Parameter periodParam = getAvailableParameter(probe, Parameter.Builtin.PERIOD);
-		if (periodParam == null) {
+		if (requests == null || periodParam == null) {
 			return null;
 		}
 		Bundle params = mergeParameters(probe, requests);
@@ -98,7 +100,18 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		
 		long period = Utils.secondsToMillis(params.getLong(Parameter.Builtin.PERIOD.name, 0L));
 		long mostRecentTimeRun = Utils.secondsToMillis(probe.getPreviousRunTime());
-		scheduleAlarm(probe, Probe.ACTION_INTERNAL_RUN, mostRecentTimeRun + period);
+		if (period != 0L) {
+			ArrayList<Bundle> dataRequests = new ArrayList<Bundle>();
+			for (Intent request : requests) {
+				ArrayList<Bundle> b = Utils.getArrayList(request.getExtras(), Probe.REQUESTS_KEY);
+				dataRequests.addAll(b);
+			}
+			//Log.i(TAG, "Requests: " + requests);
+			//Log.i(TAG, "Data requests: " + dataRequests.toString());
+			//Log.i(TAG, "Final params: " + params.toString());
+			//Log.i(TAG, "Running from DefaultProbeScheduler, mostRecentRunTime: " + mostRecentTimeRun + " + period: " + period);
+			scheduleAlarm(probe, Probe.ACTION_INTERNAL_RUN, mostRecentTimeRun + period);
+		}
 		return Utils.millisToSeconds(mostRecentTimeRun + period);
 	}
 	
@@ -122,6 +135,18 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 	 * @return
 	 */
 	protected Bundle mergeParameters(Probe probe, Collection<Intent> requests) {
+		boolean hasRequests = false;
+		for (Intent request : requests) {
+			ArrayList<Bundle> dataRequests = Utils.getArrayList(request.getExtras(), Probe.REQUESTS_KEY);
+			if (dataRequests != null && !dataRequests.isEmpty()) {
+				hasRequests = true;
+				break;
+			}
+		}
+		if (!hasRequests) {
+			return null;
+		}
+		
 		Bundle params = new Bundle();
 		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.PERIOD), requests, false);
 		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.DURATION), requests, true);

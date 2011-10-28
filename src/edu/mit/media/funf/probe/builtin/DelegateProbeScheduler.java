@@ -6,6 +6,7 @@ import java.util.Collection;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.DefaultProbeScheduler;
 import edu.mit.media.funf.probe.Probe;
@@ -46,6 +47,7 @@ public class DelegateProbeScheduler implements ProbeScheduler {
 			}
 			dataRequests.addAll(individualDataRequestsWithDefaults);
 		}
+		Log.d("TEST_TEST_TEST", "Requests from " + probe.getClass().getName() + " to " + delegateProbeClass.getName() + ": " + dataRequests);
 		delegateRequest.putExtra(Probe.REQUESTS_KEY, dataRequests);
 		probe.startService(delegateRequest);
 		

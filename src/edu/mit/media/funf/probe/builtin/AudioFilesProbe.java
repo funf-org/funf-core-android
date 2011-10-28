@@ -23,6 +23,7 @@ package edu.mit.media.funf.probe.builtin;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import android.net.Uri;
 import android.provider.MediaStore.Audio;
@@ -81,6 +82,11 @@ public class AudioFilesProbe extends DatedContentProviderProbe implements AudioF
 		projectionMap.put(Audio.Media.YEAR, intCell());
 		
 		return projectionMap;
+	}
+	
+	@Override
+	protected TimeUnit getDateColumnTimeUnit() {
+		return TimeUnit.SECONDS;
 	}
 
 	@Override

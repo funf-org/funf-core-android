@@ -76,6 +76,7 @@ public abstract class ContentProviderProbe extends Probe {
 
 	@Override
 	protected void onRun(Bundle params) {
+		Log.d(TAG, "onRun of ContentProviderProbe");
 		if (onRunThread == null) {
 			onRunThread = new Thread(new Runnable() {
 				@Override
@@ -98,8 +99,9 @@ public abstract class ContentProviderProbe extends Probe {
 			} catch (InterruptedException e) {
 				Log.e(TAG, "Didn't finish sending before probe was stopped");
 			}
+			onRunThread = null;
 		}
-		stopSelf();
+		disable();
 	}
 
 	private static final long THROTTLE_SLEEP_MILLIS = 50;

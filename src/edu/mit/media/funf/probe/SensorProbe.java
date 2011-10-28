@@ -34,6 +34,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import edu.mit.media.funf.Utils;
 
@@ -46,6 +47,16 @@ public abstract class SensorProbe extends Probe {
 	private BlockingQueue<SensorEventCopy> recentEvents;
 	private Timer senderTimer;
 
+	private Handler handler;
+	private Runnable sendDataRunnable = new Runnable() {
+		@Override
+		public void run() {
+			sendProbeData();
+			if (handler != null) {
+				handler.postDelayed(this, 1000L);
+			}
+		}
+	};
 
 	protected SensorManager getSensorManager() {
 		if (sensorManager == null) {
@@ -86,6 +97,7 @@ public abstract class SensorProbe extends Probe {
 
 	@Override
 	protected void onEnable() {
+		handler = new Handler();
 		sensor = getSensorManager().getDefaultSensor(getSensorType());
 		recentEvents = new LinkedBlockingQueue<SensorEventCopy>();
 		sensorListener = new SensorEventListener() {
@@ -108,7 +120,6 @@ public abstract class SensorProbe extends Probe {
 		// Nothing to do
 	}
 
-
 	@Override
 	public void onRun(Bundle params) {
 		Log.i(TAG, "SensorKeys listener:" + sensorListener + " SensorKeys:" + sensor + " SensorManager:" + getSensorManager());
@@ -116,13 +127,15 @@ public abstract class SensorProbe extends Probe {
 		Log.i(TAG, "RecentEvents before clear:" + recentEvents.size());
 		recentEvents.clear();
 		Log.i(TAG, "Creating thread");
-		senderTimer = new Timer();
-		senderTimer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				sendProbeData();
-			}
-		}, 1000L, 1000L);
+		
+		handler.postDelayed(sendDataRunnable, 1000L);
+		//senderTimer = new Timer();
+		//senderTimer.schedule(new TimerTask() {
+		//	@Override
+		//	public void run() {
+		//		sendProbeData();
+		//	}
+		//}, 1000L, 1000L);
 	}
 
 	@Override
@@ -131,7 +144,8 @@ public abstract class SensorProbe extends Probe {
 			return;
 		}
 		getSensorManager().unregisterListener(sensorListener);
-		senderTimer.cancel();
+		handler.removeCallbacks(sendDataRunnable);
+		//senderTimer.cancel();
 		if (!recentEvents.isEmpty()) {
 			sendProbeData();
 		}

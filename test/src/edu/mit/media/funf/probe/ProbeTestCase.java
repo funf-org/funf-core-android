@@ -41,8 +41,6 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 
 	public static final String TAG = "FunfTest";
 	
-	private static final String TEST_ID = "test.id";
-	
 	private final Class<T> probeClass;
 	private BlockingQueue<Bundle> dataBundles;
 	private DataReceiver dataReceiver;
@@ -54,13 +52,16 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 	}
 
 	private void clean() throws InterruptedException {
+		// Cancel callback
+		PendingIntent callback = PendingIntent.getBroadcast(getContext(), 0, new Intent(), PendingIntent.FLAG_CANCEL_CURRENT);
 		// Remove all current state
 		List<ProbeCommandServiceConnection> connections = new ArrayList<ProbeCommandServiceConnection>();
-		for (Class<? extends Probe> probeClass : ProbeUtils.getAvailableProbeClasses(getContext())) {
+		for (Class<? extends Probe> probeClass : getProbesAffected()) {
 			ProbeCommandServiceConnection probeConn = new ProbeCommandServiceConnection(getContext(), probeClass) {
 				@Override
 				public void runCommand() {
 					getProbe().reset();
+					getProbe().stopSelf();
 				}
 			};
 			connections.add(probeConn);
@@ -68,6 +69,12 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		for(ProbeCommandServiceConnection conn : connections) {
 			conn.join();
 		}
+	}
+	
+	protected List<Class<? extends Probe>> getProbesAffected() {
+		List<Class<? extends Probe>> list = new ArrayList<Class<? extends Probe>>();
+		list.add(probeClass);
+		return list;
 	}
 	
 	@Override
@@ -90,6 +97,20 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		getContext().unregisterReceiver(dataReceiver);
 		clean();
 		super.tearDown();
+	}
+	
+	protected void shouldNotReturnData(int timeoutSeconds) {
+		Bundle data = null;
+		try {
+			data = dataBundles.poll(timeoutSeconds, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {}
+		if (data != null) {
+			fail("Returned data within max wait time.");
+		}
+	}
+	
+	protected void clearData() {
+		dataBundles.clear();
 	}
 	
 	protected Bundle getData(int timeoutSeconds) {
@@ -122,7 +143,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		// Maybe creating service for saving data to a static variable
 		Intent i = new Intent(getContext(), probeClass);
 		i.setAction(Probe.ACTION_REQUEST);
-		PendingIntent callback = PendingIntent.getBroadcast(getContext(), 0, new Intent(), PendingIntent.FLAG_CANCEL_CURRENT);
+		PendingIntent callback = PendingIntent.getBroadcast(getContext(), 0, new Intent(), PendingIntent.FLAG_UPDATE_CURRENT);
 		i.putExtra(Probe.CALLBACK_KEY, callback);
 		i.putExtra(Probe.REQUESTS_KEY, params);
 		getContext().startService(i);
@@ -130,7 +151,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 	
 	protected void stopProbe() {
 		Intent i = new Intent(getContext(), probeClass);
-		i.setAction(Probe.ACTION_INTERNAL_STOP);
+		i.setAction(Probe.ACTION_STOP);
 		getContext().startService(i);
 	}
 	
@@ -144,7 +165,8 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			Log.i(TAG, "Recieved: " + intent.getAction());
-			if (Probe.ACTION_DATA.equals(intent.getAction())) {
+			if (Probe.ACTION_DATA.equals(intent.getAction()) 
+					&& probeClass.getName().equals(intent.getStringExtra(Probe.PROBE))) {
 				Log.i(TAG, "Adding data:" + intent.getExtras());
 				dataBundles.offer(intent.getExtras());
 			}

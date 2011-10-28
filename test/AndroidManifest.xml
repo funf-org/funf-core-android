@@ -32,8 +32,6 @@
          Also for discovering probes to clean. -->
     <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
-        <service android:name="edu.mit.media.funf.probe.builtin.BrowserBookmarksProbe"></service>
-        <!-- 
         <service android:name="edu.mit.media.funf.probe.builtin.ActivityProbe"></service>
         <service android:name="edu.mit.media.funf.probe.builtin.AndroidInfoProbe"></service>
         <service android:name="edu.mit.media.funf.probe.builtin.ApplicationsProbe"></service>
@@ -67,7 +65,7 @@
         <service android:name="edu.mit.media.funf.probe.builtin.ProximitySensorProbe"></service>
         <service android:name="edu.mit.media.funf.probe.builtin.RotationVectorSensorProbe"></service>
         <service android:name="edu.mit.media.funf.probe.builtin.TemperatureSensorProbe"></service>
-         -->
+        
         <service android:name="edu.mit.media.funf.tests.ExampleService"></service>
     </application>
     

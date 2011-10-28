@@ -34,14 +34,17 @@ public class ImagesProbeTest extends ProbeTestCase<ImagesProbe> {
 		super(ImagesProbe.class);
 	}
 	
-	public void testData() {
+	public void testData() throws InterruptedException {
 		Bundle params = new Bundle();
 		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
-		Bundle data = getData(10);
+		Bundle data = getData(20);
 		ArrayList<Parcelable> images = data.getParcelableArrayList(ImagesProbe.IMAGES);
 		assertNotNull(images);
 		assertTrue(images.size() > 0);
+		
+		Thread.sleep(1000L);
+		clearData();
 		
 		// Running again should return an empty result
 		startProbe(params);

@@ -21,8 +21,11 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
+import java.util.List;
+
 import android.os.Bundle;
 import android.util.Log;
+import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.ProbeTestCase;
 import edu.mit.media.funf.probe.Probe.Parameter;
 
@@ -31,6 +34,17 @@ public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 	public ActivityProbeTest() {
 		super(ActivityProbe.class);
 	}
+	
+	
+
+	@Override
+	protected List<Class<? extends Probe>> getProbesAffected() {
+		List<Class<? extends Probe>> list = super.getProbesAffected();
+		list.add(AccelerometerSensorProbe.class);
+		return list;
+	}
+
+
 
 	public void testData() throws InterruptedException {
 		Bundle params = new Bundle();
@@ -38,9 +52,11 @@ public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
 		Bundle data = getData(30);
-		assertTrue(data.containsKey("TOTAL_INTERVALS"));
-		assertTrue(data.containsKey("ACTIVE_INTERVALS"));
-		Log.i(TAG,"I: " + data.getInt("TOTAL_INTERVALS") + " A:" + data.getInt("ACTIVE_INTERVALS"));
+		assertTrue(data.containsKey(ActivityProbe.TOTAL_INTERVALS));
+		assertTrue(data.containsKey(ActivityProbe.LOW_ACTIVITY_INTERVALS));
+		assertTrue(data.containsKey(ActivityProbe.HIGH_ACTIVITY_INTERVALS));
+		Log.i(TAG,"T: " + data.getInt(ActivityProbe.TOTAL_INTERVALS) + " L:" + data.getInt(ActivityProbe.LOW_ACTIVITY_INTERVALS) + " H:" + data.getInt(ActivityProbe.HIGH_ACTIVITY_INTERVALS));
+		Thread.sleep(4000);
 	}
 	
 	public void testWithAccelerometerBroadcast() throws InterruptedException {
@@ -51,7 +67,8 @@ public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
 		Bundle data = getData(20);
-		assertTrue(data.containsKey("TOTAL_INTERVALS"));
-		assertTrue(data.containsKey("ACTIVE_INTERVALS"));
+		assertTrue(data.containsKey(ActivityProbe.TOTAL_INTERVALS));
+		assertTrue(data.containsKey(ActivityProbe.LOW_ACTIVITY_INTERVALS));
+		assertTrue(data.containsKey(ActivityProbe.HIGH_ACTIVITY_INTERVALS));
 	}
 }

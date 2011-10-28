@@ -14,6 +14,8 @@ import android.util.Log;
 
 public abstract class CustomizedIntentService extends Service {
 	
+	private int startId = 0;
+	private volatile HandlerThread thread;
 	private volatile Looper mServiceLooper;
     private volatile ServiceHandler mServiceHandler;
     private String mName;
@@ -26,10 +28,16 @@ public abstract class CustomizedIntentService extends Service {
         @Override
         public void handleMessage(Message msg) {
         	Log.d(TAG, "Handling msg " + msg.arg1);
-            onHandleIntent((Intent)msg.obj);
-            if (shouldStop()) {
-            	stopSelf(msg.arg1);
-            }
+        	if (msg.obj == null) {
+        		mServiceLooper.quit();
+        	} else {
+        		Log.d(TAG, "Handling message @ " + System.currentTimeMillis() +": " + msg.obj);
+            	mServiceHandler.removeMessages(WAIT_MESSAGE);
+	            onHandleIntent((Intent)msg.obj);
+	            if (shouldStop() && startId == msg.arg1) {
+	            	stopSelf();
+	            }
+        	}
         }
     }
 
@@ -50,26 +58,44 @@ public abstract class CustomizedIntentService extends Service {
     @Override
     public void onCreate() {
     	super.onCreate();
-        HandlerThread thread = new HandlerThread("IntentService[" + mName + "]");
+        thread = new HandlerThread("IntentService[" + mName + "]");
         thread.start();
 
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);
     }
     
+
+    public static final int WAIT_MESSAGE = 1;
+    /**
+     * Used to keep service alive while waiting for external intents.
+     * @param delayMillis
+     */
+    protected void waitForIntent(long delayMillis) {
+    	Log.d(TAG, "Waiting until..." + System.currentTimeMillis() + delayMillis);
+		Message msg = mServiceHandler.obtainMessage();
+		msg.what = WAIT_MESSAGE;
+		mServiceHandler.sendMessageDelayed(msg, delayMillis);
+	}
+    protected void waitForIntent() {
+		waitForIntent(1000L);
+	}
+    
+    public static final int INTERNAL_MESSAGE = 0;
     protected void queueIntent(Intent intent) {
     	Message msg = mServiceHandler.obtainMessage();
-        msg.arg1 = new Random().nextInt();
+    	msg.what = INTERNAL_MESSAGE;
+        this.startId = msg.arg1 = new Random().nextInt();
         msg.obj = intent;
         boolean success = mServiceHandler.sendMessage(msg);
-        Log.d(TAG, "Message: " + intent.getComponent() + " " + intent.getAction());
+        Log.d(TAG, "Message: "+ ((intent == null) ? "<quit>" : (intent.getComponent() + " " + intent.getAction())));
         Log.d(TAG, "Queued message "  + msg.arg1 + "? " + success);
     }
 
     @Override
     public void onStart(Intent intent, int startId) {
         Message msg = mServiceHandler.obtainMessage();
-        msg.arg1 = startId;
+        this.startId = msg.arg1 = startId;
         msg.obj = intent;
         boolean success = mServiceHandler.sendMessage(msg);
         Log.d(TAG, "onStart queued message "  + msg.arg1 + "? " + success);
@@ -85,7 +111,17 @@ public abstract class CustomizedIntentService extends Service {
     @Override
     public void onDestroy() {
     	Log.d(TAG, "Destroying service " + getClass().getName());
-        mServiceLooper.quit();
+    	queueIntent(null); // Send quit message at end of current queue
+
+    	// Wait for queue to finish
+    	try {
+			thread.join(1000);
+		} catch (InterruptedException e) {
+		}
+		if (thread.isAlive()) {
+			Log.d(TAG, "Message thread did not die in time: " + getClass().getName());
+			mServiceLooper.quit();
+		}
     }
 
     @Override

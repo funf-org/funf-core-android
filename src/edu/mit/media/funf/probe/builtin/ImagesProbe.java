@@ -23,6 +23,7 @@ package edu.mit.media.funf.probe.builtin;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import android.net.Uri;
 import android.provider.MediaStore.Images;
@@ -50,6 +51,10 @@ public class ImagesProbe extends DatedContentProviderProbe implements ImagesKeys
 	@Override
 	protected String getDisplayName() {
 		return "Image File Stats Probe";
+	}
+	
+	protected TimeUnit getDateColumnTimeUnit() {
+		return TimeUnit.SECONDS;
 	}
 
 	@Override

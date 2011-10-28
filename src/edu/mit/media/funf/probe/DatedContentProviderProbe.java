@@ -45,12 +45,12 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 			projection = new String[projectionList.size()];
 			projectionList.toArray(projection);
 		}
-		Log.i(TAG, "Previous Date Sent Time: " + getDateColumnTimeUnit().convert(getPreviousDataSentTime(), TimeUnit.MILLISECONDS));
+		Log.i(TAG, "Previous Date Sent Time: " + getDateColumnTimeUnit().convert(getPreviousDataSentTime(), TimeUnit.SECONDS));
 		return getContentResolver().query(
 				getContentProviderUri(),
 				projection, // TODO: different platforms have different fields supported for content providers, need to resolve this
                 dateColumn + " > ?", 
-                new String[] {String.valueOf(getDateColumnTimeUnit().convert(getPreviousDataSentTime(), TimeUnit.MILLISECONDS))}, 
+                new String[] {String.valueOf(getDateColumnTimeUnit().convert(getPreviousDataSentTime(), TimeUnit.SECONDS))}, 
                 dateColumn + " DESC");
 	}
 	
