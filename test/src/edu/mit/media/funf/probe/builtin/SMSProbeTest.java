@@ -25,6 +25,7 @@ import java.util.ArrayList;
 
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Log;
 import edu.mit.media.funf.probe.ProbeTestCase;
 import edu.mit.media.funf.probe.Probe.Parameter;
 
@@ -34,7 +35,7 @@ public class SMSProbeTest extends ProbeTestCase<SMSProbe> {
 		super(SMSProbe.class);
 	}
 	
-	public void testData() {
+	public void testData() throws InterruptedException {
 		Bundle params = new Bundle();
 		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
@@ -43,11 +44,15 @@ public class SMSProbeTest extends ProbeTestCase<SMSProbe> {
 		assertNotNull(messages);
 		assertTrue(messages.size() > 0);
 		
+		Thread.sleep(20000L);
+		clearData();
+		
 		// Running again should return an empty result
 		startProbe(params);
 		data = getData(10);
 		messages = data.getParcelableArrayList(SMSProbe.MESSAGES);
 		assertNotNull(messages);
+		Log.i(TAG, "SMS size: " + messages.size());
 		assertTrue(messages.isEmpty());
 	}
 
