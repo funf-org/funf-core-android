@@ -44,14 +44,14 @@ public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		params.putBoolean(ContactProbe.FULL_PARAM.getName(), true);
 		startProbe(params);
-		Bundle data = getData(10);
+		Bundle data = getData(30);
 		assertNotNull(data.get(BaseProbeKeys.TIMESTAMP));
 		ArrayList<Parcelable> contactData = data.getParcelableArrayList(ContactProbe.CONTACT_DATA);
 		assertNotNull(contactData);
 		int count = 1;
 		while(data != null) {
 			try {
-				data = getData(2);
+				data = getData(5);
 				count ++;
 			} catch (AssertionFailedError e) {
 				assertTrue(contactData.size() > 0);
@@ -72,7 +72,7 @@ public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
 		params.putBoolean(ContactProbe.FULL_PARAM.getName(), true);
 		startProbe(params);
-		Bundle data = getData(10);
+		Bundle data = getData(30);
 		boolean hasAtLeastTwo = false;
 		while (data != null) {
 			// Get the rest of the data
@@ -89,7 +89,9 @@ public class ContactProbeTest extends ProbeTestCase<ContactProbe> {
 		params.putBoolean(ContactProbe.FULL_PARAM.getName(), false);
 		startProbe(params);
 		try {
-			getData(10);  // Unfortunately we have to wait, since full scans take a while to return anything
+			data = getData(30);  // Unfortunately we have to wait, since full scans take a while to return anything
+			ArrayList<Parcelable> contactData = data.getParcelableArrayList(ContactProbe.CONTACT_DATA);
+			Log.i(TAG, "Data: " + (contactData == null ? "<NONE>" : contactData.size()));
 			fail("Should not get any contacts for a non-full scan after a full scan");
 		} catch (AssertionFailedError e) {
 			// Success

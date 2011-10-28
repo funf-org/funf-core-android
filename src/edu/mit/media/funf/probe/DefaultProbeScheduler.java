@@ -22,14 +22,15 @@
 package edu.mit.media.funf.probe;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.Parameter;
 
@@ -147,12 +148,54 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 			return null;
 		}
 		
+		
 		Bundle params = new Bundle();
 		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.PERIOD), requests, false);
 		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.DURATION), requests, true);
 		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.START), requests, false);
 		putMergedParam(params, getAvailableParameter(probe, Parameter.Builtin.END), requests, true);
+		
+		// Other parameters, just pick max
+		// TODO: allow user to specify comparator
+		List<String> knownParameters = Arrays.asList(Parameter.Builtin.PERIOD.name, Parameter.Builtin.DURATION.name, Parameter.Builtin.START.name, Parameter.Builtin.END.name);
+		Parameter[] availableParameters = getParametersNotNull(probe.getAvailableParameters());
+		for (Parameter parameter : availableParameters) {
+			if (!knownParameters.contains(parameter.getName())) {
+				putUnknownMergedParam(params, parameter, requests, true);
+			}
+		}
+		
 		return params;
+	}
+	
+	public static void putUnknownMergedParam(Bundle params, Probe.Parameter parameter, Collection<Intent> requests, boolean returnLargest) {
+		if (parameter == null || requests == null || requests.isEmpty()) {
+			return;
+		}
+		Comparable defaultValue = (Comparable)parameter.getValue();
+		String paramName = parameter.getName();
+		Comparable mergedValue = null;
+		for(Intent request : requests) {
+			ArrayList<Bundle> dataRequests = Utils.getArrayList(request.getExtras(), Probe.REQUESTS_KEY);
+			for (Bundle dataRequest : dataRequests) {
+				Comparable value = (Comparable)dataRequest.get(paramName);
+				if (value == null) {
+					continue;
+				}
+				if (mergedValue == null) {
+					mergedValue = value;
+					continue;
+				}
+				int comparison = value.compareTo(mergedValue);
+				if (!returnLargest) {
+					comparison *= -1;
+				}
+				if (comparison > 0) {
+					value = mergedValue;
+				}
+			}
+		}
+		Utils.putInBundle(params, paramName, mergedValue);
 	}
 	
 	public static void putMergedParam(Bundle params, Probe.Parameter parameter, Collection<Intent> requests, boolean returnLargest) {

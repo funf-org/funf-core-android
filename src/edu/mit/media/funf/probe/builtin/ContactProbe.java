@@ -45,6 +45,7 @@ import android.provider.ContactsContract.CommonDataKinds.Relation;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
 import android.provider.ContactsContract.CommonDataKinds.Website;
+import android.util.Log;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.ContentProviderProbe;
 import edu.mit.media.funf.probe.CursorCell;
@@ -89,7 +90,7 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys {
 	@Override
 	protected void onDisable() {
 		super.onDisable();
-		SharedPreferences.Editor versionPrefs = async(getSharedPreferences(DATA_VERSIONS, MODE_PRIVATE)).edit();
+		SharedPreferences.Editor versionPrefs = getSharedPreferences(DATA_VERSIONS, MODE_PRIVATE).edit();
 		versionPrefs.clear();
 		for (Map.Entry<Integer, Integer> idToVersion : dataIdToVersion.entrySet()) {
 			versionPrefs.putInt(String.valueOf(idToVersion.getKey()), idToVersion.getValue());
@@ -298,12 +299,15 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys {
 	@Override
 	protected void onRun(Bundle params) {
 		isFullScan = params.getBoolean(FULL_PARAM.getName(), (Boolean)FULL_PARAM.getValue());
+
+		Log.i(TAG, "Full scan = " + isFullScan);
 		super.onRun(params);
 	}
 
 	@Override
 	protected Bundle parseDataBundle(Cursor cursor, String[] projection, Map<String, CursorCell<?>> projectionMap) {
 		Bundle contactBundle = super.parseDataBundle(cursor, projection, getContactProjectionMap());
+		
 		ArrayList<Bundle> dataBundles = new ArrayList<Bundle>();
 		long originalContactId = cursor.getLong(cursor.getColumnIndex(Data.CONTACT_ID));
 		long contactId = originalContactId;
