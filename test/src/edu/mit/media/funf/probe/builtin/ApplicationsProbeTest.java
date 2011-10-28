@@ -34,7 +34,7 @@ public class ApplicationsProbeTest extends ProbeTestCase<ApplicationsProbe> {
 	public void testProbe() {
 		Bundle params = new Bundle();
 		startProbe(params);
-		Bundle data = getData(1);
+		Bundle data = getData(2);
 		assertNotNull(data.get("INSTALLED_APPLICATIONS"));
 		assertNotNull(data.get("UNINSTALLED_APPLICATIONS"));
 	}
@@ -43,7 +43,7 @@ public class ApplicationsProbeTest extends ProbeTestCase<ApplicationsProbe> {
 		Bundle params = new Bundle();
 		params.putLong(Probe.Parameter.Builtin.PERIOD.name, 0L);
 		startProbe(params);
-		Bundle data = getData(1);
+		Bundle data = getData(2);
 		assertNotNull(data.get("INSTALLED_APPLICATIONS"));
 		assertNotNull(data.get("UNINSTALLED_APPLICATIONS"));
 		shouldNotReturnData(5);

@@ -496,7 +496,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		if (enabled) {
 			Log.i(TAG, "Disabling probe: " + getClass().getName());
 			if (running) {
-				stop();
+				_stop();
 			}
 			enabled = false;
 			sendProbeStatus(null);

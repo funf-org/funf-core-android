@@ -54,6 +54,7 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 	private void clean() throws InterruptedException {
 		// Cancel callback
 		PendingIntent callback = PendingIntent.getBroadcast(getContext(), 0, new Intent(), PendingIntent.FLAG_CANCEL_CURRENT);
+		clearData();
 		// Remove all current state
 		List<ProbeCommandServiceConnection> connections = new ArrayList<ProbeCommandServiceConnection>();
 		for (Class<? extends Probe> probeClass : getProbesAffected()) {
@@ -110,7 +111,9 @@ public abstract class  ProbeTestCase<T extends Probe> extends ServiceTestCase<T>
 	}
 	
 	protected void clearData() {
-		dataBundles.clear();
+		if (dataBundles != null) {
+			dataBundles.clear();
+		}
 	}
 	
 	protected Bundle getData(int timeoutSeconds) {
