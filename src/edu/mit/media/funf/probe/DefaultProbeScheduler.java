@@ -100,7 +100,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		
 		long period = Utils.secondsToMillis(params.getLong(Parameter.Builtin.PERIOD.name, 0L));
 		long mostRecentTimeRun = Utils.secondsToMillis(probe.getPreviousRunTime());
-		if (period != 0L) {
+		if (probe.isAvailableOnDevice() && period != 0L) {
 			ArrayList<Bundle> dataRequests = new ArrayList<Bundle>();
 			for (Intent request : requests) {
 				ArrayList<Bundle> b = Utils.getArrayList(request.getExtras(), Probe.REQUESTS_KEY);

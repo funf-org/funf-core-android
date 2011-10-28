@@ -141,16 +141,12 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
 			Log.d(TAG, "Requests:" + requests);
 			if (isAvailableOnDevice() && !PROBE_STATE_DISABLED.equals(desiredState) && scheduler.shouldBeEnabled(this, requests)) {
-				Log.d(TAG, "1");
 				if(PROBE_STATE_RUNNING.equals(desiredState)) {
-					Log.d(TAG, "2");
 					_run();
 				} else {
-					Log.d(TAG, "3");
 					_stop();
 				}
 			} else {
-				Log.d(TAG, "4");
 				_disable();
 				runIntent.removeExtra(INTERNAL_PROBE_STATE);
 				PendingIntent.getService(this, 0, runIntent, PendingIntent.FLAG_UPDATE_CURRENT);
