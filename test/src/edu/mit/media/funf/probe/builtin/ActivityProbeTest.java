@@ -60,11 +60,13 @@ public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 	}
 	
 	public void testWithAccelerometerBroadcast() throws InterruptedException {
-		startProbe(AccelerometerSensorProbe.class, new Bundle());
 		
 		Bundle params = new Bundle();
-		params.putLong(Parameter.Builtin.DURATION.name, 2L);
+		params.putLong(Parameter.Builtin.DURATION.name, 4L);
 		params.putLong(Parameter.Builtin.PERIOD.name, 0L);
+
+		startProbe(AccelerometerSensorProbe.class, params);
+		params.putLong(Parameter.Builtin.DURATION.name, 2L);
 		startProbe(params);
 		Bundle data = getData(20);
 		assertTrue(data.containsKey(ActivityProbe.TOTAL_INTERVALS));
