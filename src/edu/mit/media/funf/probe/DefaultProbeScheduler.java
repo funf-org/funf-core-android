@@ -195,7 +195,9 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 				}
 			}
 		}
-		Utils.putInBundle(params, paramName, mergedValue);
+		if (mergedValue != null) {
+			Utils.putInBundle(params, paramName, mergedValue);
+		}
 	}
 	
 	public static void putMergedParam(Bundle params, Probe.Parameter parameter, Collection<Intent> requests, boolean returnLargest) {

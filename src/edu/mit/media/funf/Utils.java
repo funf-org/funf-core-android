@@ -209,6 +209,9 @@ public final class Utils {
 	
 	public static Map<String,Object> getValues(final Bundle bundle) {
 		HashMap<String, Object> values = new HashMap<String, Object>();
+		if (bundle == null) {
+			return values;
+		}
 		for (String key : bundle.keySet()) {
 			values.put(key, bundle.get(key));
 		}
@@ -216,6 +219,9 @@ public final class Utils {
 	}
 	
 	public static <T extends Parcelable> ArrayList<T> getArrayList(Bundle bundle, String key) {
+		if (bundle == null) {
+			return null;
+		}
         Object o = bundle.get(key);
         try {
         	return (ArrayList<T>) o;
