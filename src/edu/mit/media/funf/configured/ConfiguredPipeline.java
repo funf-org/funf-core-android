@@ -415,6 +415,10 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 		return FunfConfig.getInstance(async(prefs));
 	}
 	
+	protected boolean shouldStop() {
+    	return false;
+    }
+	
 	/**
 	 * Binder interface to the probe
 	 */
