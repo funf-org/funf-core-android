@@ -98,7 +98,6 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	public final void onCreate() {
 		Log.v(TAG, "CREATED");
 		super.onCreate();
-        historyPrefs = getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE);
 		enabled = false;
 		running = false;
 		pendingRequests = new ConcurrentLinkedQueue<Intent>();
@@ -116,6 +115,9 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	
 	
     protected void onHandleIntent(Intent intent) {
+    	if (historyPrefs == null) { // Load prefs off main thread
+    		historyPrefs = getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE);
+    	}
     	String action = intent.getAction();
 		Log.d(TAG, getDisplayName() + ": " + action);
 		Log.d(TAG, "RunIntent " + (runIntent == null ? "<null>" : "exists"));
@@ -577,7 +579,6 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 */
 	protected void sendProbeData(long epochTimestamp, Bundle data) {
 		// Should always be loaded when enabled
-		setHistory(epochTimestamp, getPreviousRunTime(), getPreviousRunParams(), getNextRunTime());
 		Intent dataIntent = new Intent(ACTION_DATA);
 		dataIntent.putExtras(data);
 		callback(epochTimestamp, dataIntent, null);
@@ -598,6 +599,10 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			queueIntent(valuesIntent); 
 		} else {
 			try {
+				if (ACTION_DATA.equals(valuesIntent.getAction())) {
+					setHistory(epochTimestamp, getPreviousRunTime(), getPreviousRunParams(), getNextRunTime());
+					Log.d(TAG, "Sent probe data at " + epochTimestamp);
+				}
 				Log.d(TAG, "Sent probe " + valuesIntent.getAction() + " callback at " + epochTimestamp);
 				callback.send(this, 0, valuesIntent);
 			} catch (CanceledException e) {
@@ -620,6 +625,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 					long epochTimestamp = valuesIntent.getLongExtra(TIMESTAMP, 0L);
 					try {
 						if (ACTION_DATA.equals(valuesIntent.getAction())) {
+							setHistory(epochTimestamp, getPreviousRunTime(), getPreviousRunParams(), getNextRunTime());
 							Log.d(TAG, "Sent probe data at " + epochTimestamp);
 						}
 						callback.send(this, 0, valuesIntent);
