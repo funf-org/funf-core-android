@@ -1,6 +1,7 @@
 package edu.mit.media.funf;
 
 import static edu.mit.media.funf.Utils.TAG;
+
 import java.util.Random;
 
 import android.app.Service;
@@ -14,12 +15,22 @@ import android.util.Log;
 
 public abstract class CustomizedIntentService extends Service {
 	
+
+	protected static final int INTERNAL_MESSAGE = 0;
+    protected static final int MESSAGE_QUIT = 1;
+    protected static final int MESSAGE_PAUSE = 2;
+
+    private static final long DEFAULT_MILLIS_TO_WAIT = 5000L;
+    
 	private int startId = 0;
 	private volatile HandlerThread thread;
 	private volatile Looper mServiceLooper;
     private volatile ServiceHandler mServiceHandler;
     private String mName;
 
+    private Intent intentToWaitFor;
+
+    
     private final class ServiceHandler extends Handler {
         public ServiceHandler(Looper looper) {
             super(looper);
@@ -27,17 +38,32 @@ public abstract class CustomizedIntentService extends Service {
 
         @Override
         public void handleMessage(Message msg) {
-        	Log.d(TAG, "Handling msg " + msg.arg1);
-        	if (msg.obj == null) {
+    		switch (msg.what) {
+			case MESSAGE_QUIT:
         		mServiceLooper.quit();
-        	} else {
+				break;
+			case MESSAGE_PAUSE:
+				Long millisToWait = (Long)msg.obj;
+				if (millisToWait == null) {
+					millisToWait = DEFAULT_MILLIS_TO_WAIT;
+				}
+				try {
+					synchronized (this) {
+						this.wait(millisToWait);
+					}
+				} catch (InterruptedException e) {
+					Log.w(TAG, "Service handler thread interrupted!");
+				}
+				break;
+			default:
+            	Log.d(TAG, "Handling msg " + msg.arg1);
         		Log.d(TAG, "Handling message @ " + System.currentTimeMillis() +": " + msg.obj);
-            	mServiceHandler.removeMessages(WAIT_MESSAGE);
 	            onHandleIntent((Intent)msg.obj);
-	            if (shouldStop() && startId == msg.arg1) {
-	            	stopSelf();
+	            if (startId == msg.arg1) {
+	            	onEndOfQueue();
 	            }
-        	}
+				break;
+			}
         }
     }
 
@@ -60,47 +86,65 @@ public abstract class CustomizedIntentService extends Service {
     	super.onCreate();
         thread = new HandlerThread("IntentService[" + mName + "]");
         thread.start();
-
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);
     }
     
-
-    public static final int WAIT_MESSAGE = 1;
-    /**
-     * Used to keep service alive while waiting for external intents.
-     * @param delayMillis
-     */
-    protected void waitForIntent(long delayMillis) {
-    	Log.d(TAG, "Waiting until..." + System.currentTimeMillis() + delayMillis);
-		Message msg = mServiceHandler.obtainMessage();
-		msg.what = WAIT_MESSAGE;
-		mServiceHandler.sendMessageDelayed(msg, delayMillis);
-	}
-    protected void waitForIntent() {
-		waitForIntent(1000L);
-	}
     
-    public static final int INTERNAL_MESSAGE = 0;
+    protected void pauseQueueUntilIntentReceived(Intent intent, Long timeout) {
+    	if (!mServiceHandler.hasMessages(MESSAGE_QUIT)) {
+	    	intentToWaitFor = (intent == null) ? new Intent() : intent;
+			Message msg = mServiceHandler.obtainMessage();
+			msg.what = MESSAGE_PAUSE;
+			mServiceHandler.sendMessageAtFrontOfQueue(msg);
+    	}
+    }
+    
     protected boolean queueIntent(Intent intent) {
+    	return queueIntent(intent, false);
+    }
+    
+    protected boolean queueIntent(Intent intent, boolean atFront) {
     	Message msg = mServiceHandler.obtainMessage();
     	msg.what = INTERNAL_MESSAGE;
-        this.startId = msg.arg1 = new Random().nextInt();
+        msg.arg1 = new Random().nextInt();
         msg.obj = intent;
-        boolean success = mServiceHandler.sendMessage(msg);
-        Log.d(TAG, "Message: "+ ((intent == null) ? "<quit>" : (intent.getComponent() + " " + intent.getAction())));
-        Log.d(TAG, "Queued message "  + msg.arg1 + "? " + success);
-        return success;
+        Log.d(TAG, "Internal Queue Message: "+ ((intent == null) ? "<quit>" : (intent.getComponent() + " " + intent.getAction())));
+        if (atFront) {
+        	return mServiceHandler.sendMessageAtTime(msg, 1L);  // HACK: because of the implementation of postMessageAtFrontOfQueue = sendMessageAtTime(msg, 0L)
+        } else {
+        	this.startId = msg.arg1; // TODO: figure out how to create priority queue, so we know how to specify start id
+        	return mServiceHandler.sendMessage(msg);
+        }
     }
 
+    private boolean isIntentThisIsWaitingFor(Intent intent) {
+    	return intentToWaitFor != null
+    			&& ((intentToWaitFor.getComponent() == null && intentToWaitFor.getAction() == null)
+    					|| intentToWaitFor.filterEquals(intent));
+    }
+    
     @Override
     public void onStart(Intent intent, int startId) {
         Message msg = mServiceHandler.obtainMessage();
-        this.startId = msg.arg1 = startId;
         msg.obj = intent;
-        boolean success = mServiceHandler.sendMessage(msg);
-        Log.d(TAG, "onStart queued message "  + msg.arg1 + "? " + success);
-        Log.d(TAG, "Message: " + intent.getComponent() + " " + intent.getAction());
+        
+        // Awaken handler thread if this is the intent we are waiting for
+    	if (isIntentThisIsWaitingFor(intent)) {
+    		Log.d(TAG, "GOT intent we were waiting for: " + intent.getComponent() + " " + intent.getAction());
+			intentToWaitFor = null;
+    		boolean success = mServiceHandler.sendMessageAtFrontOfQueue(msg);
+    		Log.d(TAG, "Successfully queued at front the intent we were waiting for. " + success);
+			mServiceHandler.removeMessages(MESSAGE_PAUSE);
+	    	synchronized (mServiceHandler) {
+				mServiceHandler.notify();
+			}
+    	} else {
+            this.startId = msg.arg1 = startId;
+        	mServiceHandler.sendMessage(msg);
+    	}
+
+        Log.d(TAG, "onStart Message: " + intent.getComponent() + " " + intent.getAction());
     }
 
     @Override
@@ -112,17 +156,39 @@ public abstract class CustomizedIntentService extends Service {
     @Override
     public void onDestroy() {
     	Log.d(TAG, "Destroying service " + getClass().getName());
-    	queueIntent(null); // Send quit message at end of current queue
-
+    	
+    	// Pause long enough to allow subclasses to queue up things before QUIT message
+    	pauseQueueUntilIntentReceived(new Intent("NON_EXISTENT_INTENT"), 100L);
+    	
+    	// Send quit message at front of queue
+		Message msg = mServiceHandler.obtainMessage();
+		msg.what = MESSAGE_QUIT;
+		mServiceHandler.sendMessageAtTime(msg, 2L); // So that it occurs after all messages "At front of queue"
+		
+		onBeforeDestroy();
+		
+		mServiceHandler.removeMessages(MESSAGE_PAUSE);
+    	synchronized (mServiceHandler) {
+			mServiceHandler.notify();
+		}
+		
     	// Wait for queue to finish
     	try {
-			thread.join(1000);
+			thread.join(2000);
 		} catch (InterruptedException e) {
 		}
 		if (thread.isAlive()) {
 			Log.d(TAG, "Message thread did not die in time: " + getClass().getName());
 			mServiceLooper.quit();
 		}
+    }
+    
+    /**
+     * Allows the subclass to queue up messages on message thread before the service is destroyed.
+     * Useful for must have cleanup options.
+     */
+    public void onBeforeDestroy() {
+    	// Default implementation does nothing
     }
 
     @Override
@@ -131,7 +197,8 @@ public abstract class CustomizedIntentService extends Service {
     }
     
     protected boolean isIntentHandlerThread() {
-    	return Looper.myLooper().equals(mServiceLooper);
+    	Looper looper = Looper.myLooper();
+    	return looper != null && looper.equals(mServiceLooper);
     }
 
     /**
@@ -145,15 +212,14 @@ public abstract class CustomizedIntentService extends Service {
      *               android.content.Context#startService(Intent)}.
      */
     protected abstract void onHandleIntent(Intent intent);
-    
-    /**
-     * Hook to determine if service should attempt to be stopped after this message is completed.  
-     * This will not stop the service if there are still more messages in the queue to be processed.
-     * Default is true;
-     * @return
-     */
-    protected boolean shouldStop() {
-    	return true;
+ 
+	 /**
+	  * Called when service has reached the end of the queue.  The default implementation calls stopSelf().
+	  * Subclasses can override this to prevent class from stopping, or to perform cleanup on handler thread before onDestory.
+	  * @return
+	  */
+    protected void onEndOfQueue() {
+    	stopSelf();
     }
     
     /**

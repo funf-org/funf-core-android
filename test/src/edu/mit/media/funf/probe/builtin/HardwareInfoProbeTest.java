@@ -21,8 +21,9 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
-import edu.mit.media.funf.probe.ProbeTestCase;
 import android.os.Bundle;
+import android.util.Log;
+import edu.mit.media.funf.probe.ProbeTestCase;
 
 public class HardwareInfoProbeTest extends ProbeTestCase<HardwareInfoProbe> {
 
@@ -42,6 +43,7 @@ public class HardwareInfoProbeTest extends ProbeTestCase<HardwareInfoProbe> {
 				"MODEL",
 				"DEVICE_ID"
 		};
+		Log.i(TAG, String.valueOf(data));
 		for (String key : keysToCheck) {
 			assertNotNull("Key does not exist: " + key, data.getString(key));
 			System.out.println(key + ": " + data.getString(key));

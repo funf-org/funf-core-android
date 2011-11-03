@@ -68,6 +68,7 @@ public class ActivityProbeTest extends ProbeTestCase<ActivityProbe> {
 		startProbe(AccelerometerSensorProbe.class, params);
 		params.putLong(Parameter.Builtin.DURATION.name, 2L);
 		startProbe(params);
+		
 		Bundle data = getData(20);
 		assertTrue(data.containsKey(ActivityProbe.TOTAL_INTERVALS));
 		assertTrue(data.containsKey(ActivityProbe.LOW_ACTIVITY_INTERVALS));

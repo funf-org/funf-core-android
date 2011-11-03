@@ -75,11 +75,14 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	NEXT_RUN_TIME_KEY = "nextRunTime";
 	
 	static final String
-	ACTION_INTERNAL_RUN = "PROBE_INTERNAL_RUN",
+	ACTION_INTERNAL_REQUESTS = "PROBE_INTERNAL_REQUESTS",
+	ACTION_INTERNAL_CALLBACK_REGISTERED = "PROBE_INTERNAL_CALLBACK_REGISTERED",
 	
+	ACTION_RUN = "PROBE_INTERNAL_RUN",
 	ACTION_STOP = "PROBE_INTERNAL_STOP",
 	ACTION_DISABLE = "PROBE_INTERNAL_DISABLE",
 	
+	INTERNAL_CALLBACK_INTENT = "PROBE_INTERNAL_CALLBACK_INTENT",
 	INTERNAL_REQUESTS_KEY = "PROBE_INTERNAL_REQUESTS",
 	INTERNAL_PROBE_STATE = "PROBE_INTERNAL_STATE",
 	PROBE_STATE_RUNNING = "RUNNING",
@@ -87,7 +90,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	PROBE_STATE_DISABLED = "DISABLED";
 	
 	private PowerManager.WakeLock lock;
-	private Intent runIntent;
+	private Intent requestsIntent;
 	private boolean enabled;
 	private boolean running;
 	private SharedPreferences historyPrefs;
@@ -106,77 +109,123 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	
 	@Override
 	public final void onDestroy() {
-		Log.v(TAG, "DESTROYED");
-		// Ensure disable happens on message thread
-		// TODO: figure out how to disable on message thread and still ensure quit of service
-		disable();
 		super.onDestroy();
+		Log.v(TAG, "DESTROYED");
 	}
 	
+	@Override 
+	public void onBeforeDestroy() {
+		// Ensure disable happens on message thread
+		disable();
+	}
 	
-    protected void onHandleIntent(Intent intent) {
-    	if (historyPrefs == null) { // Load prefs off main thread
+	private Intent getRequestsIntent() {
+		Intent i = new Intent(ACTION_INTERNAL_REQUESTS, null, this, getClass());
+		// TODO: implement security number so that we can verify this was our intent we created, and not an external attack
+		return i;
+	}
+	
+	private boolean isRequestsIntent(Intent intent) {
+		// TODO: verify security number
+		// TODO: maybe count brute force attacks, shut down if too many
+		return ACTION_INTERNAL_REQUESTS.equals(intent.getAction());
+	}
+	
+	private void loadRequestsIntent(Intent currentIntent) {
+		if (isRequestsIntent(currentIntent)) {
+			Log.d(TAG, "Is requests intent.");
+			requestsIntent = currentIntent;
+		} else {
+		   	// Attempt to grab pending intent and send Otherwise initialize requestsIntent
+			Intent internalRunIntent = getRequestsIntent();
+			PendingIntent selfLaunchingIntent = PendingIntent.getService(this, 0, internalRunIntent, PendingIntent.FLAG_NO_CREATE);
+			if (selfLaunchingIntent == null) {
+				requestsIntent = internalRunIntent;
+			} else {
+				try {
+					Log.i(TAG, "Sending requests pending intent and waiting");
+					selfLaunchingIntent.send();
+					queueIntent(currentIntent, true);
+					pauseQueueUntilIntentReceived(internalRunIntent, null);
+				} catch (CanceledException e) {
+					Log.e(TAG, "CANCELLED INTERNAL RUN INTENT");
+					requestsIntent = internalRunIntent;
+				}
+			}
+		}
+	}
+	
+	private SharedPreferences getHistoryPrefs() {
+		if (historyPrefs == null) { // Load prefs off main thread
     		historyPrefs = getSharedPreferences("PROBE_" + getClass().getName(), MODE_PRIVATE);
     	}
+		return historyPrefs;
+	}
+	
+    protected void onHandleIntent(Intent intent) {
     	String action = intent.getAction();
-		Log.d(TAG, getDisplayName() + ": " + action);
-		Log.d(TAG, "RunIntent " + (runIntent == null ? "<null>" : "exists"));
-		Log.d(TAG, "Component: " + intent.getComponent() == null ? "<none>" : intent.getComponent().getClassName());
+    	Log.d(TAG, getDisplayName() + ": " + action);
+    	Log.d(TAG, "Component: " + intent.getComponent() == null ? "<none>" : intent.getComponent().getClassName());
+		
+    	
+    	getHistoryPrefs();
+    	if (requestsIntent == null) {
+    		loadRequestsIntent(intent);
+    		if (requestsIntent == null) {
+    			Log.d(TAG, "Did not successfully load requests Intent");
+    			return;
+    		}
+    	}
+
+    	
+    	updateRequests();
+
+
+		Log.d(TAG, "RunIntent " + (requestsIntent == null ? "<null>" : "exists"));
+    	
     	if (intent.getComponent().getClassName().equals(Probe.class.getName())) { // Internally queued, not available outside of probe class
-    		intent.setClassName(this, "");
-    		_callback_registered(intent);
-    	} else if (ACTION_INTERNAL_RUN.equals(action)) {
-			if (runIntent == null) {
-				runIntent = intent;
-			}
-	    	String desiredState = intent.getStringExtra(INTERNAL_PROBE_STATE);
-	    	if (desiredState == null) {
-	    		desiredState = PROBE_STATE_RUNNING;
-	    	}
-	    	runIntent.putExtra(INTERNAL_PROBE_STATE, desiredState);
+    		if (ACTION_RUN.equals(action) || ACTION_STOP.equals(action) || ACTION_DISABLE.equals(action)) {
+    			ProbeScheduler scheduler = getScheduler();
+    			ArrayList<Intent> requests = requestsIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+    			Log.d(TAG, "Requests:" + requests);
+    			if (isAvailableOnDevice() && !ACTION_DISABLE.equals(action) && scheduler.shouldBeEnabled(this, requests)) {
+    				if(ACTION_RUN.equals(action)) {
+    					_run();
+    				} else {
+    					_stop();
+    				}
+    			} else {
+    				_disable();
+    				PendingIntent.getService(this, 0, requestsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+    			}
 
-	    	Log.d(TAG, "Desired state: " + desiredState);
-
-	    	
-			updateRequests();
-			ProbeScheduler scheduler = getScheduler();
-			ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
-			Log.d(TAG, "Requests:" + requests);
-			if (isAvailableOnDevice() && !PROBE_STATE_DISABLED.equals(desiredState) && scheduler.shouldBeEnabled(this, requests)) {
-				if(PROBE_STATE_RUNNING.equals(desiredState)) {
-					_run();
-				} else {
-					_stop();
-				}
-			} else {
-				_disable();
-				runIntent.removeExtra(INTERNAL_PROBE_STATE);
-				PendingIntent.getService(this, 0, runIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+    			Long nextScheduledTime = scheduler.scheduleNextRun(this, requests);
+    			Log.d(TAG, "Next scheduled time: " + nextScheduledTime);
+    			setHistory(getPreviousDataSentTime(), getPreviousRunTime(), getPreviousRunParams(), nextScheduledTime);
+    		} else if (ACTION_INTERNAL_CALLBACK_REGISTERED.equals(action)){
+				Intent callbackRegisteredIntent = intent.getParcelableExtra(INTERNAL_CALLBACK_INTENT);
+	    		_callback_registered(callbackRegisteredIntent);
 			}
-			Long nextScheduledTime = scheduler.scheduleNextRun(this, requests);
-			Log.d(TAG, "Next scheduled time: " + nextScheduledTime);
-			setHistory(getPreviousDataSentTime(), getPreviousRunTime(), getPreviousRunParams(), nextScheduledTime);
-		} else if (ACTION_STOP.equals(action)) {
-			stop();
-		} else if (ACTION_DISABLE.equals(action)) {
-			disable();
-		} else if (ACTION_REQUEST.equals(action) || action == null) {
+    	} else if (ACTION_REQUEST.equals(action) || action == null) {
 			ArrayList<Bundle> test = Utils.getArrayList(intent.getExtras(), REQUESTS_KEY);
-			for (Bundle b : test) {
-				b.get(Parameter.Builtin.PERIOD.name);
-			}
 			Log.d(TAG, "REQUEST: " + test);
 			boolean succesfullyQueued = queueRequest(intent);
 			if (succesfullyQueued) {
 				run();
 			}
-		} else if(ACTION_SEND_DETAILS.equals(action)) {
+		} else if (ACTION_INTERNAL_REQUESTS.equals(action)) {
+			
+		} else if (ACTION_STOP.equals(action)) { // External stop, queue up stop
+			stop();
+		} else if (ACTION_DISABLE.equals(action)) {   // External disable, queue up disable
+			disable();
+		} else if(ACTION_SEND_DETAILS.equals(action)) {  // DOESN'T NEED requests
 			PendingIntent callback = intent.getParcelableExtra(CALLBACK_KEY);
 			sendProbeDetails(callback);
 		} else if(ACTION_SEND_CONFIGURATION.equals(action)) {
 			//PendingIntent callback = intent.getParcelableExtra(CALLBACK_KEY);
 			//sendProbeConfiguration(callback);
-		} else if(ACTION_SEND_STATUS.equals(action)) {
+		} else if(ACTION_SEND_STATUS.equals(action)) { // DOESN'T NEED requests
 			PendingIntent callback = intent.getParcelableExtra(CALLBACK_KEY);
 			sendProbeStatus(callback);
 		} else {
@@ -202,9 +251,11 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 * @param requests
 	 */
 	private void updateRequests(boolean removeRunOnce) {
-		assert runIntent != null;
-		ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+		assert requestsIntent != null;
+		boolean hasChanges = false;
+		ArrayList<Intent> requests = requestsIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
 		if (requests == null) {
+			hasChanges = true;
 			requests = new ArrayList<Intent>();
 		}
 		
@@ -228,15 +279,17 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 				}
 			}
 		}
-
+		
 		// Remove all requests that we aren't able to (or supposed to) send to anymore
 		if (!deadRequests.isEmpty()) {
+			hasChanges = true;
 			for (Intent deadRequest = deadRequests.poll(); deadRequest != null; deadRequest = deadRequests.poll()) {
 				requests.remove(deadRequest);
 			}
 		}
 		// Add any pending requests
 		if (!pendingRequests.isEmpty()) {
+			hasChanges = true;
 			Map<PendingIntent,Intent> existingCallbacksToRequests = new HashMap<PendingIntent,Intent>();
 			for (Intent existingRequest : requests) {
 				PendingIntent callback = existingRequest.getParcelableExtra(CALLBACK_KEY);
@@ -265,8 +318,10 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			}
 		}
 		
-		runIntent.putExtra(INTERNAL_REQUESTS_KEY, requests);
-		PendingIntent.getService(this, 0, runIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		if (hasChanges) {
+			requestsIntent.putExtra(INTERNAL_REQUESTS_KEY, requests);
+			PendingIntent.getService(this, 0, requestsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		}
 	}
 	
 	/**
@@ -298,7 +353,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	}
 	
 	private void setHistory(Long previousDataSentTime, Long previousRunTime, Bundle previousRunParams, Long nextRunTime) {
-		SharedPreferences.Editor editor = historyPrefs.edit();
+		SharedPreferences.Editor editor = getHistoryPrefs().edit();
 		editor.clear();
 		if (previousDataSentTime != null) editor.putLong(MOST_RECENT_DATA_KEY, previousDataSentTime);
 		if (previousRunTime != null) editor.putLong(MOST_RECENT_RUN_KEY, previousRunTime);
@@ -316,11 +371,10 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 */
 	public void reset() {
 		setHistory(null, null, null, null);
-		if (runIntent != null) {
-			runIntent.removeExtra(INTERNAL_REQUESTS_KEY);
+		if (requestsIntent != null) {
+			requestsIntent.removeExtra(INTERNAL_REQUESTS_KEY);
 		}
-		Intent internalRunIntent = new Intent(ACTION_INTERNAL_RUN, null, this, getClass());
-		PendingIntent selfLaunchingIntent = PendingIntent.getService(this, 0, internalRunIntent, PendingIntent.FLAG_NO_CREATE);
+		PendingIntent selfLaunchingIntent = PendingIntent.getService(this, 0, getRequestsIntent(), PendingIntent.FLAG_NO_CREATE);
 		if (selfLaunchingIntent != null) {
 			selfLaunchingIntent.cancel();
 		}
@@ -330,28 +384,28 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 * @return a timestamp (in millis since epoch) of the most recent time this probe sent data
 	 */
 	public long getPreviousDataSentTime() {
-		return historyPrefs.getLong(MOST_RECENT_DATA_KEY, 0L);
+		return getHistoryPrefs().getLong(MOST_RECENT_DATA_KEY, 0L);
 	}
 
 	/**
 	 * @return a timestamp (in millis since epoch) of the most recent time this probe was run 
 	 */
 	public long getPreviousRunTime() {
-		return historyPrefs.getLong(MOST_RECENT_RUN_KEY, 0L);
+		return getHistoryPrefs().getLong(MOST_RECENT_RUN_KEY, 0L);
 	}
 	
 	/**
 	 * @return the bundle of params used to run the probe the most recent time it was run
 	 */
 	public Bundle getPreviousRunParams() {
-		return Utils.getBundleFromPrefs(historyPrefs, MOST_RECENT_PARAMS_KEY);
+		return Utils.getBundleFromPrefs(getHistoryPrefs(), MOST_RECENT_PARAMS_KEY);
 	}
 	
 	/**
 	 * @return a timestamp (in millis since epoch) of the most recent time this probe was run 
 	 */
 	public long getNextRunTime() {
-		return historyPrefs.getLong(NEXT_RUN_TIME_KEY, 0L);
+		return getHistoryPrefs().getLong(NEXT_RUN_TIME_KEY, 0L);
 	}
 	
 	/**
@@ -383,32 +437,9 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
      * Safe method to run probe, which ensures that requests are preserved.
      */
     protected void run() {
-    	// If we have not set runIntent yet, attempt to grab pending intent and send
-		// Otherwise initialize runIntent and create corresponding PendingIntent
-    	boolean internalRunSent = false;
-    	if (runIntent == null) {
-			Intent internalRunIntent = new Intent(ACTION_INTERNAL_RUN, null, this, getClass());
-			PendingIntent selfLaunchingIntent = PendingIntent.getService(this, 0, internalRunIntent, PendingIntent.FLAG_NO_CREATE);
-			if (selfLaunchingIntent == null) {
-				runIntent = internalRunIntent;
-			} else {
-				try {
-					Log.i(TAG, "Running from Probe.run pending intent");
-					selfLaunchingIntent.send();
-					waitForIntent();
-					internalRunSent = true;
-				} catch (CanceledException e) {
-					Log.e(TAG, "CANCELLED INTERNAL RUN INTENT");
-					runIntent = internalRunIntent;
-				}
-			}
-		}
-    	if (runIntent != null) {
-			if (!internalRunSent) {
-				updateRequests(); // Creates pending intent if it doesn't exist
-				Log.i(TAG, "Running from Probe.run internal queue");
-				queueIntent(runIntent); 
-			}
+    	if (requestsIntent != null) { // Assume the app is already disabled if requestsIntent is null
+    		Intent i = new Intent(ACTION_RUN, null, this, Probe.class);
+			queueIntent(i);
 		}
     }
     
@@ -416,17 +447,17 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	
 	protected final void stop() {
 		Log.d(TAG, "Stop queued");
-		if (runIntent != null) { // Assume the app is already disabled if runIntent is null
-			runIntent.putExtra(INTERNAL_PROBE_STATE, PROBE_STATE_ENABLED);
-			queueIntent(runIntent);
+		if (requestsIntent != null) { // Assume the app is already disabled if requestsIntent is null
+			Intent i = new Intent(ACTION_STOP, null, this, Probe.class);
+			queueIntent(i);
 		}
 	}
 	
 	protected final void disable() {
 		Log.d(TAG, "Disable queued");
-		if (runIntent != null) { // Assume the app is already disabled if runIntent is null
-			runIntent.putExtra(INTERNAL_PROBE_STATE, PROBE_STATE_DISABLED);
-			queueIntent(runIntent);
+		if (requestsIntent != null) { // Assume the app is already disabled if requestsIntent is null
+			Intent i = new Intent(ACTION_DISABLE, null, this, Probe.class);
+			queueIntent(i);
 		}
 	}
 	
@@ -453,7 +484,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			_enable();
 		}
 		ProbeScheduler scheduler = getScheduler();
-		ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+		ArrayList<Intent> requests = requestsIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
 		Bundle parameters = scheduler.startRunningNow(this, requests);
 		if (parameters != null) {
 			Log.i(TAG, "Running probe: " + getClass().getName());
@@ -518,8 +549,10 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	}
 	
 	@Override
-	protected boolean shouldStop() {
-		return isEnabled() == false;
+	protected void onEndOfQueue() {
+		if (isEnabled() == false) {
+			stopSelf();
+		} 
 	}
 
 	/**
@@ -590,14 +623,19 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 * @param valuesIntent
 	 */
 	protected void callback(long epochTimestamp, Intent valuesIntent, PendingIntent callback) {
-		assert runIntent != null;
+		assert requestsIntent != null;
 		valuesIntent.putExtra(PROBE, getClass().getName());
 		valuesIntent.putExtra(TIMESTAMP, epochTimestamp);
 		if (callback == null) {
 			Log.d(TAG, "Queing probe " + valuesIntent.getAction() + " callback at " + epochTimestamp);
-			// Run on message queue to avoid concurrent modification of requests
-			valuesIntent.setClass(this, Probe.class);
-			queueIntent(valuesIntent); 
+			if (isIntentHandlerThread()) {
+				_callback_registered(valuesIntent);
+			} else {
+				// Run on message queue to avoid concurrent modification of requests
+				Intent callbackRegisteredIntent = new Intent(ACTION_INTERNAL_CALLBACK_REGISTERED, null, this, Probe.class);
+				callbackRegisteredIntent.putExtra(INTERNAL_CALLBACK_INTENT, valuesIntent);
+				queueIntent(callbackRegisteredIntent); 
+			}
 		} else {
 			try {
 				if (ACTION_DATA.equals(valuesIntent.getAction())) {
@@ -618,8 +656,8 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 */
 	protected void _callback_registered(Intent valuesIntent) {
 		// Send to all requesters
-		if (runIntent != null) {
-			ArrayList<Intent> requests = runIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+		if (requestsIntent != null) {
+			ArrayList<Intent> requests = requestsIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
 			if (requests != null && !requests.isEmpty()) {
 				for (Intent request : requests) {
 					PendingIntent callback = request.getParcelableExtra(CALLBACK_KEY);

@@ -111,7 +111,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 			//Log.i(TAG, "Data requests: " + dataRequests.toString());
 			//Log.i(TAG, "Final params: " + params.toString());
 			//Log.i(TAG, "Running from DefaultProbeScheduler, mostRecentRunTime: " + mostRecentTimeRun + " + period: " + period);
-			scheduleAlarm(probe, Probe.ACTION_INTERNAL_RUN, mostRecentTimeRun + period);
+			scheduleAlarm(probe, Probe.ACTION_RUN, mostRecentTimeRun + period);
 		}
 		return Utils.millisToSeconds(mostRecentTimeRun + period);
 	}
