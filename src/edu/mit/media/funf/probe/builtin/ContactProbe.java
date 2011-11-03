@@ -21,7 +21,6 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
-import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -303,6 +302,7 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys {
 		Log.i(TAG, "Full scan = " + isFullScan);
 		super.onRun(params);
 	}
+	
 
 	@Override
 	protected Bundle parseDataBundle(Cursor cursor, String[] projection, Map<String, CursorCell<?>> projectionMap) {

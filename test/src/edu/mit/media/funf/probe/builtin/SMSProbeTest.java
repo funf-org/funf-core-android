@@ -49,7 +49,7 @@ public class SMSProbeTest extends ProbeTestCase<SMSProbe> {
 		
 		// Running again should return an empty result
 		startProbe(params);
-		data = getData(10);
+		data = getData(20);
 		messages = data.getParcelableArrayList(SMSProbe.MESSAGES);
 		assertNotNull(messages);
 		Log.i(TAG, "SMS size: " + messages.size());

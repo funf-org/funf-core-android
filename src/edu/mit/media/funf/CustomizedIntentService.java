@@ -16,11 +16,19 @@ import android.util.Log;
 public abstract class CustomizedIntentService extends Service {
 	
 
-	protected static final int INTERNAL_MESSAGE = 0;
-    protected static final int MESSAGE_QUIT = 1;
-    protected static final int MESSAGE_PAUSE = 2;
+	protected static final int EXTERNAL_MESSAGE = 0;
+	protected static final int INTERNAL_MESSAGE = 1;
+	protected static final int MESSAGE_QUIT = 2;
+	protected static final int MESSAGE_PAUSE = 3;
 
     private static final long DEFAULT_MILLIS_TO_WAIT = 5000L;
+    
+    /*//TODO include priorities instead of arbitrary integer values for start time
+    private static final long 
+    PRIORITY_HIGHEST = 1,
+    PRIORITY_HIGHER = 2,
+    PRIORITY_HIGH = 3;
+    */
     
 	private int startId = 0;
 	private volatile HandlerThread thread;
@@ -59,13 +67,25 @@ public abstract class CustomizedIntentService extends Service {
             	Log.d(TAG, "Handling msg " + msg.arg1);
         		Log.d(TAG, "Handling message @ " + System.currentTimeMillis() +": " + msg.obj);
 	            onHandleIntent((Intent)msg.obj);
-	            if (startId == msg.arg1) {
+	            
+	            if (!hasMessages()) {
 	            	onEndOfQueue();
 	            }
 				break;
 			}
         }
+        
+
+        private boolean hasMessages() {
+        	// TODO: this may be to intensive to run on every message, consider a better implementation
+        	//startId == msg.arg1  
+        	return mServiceHandler.hasMessages(EXTERNAL_MESSAGE) 
+        	|| mServiceHandler.hasMessages(INTERNAL_MESSAGE) 
+        	||  mServiceHandler.hasMessages(MESSAGE_PAUSE) 
+        	|| mServiceHandler.hasMessages(MESSAGE_QUIT);
+        }
     }
+    
 
     public CustomizedIntentService() {
     	this(null);
@@ -128,19 +148,21 @@ public abstract class CustomizedIntentService extends Service {
     public void onStart(Intent intent, int startId) {
         Message msg = mServiceHandler.obtainMessage();
         msg.obj = intent;
+        msg.what = EXTERNAL_MESSAGE;
+        msg.arg1 = startId;
         
         // Awaken handler thread if this is the intent we are waiting for
     	if (isIntentThisIsWaitingFor(intent)) {
     		Log.d(TAG, "GOT intent we were waiting for: " + intent.getComponent() + " " + intent.getAction());
 			intentToWaitFor = null;
-    		boolean success = mServiceHandler.sendMessageAtFrontOfQueue(msg);
+    		boolean success = mServiceHandler.sendMessageAtTime(msg, 0L);
     		Log.d(TAG, "Successfully queued at front the intent we were waiting for. " + success);
 			mServiceHandler.removeMessages(MESSAGE_PAUSE);
 	    	synchronized (mServiceHandler) {
 				mServiceHandler.notify();
 			}
     	} else {
-            this.startId = msg.arg1 = startId;
+            this.startId = msg.arg1;
         	mServiceHandler.sendMessage(msg);
     	}
 

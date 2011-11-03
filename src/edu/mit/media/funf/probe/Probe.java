@@ -215,6 +215,8 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			}
 		} else if (ACTION_INTERNAL_REQUESTS.equals(action)) {
 			
+		} else if (ACTION_RUN.equals(action)) { // External stop, queue up stop
+			run();
 		} else if (ACTION_STOP.equals(action)) { // External stop, queue up stop
 			stop();
 		} else if (ACTION_DISABLE.equals(action)) {   // External disable, queue up disable
