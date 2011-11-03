@@ -21,6 +21,7 @@
  */
 package edu.mit.media.funf;
 
+import java.util.List;
 import java.util.Set;
 
 import android.os.Bundle;
@@ -158,5 +159,39 @@ public final class EqualsUtil {
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * This is a convenience method to test whether or not two bundles' contents are equal.
+	 * This method only works if the contents of each bundle are primitive data types or strings.
+	 * Otherwise this method may wrongly report they they are not equal.
+	 * @param bundle1
+	 * @param bundle2
+	 * @return
+	 */
+	public static boolean areEqual(List<Bundle> bundles1, List<Bundle> bundles2) {
+		// Null for none or both, or the same
+		if (bundles1 == null) {
+			return bundles2 == null;
+		} else if (bundles2 == null) {
+			return false;
+		} else if (bundles1 == bundles2) {
+			return true;
+		}
+		
+		// Same length
+		if (bundles1.size() != bundles2.size()) {
+			return false;
+		}
+		
+		// Same contents
+		for (int i=0; i<bundles1.size(); i++) {
+			if(!areEqual(bundles1.get(i), bundles2.get(i))) {
+				return false;
+			}
+		}
+		
+		return true;
+		
 	}
 }
