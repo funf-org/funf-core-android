@@ -23,12 +23,13 @@ public abstract class CustomizedIntentService extends Service {
 
     private static final long DEFAULT_MILLIS_TO_WAIT = 5000L;
     
-    /*//TODO include priorities instead of arbitrary integer values for start time
+    // Times since bootup to controll order at front of que, 
+    // implemented as a hack because putting message at front of queue does not work as expected
     private static final long 
-    PRIORITY_HIGHEST = 1,
-    PRIORITY_HIGHER = 2,
-    PRIORITY_HIGH = 3;
-    */
+    PRIORITY_BEFORE_FRONT = 1,
+    PRIORITY_FRONT = 2,
+    PRIORITY_AFTER_FRONT = 3;
+    
     
 	private int startId = 0;
 	private volatile HandlerThread thread;
@@ -116,7 +117,7 @@ public abstract class CustomizedIntentService extends Service {
 	    	intentToWaitFor = (intent == null) ? new Intent() : intent;
 			Message msg = mServiceHandler.obtainMessage();
 			msg.what = MESSAGE_PAUSE;
-			mServiceHandler.sendMessageAtFrontOfQueue(msg);
+			mServiceHandler.sendMessageAtTime(msg, PRIORITY_BEFORE_FRONT);  // Very front of queue
     	}
     }
     
@@ -131,7 +132,7 @@ public abstract class CustomizedIntentService extends Service {
         msg.obj = intent;
         Log.d(TAG, "Internal Queue Message: "+ ((intent == null) ? "<quit>" : (intent.getComponent() + " " + intent.getAction())));
         if (atFront) {
-        	return mServiceHandler.sendMessageAtTime(msg, 1L);  // HACK: because of the implementation of postMessageAtFrontOfQueue = sendMessageAtTime(msg, 0L)
+        	return mServiceHandler.sendMessageAtTime(msg, PRIORITY_FRONT);  // HACK: because of the implementation of postMessageAtFrontOfQueue = sendMessageAtTime(msg, 0L)
         } else {
         	this.startId = msg.arg1; // TODO: figure out how to create priority queue, so we know how to specify start id
         	return mServiceHandler.sendMessage(msg);
@@ -155,7 +156,7 @@ public abstract class CustomizedIntentService extends Service {
     	if (isIntentThisIsWaitingFor(intent)) {
     		Log.d(TAG, "GOT intent we were waiting for: " + intent.getComponent() + " " + intent.getAction());
 			intentToWaitFor = null;
-    		boolean success = mServiceHandler.sendMessageAtTime(msg, 0L);
+    		boolean success = mServiceHandler.sendMessageAtTime(msg, PRIORITY_BEFORE_FRONT);
     		Log.d(TAG, "Successfully queued at front the intent we were waiting for. " + success);
 			mServiceHandler.removeMessages(MESSAGE_PAUSE);
 	    	synchronized (mServiceHandler) {
@@ -185,7 +186,7 @@ public abstract class CustomizedIntentService extends Service {
     	// Send quit message at front of queue
 		Message msg = mServiceHandler.obtainMessage();
 		msg.what = MESSAGE_QUIT;
-		mServiceHandler.sendMessageAtTime(msg, 2L); // So that it occurs after all messages "At front of queue"
+		mServiceHandler.sendMessageAtTime(msg, PRIORITY_AFTER_FRONT); // So that it occurs after all messages "At front of queue"
 		
 		onBeforeDestroy();
 		
