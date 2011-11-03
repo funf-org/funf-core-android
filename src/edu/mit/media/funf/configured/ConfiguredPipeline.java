@@ -252,7 +252,11 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 	}
 	
 	public void sendProbeRequest(String probeName) {
-		ArrayList<Bundle> dataRequest = new ArrayList<Bundle>(Arrays.asList(getConfig().getDataRequests().get(probeName)));
+		Bundle[] requests = getConfig().getDataRequests().get(probeName);
+		if (requests == null) {
+			requests = new Bundle[] {}; // null is same as blank config
+		}
+		ArrayList<Bundle> dataRequest = new ArrayList<Bundle>(Arrays.asList(requests));
 		Intent request = new Intent(Probe.ACTION_REQUEST);
 		request.setClassName(this, probeName);
 		request.putExtra(Probe.CALLBACK_KEY, getCallback());

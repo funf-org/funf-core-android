@@ -82,7 +82,7 @@ public abstract class CustomizedIntentService extends Service {
 	}
     
     public static final int INTERNAL_MESSAGE = 0;
-    protected void queueIntent(Intent intent) {
+    protected boolean queueIntent(Intent intent) {
     	Message msg = mServiceHandler.obtainMessage();
     	msg.what = INTERNAL_MESSAGE;
         this.startId = msg.arg1 = new Random().nextInt();
@@ -90,6 +90,7 @@ public abstract class CustomizedIntentService extends Service {
         boolean success = mServiceHandler.sendMessage(msg);
         Log.d(TAG, "Message: "+ ((intent == null) ? "<quit>" : (intent.getComponent() + " " + intent.getAction())));
         Log.d(TAG, "Queued message "  + msg.arg1 + "? " + success);
+        return success;
     }
 
     @Override

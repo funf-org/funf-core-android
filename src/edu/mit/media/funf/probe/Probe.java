@@ -398,15 +398,16 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 					waitForIntent();
 					internalRunSent = true;
 				} catch (CanceledException e) {
+					Log.e(TAG, "CANCELLED INTERNAL RUN INTENT");
 					runIntent = internalRunIntent;
 				}
 			}
 		}
     	if (runIntent != null) {
-			updateRequests(); // Creates pending intent if it doesn't exist
 			if (!internalRunSent) {
+				updateRequests(); // Creates pending intent if it doesn't exist
 				Log.i(TAG, "Running from Probe.run internal queue");
-				queueIntent(runIntent); // TODO: may need to directly queue intent to prevent service from shutting down
+				queueIntent(runIntent); 
 			}
 		}
     }
