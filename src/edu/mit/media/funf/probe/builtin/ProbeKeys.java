@@ -300,6 +300,13 @@ public class ProbeKeys {
 		RUNNING_SERVICES = "RUNNING_SERVICES";
 	}
 	
+	public static interface AccountsKeys extends BaseProbeKeys {
+		public static final String 
+		ACCOUNTS = "ACCOUNTS",
+		NAME = "NAME",
+		TYPE = "TYPE";
+	}
+	
 	public interface AndroidInternal {
 	
 		///////////////////////////////////////////
