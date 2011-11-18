@@ -67,6 +67,7 @@
         <service android:name="edu.mit.media.funf.probe.builtin.TemperatureSensorProbe"></service>
         
         <service android:name="edu.mit.media.funf.probe.builtin.ProcessStatisticsProbe"></service>
+        <service android:name="edu.mit.media.funf.probe.builtin.ServicesProbe"></service>
         
         <service android:name="edu.mit.media.funf.tests.ExampleService"></service>
     </application>

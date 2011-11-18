@@ -295,6 +295,11 @@ public class ProbeKeys {
 		SCAN_RESULTS = "SCAN_RESULTS";
 	}
 	
+	public static interface ServicesKeys extends BaseProbeKeys {
+		public static final String 
+		RUNNING_SERVICES = "RUNNING_SERVICES";
+	}
+	
 	public interface AndroidInternal {
 	
 		///////////////////////////////////////////

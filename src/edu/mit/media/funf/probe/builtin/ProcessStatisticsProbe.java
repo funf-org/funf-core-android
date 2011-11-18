@@ -1,3 +1,24 @@
+/**
+ * Funf: Open Sensing Framework
+ * Copyright (C) 2010-2011 Nadav Aharony, Wei Pan, Alex Pentland. 
+ * Acknowledgments: Alan Gardner
+ * Contact: nadav@media.mit.edu
+ * 
+ * This file is part of Funf.
+ * 
+ * Funf is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as 
+ * published by the Free Software Foundation, either version 3 of 
+ * the License, or (at your option) any later version. 
+ * 
+ * Funf is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+ * See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public 
+ * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
+ */
 package edu.mit.media.funf.probe.builtin;
 
 import java.io.BufferedReader;
@@ -5,9 +26,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.StringTokenizer;
 
+import android.app.ActivityManager;
+import android.app.ActivityManager.ProcessErrorStateInfo;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.os.Bundle;
+import android.os.Debug.MemoryInfo;
 import android.util.Log;
 import edu.mit.media.funf.probe.SynchronousProbe;
 
@@ -48,7 +74,21 @@ public class ProcessStatisticsProbe extends SynchronousProbe {
 
 	@Override
 	protected Bundle getData() {
+		// TODO: make work for only this package
+		// TODO: allow parameter to customize package scanned
+		ActivityManager am = (ActivityManager)this.getApplicationContext().getSystemService(ACTIVITY_SERVICE);
+		ArrayList<RunningAppProcessInfo> runningProcesses = new ArrayList<RunningAppProcessInfo>(am.getRunningAppProcesses());
+		final int numProcesses = runningProcesses.size();
+		int[] runningProcessIds = new int[numProcesses];
+		for (int i=0; i<numProcesses; i++ ) {
+			runningProcessIds[i] = runningProcesses.get(i).pid;
+		}
+		ArrayList<MemoryInfo> memoryInfos = new ArrayList<MemoryInfo>(Arrays.asList(am.getProcessMemoryInfo(runningProcessIds)));
+		ArrayList<ProcessErrorStateInfo> errorInfos = new ArrayList<ProcessErrorStateInfo>(am.getProcessesInErrorState());
 		Bundle data = new Bundle();
+		data.putParcelableArrayList("RUNNING_PROCESS_INFO", runningProcesses);
+		data.putParcelableArrayList("RUNNING_PROCESS_MEMORY_INFO", memoryInfos);
+		data.putParcelableArrayList("ERRORED_PROCESS_INFO", errorInfos);
 		data.putBundle("CPU_LOAD", getCpuLoad());
 		data.putBundle("MEM_INFO", getMemInfo());
 		data.putBundle("NET_DEV", getNetDev());
