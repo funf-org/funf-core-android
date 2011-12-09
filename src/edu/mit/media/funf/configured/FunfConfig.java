@@ -34,7 +34,6 @@ import org.json.JSONObject;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import edu.mit.media.funf.AsyncSharedPrefs;
 import edu.mit.media.funf.EqualsUtil;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;

@@ -30,9 +30,11 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.Parameter;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 
 /**
  * Schedules probes based on PERIOD, DURATION, START, END,and PASSIVE parameters.
@@ -218,14 +220,8 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		}
 		params.putLong(paramName, mergedValue);
 	}
-	
-	public static Parameter getAvailableParameter(Probe probe, Parameter.Builtin systemParam) {
-		for (Parameter p : getParametersNotNull(probe.getAvailableParameters())) {
-			if(systemParam.name.equals(p.getName())) {
-				return p;
-			}
-		}
-		return null;
+	public static Parameter getAvailableParameter(Probe probe, Builtin systemParam) {
+		return Parameter.getAvailableParameter(DefaultProbeScheduler.getParametersNotNull(probe.getAvailableParameters()), systemParam);
 	}
 	
 	public static Parameter[] getParametersNotNull(Parameter[] availableParameters) {

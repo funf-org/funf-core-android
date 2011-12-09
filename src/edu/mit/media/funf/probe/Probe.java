@@ -25,6 +25,7 @@ import static edu.mit.media.funf.Utils.nonNullStrings;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,9 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -48,6 +52,7 @@ import android.os.PowerManager;
 import android.util.Log;
 import edu.mit.media.funf.CustomizedIntentService;
 import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.probe.Probe.Parameter.Builtin;
 import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
@@ -72,6 +77,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	private static final String 
 	MOST_RECENT_RUN_KEY = "mostRecentTimeRun",
 	MOST_RECENT_DATA_KEY = "mostRecentTimeDataSent",
+	MOST_RECENT_DATA_BY_REQUEST_KEY = "mostRecentTimeDataSentByRequest",
 	MOST_RECENT_PARAMS_KEY = "mostRecentParamsSent",
 	NEXT_RUN_TIME_KEY = "nextRunTime";
 	
@@ -204,7 +210,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 
     			Long nextScheduledTime = scheduler.scheduleNextRun(this, requests);
     			Log.d(TAG, "Next scheduled time: " + nextScheduledTime);
-    			setHistory(getPreviousDataSentTime(), getPreviousRunTime(), getPreviousRunParams(), nextScheduledTime);
+    			getHistoryPrefs().edit().putLong(NEXT_RUN_TIME_KEY, nextScheduledTime).commit();
     		} else if (ACTION_INTERNAL_CALLBACK_REGISTERED.equals(action)){
 				Intent callbackRegisteredIntent = intent.getParcelableExtra(INTERNAL_CALLBACK_INTENT);
 				PendingIntent callback = intent.getParcelableExtra(CALLBACK_KEY);
@@ -252,6 +258,15 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
     	updateRequests(false);
     }
 	
+    private static Map<PendingIntent,Intent> getCallbacksToRequests(ArrayList<Intent> requests) {
+    	Map<PendingIntent,Intent> existingCallbacksToRequests = new HashMap<PendingIntent,Intent>();
+		for (Intent existingRequest : requests) {
+			PendingIntent callback = existingRequest.getParcelableExtra(CALLBACK_KEY);
+			existingCallbacksToRequests.put(callback, existingRequest);
+		}
+		return existingCallbacksToRequests;
+    }
+    
 	/**
 	 * Updates request list with items in queue, replacing duplicate pending intents for this probe.
 	 * @param requests
@@ -266,7 +281,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		}
 		
 		// Remove run once requests
-		Parameter periodParam = DefaultProbeScheduler.getAvailableParameter(this, Parameter.Builtin.PERIOD);
+		Parameter periodParam = Parameter.getAvailableParameter(getAvailableParameters(), Parameter.Builtin.PERIOD);
 		if (periodParam != null && removeRunOnce) {
 			for (Intent request : requests) {
 				ArrayList<Bundle> dataRequests = Utils.getArrayList(request.getExtras(), REQUESTS_KEY);
@@ -388,7 +403,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	 * Resets all of the run data information, and removes all requests
 	 */
 	public void reset() {
-		setHistory(null, null, null, null);
+		getHistoryPrefs().edit().clear().commit();
 		if (requestsIntent != null) {
 			requestsIntent.removeExtra(INTERNAL_REQUESTS_KEY);
 		}
@@ -512,7 +527,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 			}
 			sendProbeStatus(null);
 			long nowTimestamp = Utils.millisToSeconds(System.currentTimeMillis());
-			setHistory(getPreviousDataSentTime(), nowTimestamp, parameters, getNextRunTime());
+			getHistoryPrefs().edit().putLong(MOST_RECENT_RUN_KEY, nowTimestamp).commit();
 			onRun(parameters);
 		}
 	}
@@ -656,46 +671,104 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		}
 	}
 	
+	private static boolean isDataRequestAcceptingPassiveData(Bundle dataRequest, Parameter[] availableParameters) {
+		boolean acceptOpportunisticData = true;
+		Parameter opportunisticParameter = Parameter.getAvailableParameter(availableParameters, Parameter.Builtin.OPPORTUNISTIC);
+		if (opportunisticParameter != null) {
+			acceptOpportunisticData = dataRequest.getBoolean(opportunisticParameter.getName(), (Boolean)opportunisticParameter.getValue());
+		}
+		return acceptOpportunisticData;
+	}
+	
+	private boolean isDataRequestSatisfied(Bundle dataRequest, Parameter[] availableParameters, long dataTime, long lastDataSentTime) {
+		Parameter periodParameter = Parameter.getAvailableParameter(availableParameters, Parameter.Builtin.PERIOD);
+		if (periodParameter == null) {
+			return true;
+		} else {
+			long period = dataRequest.getLong(periodParameter.getName(), (Long)periodParameter.getValue());
+			return dataTime >= (lastDataSentTime + period);
+		}
+	}
+	
 	/**
 	 * Send some values to each requesting pending intent
 	 * @param valuesIntent
 	 */
 	protected void _callback_registered(Intent valuesIntent, PendingIntent callback) {
-		// Send to all requesters
+		long epochTimestamp = valuesIntent.getLongExtra(TIMESTAMP, 0L);
+		Set<PendingIntent> callbacks = new HashSet<PendingIntent>();
+		if (callback != null) {
+			callbacks.add(callback);
+		}
+		ArrayList<Intent> requests =  null;
 		if (requestsIntent != null) {
-			boolean sentToCallback = (callback == null); // False if there is a specified callback
-			ArrayList<Intent> requests = requestsIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+			requests = requestsIntent.getParcelableArrayListExtra(INTERNAL_REQUESTS_KEY);
+		}
+
+		if (ACTION_DATA.equals(valuesIntent.getAction())) {
+			// Send to all requesters
 			if (requests != null && !requests.isEmpty()) {
+				JSONObject dataSentTimes = null;
+				try {
+					dataSentTimes = new JSONObject(getHistoryPrefs().getString(MOST_RECENT_DATA_BY_REQUEST_KEY, "{}"));
+				} catch (JSONException e) {
+					Log.e(TAG, "Unable to parse data sent history.");
+					dataSentTimes = new JSONObject();
+				}
+				
+				Parameter[] availableParameters = getAvailableParameters();
 				for (Intent request : requests) {
 					PendingIntent requesterCallback = request.getParcelableExtra(CALLBACK_KEY);
-					if (callback == null || requesterCallback.equals(callback)) {
-						sentToCallback = true;
-						long epochTimestamp = valuesIntent.getLongExtra(TIMESTAMP, 0L);
-						try {
-							if (ACTION_DATA.equals(valuesIntent.getAction())) {
-								setHistory(epochTimestamp, getPreviousRunTime(), getPreviousRunParams(), getNextRunTime());
-								Log.d(TAG, "Sent probe data at " + epochTimestamp);
+					ArrayList<Bundle> dataRequests = Utils.getArrayList(request.getExtras(), REQUESTS_KEY);
+					
+					for (Bundle dataRequest : dataRequests) {
+						String requestKey = normalizedStringRepresentation(dataRequest, getAvailableParameters());
+						long lastDataSentTime = dataSentTimes.optLong(requestKey);
+						// TODO: If data request accepts passive data, but also needs data enforced on a schedule
+						// we may need to make logic more complicated
+						if (isDataRequestSatisfied(dataRequest, availableParameters, epochTimestamp, lastDataSentTime)
+								|| isDataRequestAcceptingPassiveData(dataRequest, availableParameters)) {
+							callbacks.add(requesterCallback);
+							try {
+								dataSentTimes.put(requestKey, epochTimestamp);
+							} catch (JSONException e) {
+								Log.e(TAG, "Unable to store data sent time in .");
 							}
-							requesterCallback.send(this, 0, valuesIntent);
-						} catch (CanceledException e) {
-							Log.w(TAG, "Unable to send to canceled pending intent at " + epochTimestamp);
-							deadRequests.add(request);
 						}
 					}
 				}
+
+				// Save the data sent times
+				getHistoryPrefs().edit()
+				.putString(MOST_RECENT_DATA_BY_REQUEST_KEY, dataSentTimes.toString())
+				.putLong(MOST_RECENT_DATA_KEY, epochTimestamp)
+				.commit();
 			}
-			
-			// If this callback is not requesting, still send status and detail messages
-			if (callback != null && !sentToCallback) {
-				try {
-					callback.send(this, 0, valuesIntent);
-				} catch (CanceledException e) {
-					Log.w(TAG, "Unable to send to canceled pending intent");
+
+		} else {
+			// Add all
+			for (Intent request : requests) {
+				PendingIntent requesterCallback = request.getParcelableExtra(CALLBACK_KEY);
+				callbacks.add(requesterCallback);
+			}
+		}
+		
+
+		Log.d(TAG, "Sent probe data at " + epochTimestamp);
+		for (PendingIntent requesterCallback : callbacks) {
+			try {
+				requesterCallback.send(this, 0, valuesIntent);
+			} catch (CanceledException e) {
+				Log.w(TAG, "Unable to send to canceled pending intent at " + epochTimestamp);
+				Map<PendingIntent,Intent> callbacksToRequests = getCallbacksToRequests(requests);
+				Intent request = callbacksToRequests.get(requesterCallback);
+				if (request != null) {
+					deadRequests.add(request);
 				}
 			}
-			
-			updateRequests();
 		}
+		
+		updateRequests();
 	}
 	
 	
@@ -880,7 +953,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		 *
 		 */
 		public enum Builtin {
-			PASSIVE("PASSIVE", "Passive", "Whether the requester wants data they did not specifically request."),
+			OPPORTUNISTIC("OPPORTUNISTIC", "Opportunistic", "Whether the requester wants data they did not specifically request."),
 			DURATION("DURATION", "Duration", "Length of time probe will run for (seconds)"),
 			START("START_DATE", "Start Timestamp", "Date after which probe is allowed to run (seconds since epoch)"),
 			END("END_DATE", "End Timestamp", "Date before which probe is allowed to run (seconds since epoch)"),
@@ -952,10 +1025,40 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		public Bundle getBundle() {
 			return paramBundle;
 		}
+
+		public static Parameter getAvailableParameter(Parameter[] availableParameters, Builtin systemParam) {
+			for (Parameter p : availableParameters) {
+				if(systemParam.name.equals(p.getName())) {
+					return p;
+				}
+			}
+			return null;
+		}
+		
 	}
 	
 
 
+	public static String normalizedStringRepresentation(Bundle dataRequest, Parameter[] availableParameters) {
+		// We use JSONObject to ensure special characters are properly and consistently escaped during serialization
+		// But key order is not guaranteed, so we make many of them
+		List<String> representations = new ArrayList<String>();
+		for (Parameter parameter : availableParameters) {
+			String name = parameter.getName();
+			Object value = dataRequest.get(name);
+			if (value != null) {
+				JSONObject jsonObject = new JSONObject();
+				try {
+					jsonObject.put(name, value);
+					representations.add(jsonObject.toString());
+				} catch (JSONException e) {
+					Log.e(Utils.TAG, "Unable to serialize parameter name '" + name + "' with value '" + value + "'");
+				}
+			}
+		}
+		Collections.sort(representations);
+		return "[" + Utils.join(representations, ",") + "]";
+	}
 
 	
 	/**
