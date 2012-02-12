@@ -80,12 +80,13 @@ public class FileDirectoryArchive implements Archive<File> {
 	
 	public boolean contains(final File item) {
 		final String itemFilename = item.getName();
-		return archiveDir.list(new FilenameFilter() {
+		String[] files = archiveDir.list(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String filename) {
 				return itemFilename.equals(filename);			
 			}
-		}).length > 0;
+		});
+		return files != null && files.length > 0;
 	}
 	
 
