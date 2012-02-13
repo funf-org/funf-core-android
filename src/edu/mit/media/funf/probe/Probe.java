@@ -210,7 +210,11 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 
     			Long nextScheduledTime = scheduler.scheduleNextRun(this, requests);
     			Log.d(TAG, "Next scheduled time: " + nextScheduledTime);
-    			getHistoryPrefs().edit().putLong(NEXT_RUN_TIME_KEY, nextScheduledTime).commit();
+    			if (nextScheduledTime == null) {
+    				getHistoryPrefs().edit().remove(NEXT_RUN_TIME_KEY).commit();
+    			} else {
+    				getHistoryPrefs().edit().putLong(NEXT_RUN_TIME_KEY, nextScheduledTime).commit();
+    			}
     		} else if (ACTION_INTERNAL_CALLBACK_REGISTERED.equals(action)){
 				Intent callbackRegisteredIntent = intent.getParcelableExtra(INTERNAL_CALLBACK_INTENT);
 				PendingIntent callback = intent.getParcelableExtra(CALLBACK_KEY);
