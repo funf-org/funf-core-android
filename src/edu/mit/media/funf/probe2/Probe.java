@@ -21,6 +21,7 @@ public abstract class Probe implements ProbeRunnable {
 	 */
 	public Probe() {
 		state = State.DISABLED;
+		setConfig(null);
 	}
 	
 	public Probe(Context context) {
@@ -43,6 +44,27 @@ public abstract class Probe implements ProbeRunnable {
 		}
 		return context;
 	}
+	
+	/*****************************************
+	 * Probe Configuration
+	 *****************************************/
+	private Bundle config;
+	
+	/**
+	 * Changes the configuration for this probe.  Setting the configuration will disable the probe.
+	 * @param config
+	 */
+	public void setConfig(Bundle config) {
+		disable();
+		this.config = config == null ? new Bundle() : config;
+	}
+	protected Bundle getConfig() {
+		if (config == null) {
+			throw new RuntimeException("Config was never set for probe '" + getClass().getName() + "'");
+		}
+		return config;
+	}
+	
 
 	/*****************************************
 	 * Probe Data Listeners
