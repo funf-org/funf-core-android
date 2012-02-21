@@ -72,28 +72,49 @@ public class ProbeTest extends AndroidTestCase {
 	public void testIndempotence() {
 		assertEquals(Probe.State.DISABLED, testProbe.getState());
 		testProbe.disable();
-		assertStateChange(testProbe, Probe.State.DISABLED, null);
+		assertStateChange(testProbe, Probe.State.DISABLED);
 		
 		// Test multiple times to ensure it doesn't call onEnabled
 		testProbe.enable();
 		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.ENABLED);
 		testProbe.enable();
-		assertStateChange(testProbe, Probe.State.ENABLED, null);
+		assertStateChange(testProbe, Probe.State.ENABLED);
 		testProbe.enable();
-		assertStateChange(testProbe, Probe.State.ENABLED, null);
+		assertStateChange(testProbe, Probe.State.ENABLED);
 		
 		testProbe.disable();
 		assertStateChange(testProbe, Probe.State.DISABLED, TestProbe.DISABLED);
 	}
 	
-	private void assertStateChange(TestProbe theTestProbe, Probe.State correctState, String correctMessage) {
+	public void testConfigChange() {
+		testProbe.enable();
+		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.ENABLED);
+		testProbe.start();
+		assertStateChange(testProbe, Probe.State.RUNNING, TestProbe.STARTED);
+		testProbe.setConfig(null);
+		assertStateChange(testProbe, Probe.State.DISABLED, TestProbe.STOPPED, TestProbe.DISABLED);
+	}
+	
+	/**
+	 * Asserts that the current state is as defined at the end of the list of state changes.
+	 * If no state changes are provided, it is assumed that there should NOT be a state change.
+	 * @param theTestProbe
+	 * @param correctState
+	 * @param correctMessages
+	 */
+	private void assertStateChange(TestProbe theTestProbe, Probe.State correctState, String... correctMessages) {
 		try {
-			String message = testProbe.messageQueue.poll(100, TimeUnit.MILLISECONDS);
-			if (correctMessage == null) {
-				assertNull(message);
-			} else {
-				assertNotNull(message);
-				assertEquals(correctMessage, message);
+			if (correctMessages == null) {
+				correctMessages = new String[] { null };
+			}
+			for (String correctMessage : correctMessages) {
+				String message = testProbe.messageQueue.poll(100, TimeUnit.MILLISECONDS);
+				if (correctMessage == null) {
+					assertNull(message);
+				} else {
+					assertNotNull(message);
+					assertEquals(correctMessage, message);
+				}
 			}
 			assertEquals(correctState, testProbe.getState());
 		} catch (InterruptedException e) {
