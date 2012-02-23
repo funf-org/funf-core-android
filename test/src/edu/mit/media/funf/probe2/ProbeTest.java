@@ -10,7 +10,7 @@ public class ProbeTest extends AndroidTestCase {
 
 	private TestProbe testProbe;
 	
-	public class TestProbe extends Probe {
+	public class TestProbe extends Probe.Base implements Probe {
 		public BlockingQueue<String> messageQueue = new LinkedBlockingQueue<String>();
 		
 		public static final String 
