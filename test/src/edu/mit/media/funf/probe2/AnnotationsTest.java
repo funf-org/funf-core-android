@@ -8,6 +8,9 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 import android.test.AndroidTestCase;
 import android.text.Annotation;
 
@@ -75,5 +78,19 @@ public class AnnotationsTest extends AndroidTestCase {
 	public void testReflectionAccessToDefaults() throws IllegalAccessException, InstantiationException {
 
 		Annotation test = (Annotation) Probe.DefaultSchedule.class.newInstance();
+	}
+	
+	public void testGsonKeyOrderStability() {
+		Gson gson = new Gson();
+		JsonObject t1 = new JsonObject();
+		t1.addProperty("test1", 1);
+		t1.addProperty("test2", 2);
+		t1.addProperty("test3", 3);
+		System.out.println(gson.toJson(t1));
+		JsonObject t2 = new JsonObject();
+		t2.addProperty("test3", 3);
+		t2.addProperty("test2", 2);
+		t2.addProperty("test1", 1);
+		System.out.println(gson.toJson(t2));
 	}
 }

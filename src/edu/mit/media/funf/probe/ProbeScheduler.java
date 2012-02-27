@@ -31,5 +31,5 @@ public interface ProbeScheduler {
 	 * @param requests
 	 * @return
 	 */
-	public Long scheduleNextRun(Probe probe, Collection<Intent> requests);
+	public Double scheduleNextRun(Probe probe, Collection<Intent> requests);
 }

@@ -328,15 +328,15 @@ public final class Utils {
 		return false;
 	}
 	
-	public static long getTimestamp() {
+	public static double getTimestamp() {
 		return millisToSeconds(System.currentTimeMillis());
 	}
 	
-	public static long millisToSeconds(long millis) {
-		return millis/1000L;
+	public static double millisToSeconds(long millis) {
+		return ((double)millis)/1000;
 	}
 	
-	public static long secondsToMillis(long seconds) {
-		return seconds*1000L;
+	public static long secondsToMillis(double seconds) {
+		return (long)(seconds*1000);
 	}
 }

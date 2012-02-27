@@ -30,7 +30,6 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.Parameter;
@@ -91,7 +90,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 	 * @see edu.mit.media.funf.probe.ProbeScheduler#scheduleNextRun(edu.mit.media.funf.probe.Probe, android.content.Intent[])
 	 */
 	@Override
-	public Long scheduleNextRun(Probe probe, Collection<Intent> requests) {
+	public Double scheduleNextRun(Probe probe, Collection<Intent> requests) {
 		Parameter periodParam = getAvailableParameter(probe, Parameter.Builtin.PERIOD);
 		if (requests == null || periodParam == null) {
 			return null;

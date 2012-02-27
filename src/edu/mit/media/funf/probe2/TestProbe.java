@@ -13,7 +13,7 @@ import edu.mit.media.funf.probe2.Probe.RequiredPermissions;
 @Description("This probe collects some awesome stuff.  You should definitely enable it.")
 @RequiredFeatures({"android.hardware.bluetooth"})
 @RequiredPermissions({android.Manifest.permission.ACCESS_CHECKIN_PROPERTIES})
-@DefaultSchedule("{\"PERIOD\": 100}")
+@DefaultSchedule("{\"period\": 100}")
 @DefaultConfig("{}")
 public class TestProbe extends Base implements ContinuousProbe {
 

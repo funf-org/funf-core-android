@@ -1,5 +1,9 @@
 package edu.mit.media.funf.probe2;
 
+import static edu.mit.media.funf.Utils.TAG;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -10,18 +14,18 @@ import java.util.Map;
 import java.util.Set;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
-import android.text.Annotation;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
-import static edu.mit.media.funf.Utils.TAG;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import com.google.gson.JsonParser;
+
+import edu.mit.media.funf.JsonUtils;
 
 public interface Probe {
 	
@@ -131,7 +135,117 @@ public interface Probe {
 		public void onStateChanged(Probe probe);
 	}
 	
+	public class Identifier {
+		public static final String PROBE_SCHEME = "probe";
+		
+		/**
+		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for a probe with a specific config.
+		 * Need to ensure that your config string is consistently sorted.
+		 * @return
+		 */
+		public static Uri getProbeUri(String probeName, String config) {
+			String path = config == null ? "" : "/" + config;
+			return new Uri.Builder()
+					.scheme(PROBE_SCHEME)
+					.authority(probeName)
+					.path(path)
+					.build();
+		}
+		
+		/**
+		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for a probe with a specific config.
+		 * Will sort the JsonObject before serializing to the Uri, to ensure a consistent Uri.
+		 * @param probeName
+		 * @param config
+		 * @return
+		 */
+		public static Uri getProbeUri(String probeName, JsonObject config) {
+			return getProbeUri(probeName, 
+					(config == null) ? null : JsonUtils.deepSort(config).toString());
+		}
 
+		/**
+		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for a probe with a specific config.
+		 * Will sort the JsonObject before serializing to the Uri, to ensure a consistent Uri.
+		 * @param probeClass
+		 * @param config
+		 * @return
+		 */
+		public static Uri getProbeUri(Class<? extends Probe> probeClass, JsonObject config) {
+			return getProbeUri(probeClass.getName(), config);
+		}
+		
+		/**
+		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for a probe with a specific config.
+		 * @param probeClass
+		 * @param config
+		 * @return
+		 */
+		public static Uri getProbeUri(Class<? extends Probe> probeClass, String config) {
+			return getProbeUri(probeClass.getName(), config);
+		}
+		
+		/**
+		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for the probe instance.
+		 * Will sort the JsonObject before serializing to the Uri, to ensure a consistent Uri.
+		 * @param probe
+		 * @return
+		 */
+		public static Uri getProbeUri(Probe probe) {
+			return getProbeUri(probe.getClass(), probe.getConfig());
+		}
+		
+		/**
+		 * Returns true if Uri is a probe Uri.
+		 * @param probeUri
+		 * @return
+		 */
+		public static boolean isProbeUri(Uri probeUri) {
+			return PROBE_SCHEME.equalsIgnoreCase(probeUri.getScheme());
+		}
+		
+		private static void verifyProbeUri(Uri probeUri) {
+			if (!isProbeUri(probeUri)) {
+				throw new RuntimeException("Uri is not a probe Uri: " + probeUri.toString());
+			}
+		}
+		
+		/**
+		 * Returns the name of the probe in the Uri.
+		 * @param probeUri
+		 * @return
+		 */
+		public static String getProbeName(Uri probeUri) {
+			verifyProbeUri(probeUri);
+			return probeUri.getAuthority();
+		}
+		
+		/**
+		 * Returns the config in the probe Uri as a String.
+		 * @param probeUri
+		 * @return
+		 */
+		public static String getConfigString(Uri probeUri) {
+			verifyProbeUri(probeUri);
+			String path = probeUri.getPath();
+			return path == null || !path.startsWith("/") ? null : path.substring(1);
+		}
+		
+		/**
+		 * Returns the config in the probe Uri as a JsonObject.
+		 * @param probeUri
+		 * @return
+		 */
+		public static JsonObject getConfig(Uri probeUri) {
+			String configString = getConfigString(probeUri);
+			if (configString == null || configString.length() == 0) {
+				return null;
+			} else {
+				return (JsonObject)new JsonParser().parse(configString);
+			}
+		}
+	}
+	
 	/**
 	 * Types to represent the current state of the probe.
 	 * Provides the implementation of the ProbeRunnable state machine.
@@ -526,6 +640,24 @@ public interface Probe {
 		@Override
 		public void removeStateListener(StateListener listener) {
 			stateListeners.remove(listener);
+		}
+		
+		
+
+		public static Class<? extends Probe> getProbeClass(String probeDescriptor) {
+			// TODO: Implement uri signatures, and find best available class
+			try {
+			 	Class<?> theClass = Class.forName(probeDescriptor);
+				if (Probe.class.isAssignableFrom(theClass)) {
+					@SuppressWarnings("unchecked")
+					Class<? extends Probe> probeClass = (Class<? extends Probe>)theClass;
+					return probeClass;
+				}
+			} 
+			catch (ClassNotFoundException e) {
+				Log.e(TAG, "Probe does not exist: '" + probeDescriptor + "'", e);
+			}
+			return null;
 		}
 	}
 }

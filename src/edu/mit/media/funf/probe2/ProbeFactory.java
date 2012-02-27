@@ -1,7 +1,13 @@
 package edu.mit.media.funf.probe2;
 
 import static edu.mit.media.funf.Utils.TAG;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
+
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
@@ -14,7 +20,7 @@ import com.google.gson.JsonObject;
 public interface ProbeFactory {
 
 	/**
-	 * Returns the probe specified by the given name.  Name should be the fully qualified java class
+	 * Returns the probe specified by the given name and configuration.  Name should be the fully qualified java class
 	 * name of the probe.  (e.g. "edu.mit.media.funf.builtin.LocationProbe")
 	 * @param name
 	 * @param config
@@ -23,14 +29,22 @@ public interface ProbeFactory {
 	public Probe getProbe(String name, JsonObject config);
 	
 	/**
-	 * Returns the probe specified by the given name.  Name should be the fully qualified java class
-	 * name of the probe.  (e.g. "edu.mit.media.funf.builtin.LocationProbe")
+	 * Returns the probe specified by the class and configuration.
 	 * 
 	 * @param probeClass
 	 * @param config
 	 * @return
 	 */
 	public Probe getProbe(Class<? extends Probe> probeClass, JsonObject config);
+	
+	/**
+	 * Returns the probe specified by the uri.  (e.g. "probe://edu.mit.media.funf.builtin.LocationProbe")
+	 * 
+	 * @param probeClass
+	 * @param config
+	 * @return
+	 */
+	public Probe getProbe(Uri probeUri);
 	
 	
 	public class BasicProbeFactory implements ProbeFactory {
@@ -43,8 +57,8 @@ public interface ProbeFactory {
 			this.context = context.getApplicationContext();
 		}
 		
-		private static ProbeFactory instance;
-		public static ProbeFactory getInstance(Context context) {
+		private static BasicProbeFactory instance;
+		public static BasicProbeFactory getInstance(Context context) {
 			if (instance == null) {
 				synchronized (BasicProbeFactory.class) {
 					if (instance == null) {
@@ -56,18 +70,14 @@ public interface ProbeFactory {
 		}
 		
 		@Override
+		public Probe getProbe(Uri probeUri) {
+			return getProbe(Probe.Identifier.getProbeName(probeUri), Probe.Identifier.getConfig(probeUri));
+		}
+		
+		@Override
 		public Probe getProbe(String name, JsonObject config) {
-			// TODO: Implement uri signatures, and find best available class
-			try {
-				Class<?> theClass = Class.forName(name);
-				if (Probe.class.isAssignableFrom(theClass)) {
-					Class<? extends Probe> probeClass = (Class<? extends Probe>)theClass;
-					return getProbe(probeClass, config);
-				}
-			} catch (ClassNotFoundException e) {
-				Log.e(TAG, "Probe does not exist: '" + name + "'", e);
-			}
-			return null;
+			Class<? extends Probe> probeClass = Probe.Base.getProbeClass(name);
+			return probeClass == null ? null : getProbe(probeClass, config);
 		}
 
 		@Override
@@ -86,5 +96,89 @@ public interface ProbeFactory {
 			return null;
 		}
 		
+	}
+	
+	/****************************************
+	 * Caching Probe Factory
+	 *****************************************/
+	public class CachingProbeFactory implements ProbeFactory {
+		private BasicProbeFactory basicFactory;
+		private Map<Class<? extends Probe>,Map<JsonObject,Probe>> cache;  // (ProbeClass,Config) -> Probe
+		
+		private CachingProbeFactory(Context context) {
+			if (context == null) {
+				throw new RuntimeException("Context is required for BasicProbeFactory");
+			}
+			this.basicFactory =BasicProbeFactory.getInstance(context);
+			this.cache = new HashMap<Class<? extends Probe>, Map<JsonObject,Probe>>();
+		}
+		
+		private static CachingProbeFactory instance;
+		public static CachingProbeFactory getInstance(Context context) {
+			if (instance == null) {
+				synchronized (CachingProbeFactory.class) {
+					if (instance == null) {
+						instance = new CachingProbeFactory(context);
+					}
+				}
+			}
+			return instance;
+		}
+		
+		/**
+		 * Returns a cached probe of the same class and config, or null if it doesn't exist.
+		 * @param probeClass
+		 * @param config
+		 * @return
+		 */
+		private Probe getCachedProbe(Class<? extends Probe> probeClass, JsonObject config) {
+			Map<JsonObject,Probe> cacheByConfig = cache.get(probeClass);
+			return (cacheByConfig == null) ? null : cacheByConfig.get(config);
+		}
+		
+		/**
+		 * Cache the probe, overwriting any existing cached probe.
+		 * @param probe
+		 * @param config
+		 */
+		private void cacheProbe(Probe probe, JsonObject config) {
+			synchronized (cache) {
+				Class<? extends Probe> probeClass = probe.getClass();
+				Map<JsonObject,Probe> cacheByConfig = cache.get(probeClass);
+				if (cacheByConfig == null) {
+					cacheByConfig = new WeakHashMap<JsonObject, Probe>();
+					cache.put(probeClass, cacheByConfig);
+				}
+				cacheByConfig.put(config, probe);
+			}
+		}
+		
+		@Override
+		public Probe getProbe(Uri probeUri) {
+			return getProbe(Probe.Identifier.getProbeName(probeUri), Probe.Identifier.getConfig(probeUri));
+		}
+		
+		@Override
+		public Probe getProbe(String name, JsonObject config) {
+			Class<? extends Probe> probeClass = Probe.Base.getProbeClass(name);
+			return getProbe(probeClass, config);
+		}
+	
+		@Override
+		public Probe getProbe(Class<? extends Probe> probeClass, JsonObject config) {
+			Probe probe = getCachedProbe(probeClass, config);
+			if (probe == null) { // Avoid synchronized block on every call
+				synchronized (cache) {
+					probe = getCachedProbe(probeClass, config);
+					if (probe == null) {
+						probe = basicFactory.getProbe(probeClass, config);
+						if (probe != null) {
+							cacheProbe(probe, config);
+						}
+					}
+				}
+			}
+			return probe;
+		}
 	}
 }
