@@ -26,7 +26,7 @@ import static edu.mit.media.funf.AsyncSharedPrefs.async;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+
+import com.google.gson.JsonElement;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -338,5 +340,42 @@ public final class Utils {
 	
 	public static long secondsToMillis(double seconds) {
 		return (long)(seconds*1000);
+	}
+	
+	public static final long NANOS_IN_SECOND = 1000000000; // 10^9
+	private static long referenceNanos;
+	private static long referenceMillis;
+	private static double secondsOffset;
+	
+	/**
+	 * Aligns the nano seconds to the start of a new millisecond.
+	 * This should be called whenever device wakes up from sleep.
+	 */
+	public static void calibrateNanosConversion() {
+		long originalMillis = System.currentTimeMillis();
+		long updatedMillis = originalMillis;
+		while(originalMillis == updatedMillis) {
+			updatedMillis = System.currentTimeMillis();
+		}
+		referenceNanos = System.nanoTime();
+		referenceMillis = updatedMillis;
+		secondsOffset = millisToSeconds(referenceMillis) - (double)referenceNanos / (double)NANOS_IN_SECOND;
+	}
+	
+	/**
+	 * Converts uptime nanos to a real UTC timestamp in seconds.
+	 * @param nanos
+	 * @return
+	 */
+	public static double uptimeNanosToTimestamp(long nanos) {
+		long currentMillisAccordingToNanos = secondsToMillis(_uptimeNanosToTimestamp(System.nanoTime()));
+		if (Math.abs(currentMillisAccordingToNanos - System.currentTimeMillis()) > 1) {
+			calibrateNanosConversion();
+		}
+		return _uptimeNanosToTimestamp(nanos);
+	}
+	
+	private static double _uptimeNanosToTimestamp(long nanos) {
+		return ((double)nanos / (double)NANOS_IN_SECOND) + secondsOffset;
 	}
 }

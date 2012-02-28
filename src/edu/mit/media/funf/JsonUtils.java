@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -51,6 +52,31 @@ public class JsonUtils {
 		} 
 	}
 	
+	/**
+	 * Returns a deep copy of the JsonElement.  This is not thread safe.
+	 * @param el
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T extends JsonElement> T deepCopy(T el) {
+		if (el == null) {
+			return (T)JsonNull.INSTANCE;
+		} else if (el.isJsonArray()) {
+			JsonArray array = new JsonArray();
+			for (JsonElement subEl : el.getAsJsonArray()) {
+				array.add(deepCopy(subEl));
+			}
+			return (T)array;
+		} else if (el.isJsonObject()) {
+			JsonObject object = new JsonObject();
+			for (Map.Entry<String, JsonElement> entry : el.getAsJsonObject().entrySet()) {
+				object.add(entry.getKey(), deepCopy(entry.getValue()));
+			}
+			return (T)object;
+		} else {
+			return (T)el;
+		}
+	}
 
 	
 	/**

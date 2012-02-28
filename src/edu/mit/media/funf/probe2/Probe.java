@@ -22,10 +22,13 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import edu.mit.media.funf.JsonUtils;
+import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
 public interface Probe {
 	
@@ -297,6 +300,7 @@ public interface Probe {
 			protected void start(Base probe) {
 				if (probe instanceof Probe.StartableProbe) {
 					synchronized (probe) {
+						// TODO: Sleep lock
 						probe.state = RUNNING;
 						probe.onStart();
 					}
@@ -337,6 +341,7 @@ public interface Probe {
 			@Override
 			protected void stop(Base probe) {
 				synchronized (probe) {
+					// TODO: Release sleep lock
 					probe.state = ENABLED;
 					probe.onStop();
 				}
@@ -362,8 +367,7 @@ public interface Probe {
 
 	@DefaultSchedule
 	@DefaultConfig
-	public abstract class Base implements Probe {
-		
+	public abstract class Base implements Probe, BaseProbeKeys {
 		
 		/**
 		 * No argument constructor requires that setContext be called manually.
@@ -381,6 +385,15 @@ public interface Probe {
 			this(context);
 			setProbeFactory(factory);
 		}
+		
+		private Gson gson;
+		protected Gson getGson() {
+			if (gson == null) {
+				gson = new Gson();
+			}
+			return gson;
+		}
+		
 		// TODO: figure out how to get scheduler to use source data requests to schedule appropriately
 		// Probably will need to prototype with ActivityProbe
 		public Map<String,JsonObject> getSourceDataRequests() {
@@ -444,6 +457,8 @@ public interface Probe {
 			return config;
 		}
 		
+		
+		private JsonObject DEFAULT_CONFIG;
 		/**
 		 * Returns a copy of the default configuration that is used by the probe if no 
 		 * configuration is specified.  This is also used to enumerate the 
@@ -453,7 +468,34 @@ public interface Probe {
 		 * @return
 		 */
 		public JsonObject getDefaultConfig() {
-			return new JsonObject();
+			if (DEFAULT_CONFIG == null) {
+				DefaultConfig annotation = getClass().getAnnotation(DefaultConfig.class);
+				if (annotation == null) {
+					DEFAULT_CONFIG = new JsonObject();
+				} else {
+					try {
+						DEFAULT_CONFIG = new JsonParser().parse(annotation.value()).getAsJsonObject();
+					} catch (ClassCastException e) {
+						Log.e(TAG, "Bad @DefaultConfig for '" + getClass().getName() + "': " + annotation.value());
+						DEFAULT_CONFIG = new JsonObject();
+					} catch (IllegalStateException e) {
+						Log.e(TAG, "Bad @DefaultConfig for '" + getClass().getName() + "': " + annotation.value());
+						DEFAULT_CONFIG = new JsonObject();
+					}
+				}
+			}
+			return DEFAULT_CONFIG;
+		}
+		
+
+		/**
+		 * Returns the configuration 
+		 * @return
+		 */
+		public JsonObject getCompleteConfig() {
+			JsonObject config = getDefaultConfig();
+			JsonUtils.deepCopyOnto(getConfig(), config, true);
+			return config;
 		}
 		
 	
@@ -481,12 +523,22 @@ public interface Probe {
 		@Override
 		public void removeDataListener(DataListener listener) {
 			dataListeners.remove(listener);
+			// If no one is listening, stop using device resources
+			if (dataListeners.isEmpty()) {
+				disable();
+			}
 		}
 		
 		protected void sendData(JsonObject data) {
+			if (!data.has(TIMESTAMP)) {
+				data.addProperty(TIMESTAMP, Utils.getTimestamp());
+			}
+			if (!data.has(PROBE)) {
+				data.addProperty(PROBE, getClass().getName());
+			}
 			synchronized (dataListeners) {
 				for (DataListener listener : dataListeners) {
-					listener.onDataReceived(data);
+					listener.onDataReceived(JsonUtils.deepCopy(data));
 				}
 			}
 		}
@@ -604,12 +656,28 @@ public interface Probe {
 		private volatile Looper looper;
 		private volatile Handler handler;
 		
+		/**
+		 * Access to the probe thread's handler.
+		 * @return
+		 */
+		protected Handler getHandler() {
+			return handler;
+		}
+		
+		/**
+		 * @param msg
+		 * @return
+		 */
+		protected boolean handleMessage(Message msg) {
+			// For right now don't handle any messages, only runnables
+			return false;
+		}
+		
 		private class ProbeHandlerCallback implements Handler.Callback {
 	
 			@Override
 			public boolean handleMessage(Message msg) {
-				// TODO Auto-generated method stub
-				return false;
+				return Base.this.handleMessage(msg);
 			}
 			
 		}
