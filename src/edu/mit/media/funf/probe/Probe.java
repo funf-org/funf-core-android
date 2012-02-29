@@ -28,12 +28,18 @@ import android.os.PowerManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSerializer;
+import com.google.gson.TypeAdapterFactory;
 
+import edu.mit.media.funf.DataNormalizer;
+import edu.mit.media.funf.HashUtil;
 import edu.mit.media.funf.JsonUtils;
 import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.HashUtil.HashingType;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
 public interface Probe {
@@ -471,9 +477,18 @@ public interface Probe {
 		private Gson gson;
 		protected Gson getGson() {
 			if (gson == null) {
-				gson = new Gson(); 
+				gson = getGsonBuilder().create(); 
 			}
 			return gson;
+		}
+		
+		protected GsonBuilder getGsonBuilder() {
+			TypeAdapterFactory adapterFactory = getSerializationFactory();
+			GsonBuilder builder = new GsonBuilder();
+			if (adapterFactory != null) {
+				builder.registerTypeAdapterFactory(adapterFactory);
+			}
+			return builder;
 		}
 		
 		// TODO: figure out how to get scheduler to use source data requests to schedule appropriately
@@ -682,21 +697,25 @@ public interface Probe {
 			}
 		}
 		
-		protected void sendData(JsonObject data) {
+		protected void sendData(final JsonObject data) {
 			if (data == null) {
 				return;
-			}
-			Uri completeProbeUri = Identifier.getCompleteProbeUri(this);
-			if (!data.has(TIMESTAMP)) {
-				
-				data.addProperty(TIMESTAMP, Utils.getTimestamp());
-			}
-			if (!data.has(PROBE)) {
-				data.addProperty(PROBE, getClass().getName());
-			}
-			synchronized (dataListeners) {
-				for (DataListener listener : dataListeners) {
-					listener.onDataReceived(getCompleteProbeUri(), JsonUtils.deepCopy(data));
+			} else if (Thread.currentThread() != looper.getThread()) {
+				// Ensure the data send runs on the probe's thread
+				Message dataMessage = handler.obtainMessage(SEND_DATA_MESSAGE, data);
+				handler.sendMessage(dataMessage);
+			} else {
+				if (!data.has(TIMESTAMP)) {
+					data.addProperty(TIMESTAMP, Utils.getTimestamp());
+				}
+				// TODO: do we really need this if we are sending the complete probe uri?
+				if (!data.has(PROBE)) {
+					data.addProperty(PROBE, getClass().getName());
+				}
+				synchronized (dataListeners) {
+					for (DataListener listener : dataListeners) {
+						listener.onDataReceived(getCompleteProbeUri(), JsonUtils.deepCopy(data));
+					}
 				}
 			}
 		}
@@ -833,11 +852,18 @@ public interface Probe {
 			return false;
 		}
 		
+		protected static final int SEND_DATA_MESSAGE = 534334;
+		
 		private class ProbeHandlerCallback implements Handler.Callback {
 	
 			@Override
 			public boolean handleMessage(Message msg) {
-				return Base.this.handleMessage(msg);
+				if (msg.what == SEND_DATA_MESSAGE && msg.obj instanceof JsonObject) {
+					sendData((JsonObject)msg.obj);
+					return true;
+				} else {
+					return Base.this.handleMessage(msg);
+				}
 			}
 			
 		}
@@ -885,6 +911,41 @@ public interface Probe {
 			catch (ClassNotFoundException e) {
 				Log.e(TAG, "Probe does not exist: '" + probeDescriptor + "'", e);
 			}
+			return null;
+		}
+		
+		
+		/**********************************
+		 * Sensitive Data
+		 ********************************/
+		
+		@Configurable
+		private boolean hidSensitiveData = true;
+		
+		protected String sensitiveData(String data) {
+			return sensitiveData(data, null);
+		}
+		
+		protected String sensitiveData(String data, DataNormalizer<String> normalizer) {
+			if (hidSensitiveData) {
+				if (normalizer != null) {
+					data = normalizer.normalize(data);
+				}
+				return HashUtil.hashString(getContext(), data, HashingType.ONE_WAY_HASH);
+			} else {
+				return data;
+			}
+		}
+		
+		/**********************************
+		 * Custom serialization
+		 ********************************/
+
+		/**
+		 * Used to override the serialiazation technique for multiple types
+		 * @return
+		 */
+		protected TypeAdapterFactory getSerializationFactory() {
 			return null;
 		}
 	}
