@@ -21,9 +21,8 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
-import android.hardware.SensorManager;
-import android.os.Bundle;
-import edu.mit.media.funf.probe.SensorProbe;
+import edu.mit.media.funf.probe.Probe.Description;
+import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.LinearAccelerationSensorKeys;
 
 /**
@@ -34,17 +33,12 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.LinearAccelerationSensorKeys;
  * Android Reference http://developer.android.com/reference/android/hardware/SensorEvent.html
  *
  */
+@Description("Records a three dimensional vector indicating acceleration along each device axis, not including gravity.")
+@RequiredFeatures({"android.hardware.sensor.accelerometer","android.hardware.sensor.gyroscope"})
 public class LinearAccelerationSensorProbe extends SensorProbe implements LinearAccelerationSensorKeys {
 
 	public int getSensorType() {
 		return 10;  //SensorKeys.TYPE_LINEAR_ACCELERATION; // API Level 9
-	}
-
-	public String[] getRequiredFeatures() {
-		return new String[]{
-			"android.hardware.sensor.accelerometer",
-			"android.hardware.sensor.gyroscope"
-		};
 	}
 	
 	public String[] getValueNames() {
@@ -52,6 +46,4 @@ public class LinearAccelerationSensorProbe extends SensorProbe implements Linear
 			X, Y, Z
 		};
 	}
-
-
 }

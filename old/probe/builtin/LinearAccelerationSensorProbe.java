@@ -21,29 +21,37 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
-import android.hardware.Sensor;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
-import edu.mit.media.funf.probe.Probe.Description;
-import edu.mit.media.funf.probe.builtin.ProbeKeys.TemperatureSensorKeys;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import edu.mit.media.funf.probe.SensorProbe;
+import edu.mit.media.funf.probe.builtin.ProbeKeys.LinearAccelerationSensorKeys;
 
 /**
- * Used to record temperature.  Implementation depends on the device and does not exist on all devices.  
- *	Some will record temperature of battery, others temperature of CPU or environment.
+ * Records a three dimensional vector indicating acceleration along each device axis, not including gravity. All values have units of m/s^2. The coordinate system is the same as is used by the acceleration sensor.  
+ * The output of the accelerometer, gravity and linear-acceleration sensors obey the following relation:
+ * acceleration = gravity + linear-acceleration
+ * 
+ * Android Reference http://developer.android.com/reference/android/hardware/SensorEvent.html
  *
  */
-@Description("Returns sensor distance in centimeters or only a binary near/far measurement.")
-//@RequiredFeatures("android.hardware.sensor.temperature") // doesn't exist yet
-@DefaultSchedule(period=1200, duration=10)
-public class TemperatureSensorProbe extends SensorProbe implements TemperatureSensorKeys {
+public class LinearAccelerationSensorProbe extends SensorProbe implements LinearAccelerationSensorKeys {
 
 	public int getSensorType() {
-		return Sensor.TYPE_TEMPERATURE;
+		return 10;  //SensorKeys.TYPE_LINEAR_ACCELERATION; // API Level 9
+	}
+
+	public String[] getRequiredFeatures() {
+		return new String[]{
+			"android.hardware.sensor.accelerometer",
+			"android.hardware.sensor.gyroscope"
+		};
 	}
 	
 	public String[] getValueNames() {
 		return new String[] {
-			TEMPERATURE	
+			X, Y, Z
 		};
 	}
+
 
 }

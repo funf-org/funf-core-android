@@ -19,26 +19,25 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf.probe.builtin;
+package edu.mit.media.funf;
 
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
-import edu.mit.media.funf.probe.Probe.Description;
-import edu.mit.media.funf.probe.Probe.RequiredFeatures;
-import edu.mit.media.funf.probe.builtin.ProbeKeys.RotationVectorSensorKeys;
+/**
+ * Exceptions related to Funf ProbeKeys.
+ * @author alangardner
+ *
+ */
+public class ProbeExceptions {
 
-@Description("Returns sensor distance in centimeters or only a binary near/far measurement.")
-@RequiredFeatures("android.hardware.sensor.gyroscope")
-@DefaultSchedule(period=300, duration=15)
-public class RotationVectorSensorProbe extends SensorProbe implements RotationVectorSensorKeys {
+	/**
+	 * Used when attempting to put non-primitive or parcelable object into Bundle or SharedPreferences
+	 * @author alangardner
+	 *
+	 */
+	public static class UnstorableTypeException extends RuntimeException {
+		private static final long serialVersionUID = 8360917114397550065L;
 
-	public int getSensorType() {
-		return 11;  //SensorKeys.TYPE_ROTATION_VECTOR; // API Level 9
+		public UnstorableTypeException(final Class<?> objectClass) {
+			super("Can't store object of type: " + objectClass.getName());
+		}
 	}
-	
-	public String[] getValueNames() {
-		return new String[] {
-			X_SIN_THETA_OVER_2, Y_SIN_THETA_OVER_2, Z_SIN_THETA_OVER_2, COS_THETA_OVER_2
-		};
-	}
-
 }

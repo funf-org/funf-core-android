@@ -1,4 +1,4 @@
-package edu.mit.media.funf.probe2;
+package edu.mit.media.funf.probe;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -8,11 +8,11 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-
 import android.test.AndroidTestCase;
 import android.text.Annotation;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 public class AnnotationsTest extends AndroidTestCase {
 

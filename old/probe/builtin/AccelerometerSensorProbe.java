@@ -22,27 +22,33 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
-import edu.mit.media.funf.probe.Probe.Description;
-import edu.mit.media.funf.probe.builtin.ProbeKeys.TemperatureSensorKeys;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import edu.mit.media.funf.probe.SensorProbe;
+import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerSensorKeys;
 
 /**
- * Used to record temperature.  Implementation depends on the device and does not exist on all devices.  
- *	Some will record temperature of battery, others temperature of CPU or environment.
+ * Measures the acceleration applied to the device.  All values are in SI units (m/s^2).
+ * 
+ * More information in the Android Reference http://developer.android.com/reference/android/hardware/SensorEvent.html
  *
  */
-@Description("Returns sensor distance in centimeters or only a binary near/far measurement.")
-//@RequiredFeatures("android.hardware.sensor.temperature") // doesn't exist yet
-@DefaultSchedule(period=1200, duration=10)
-public class TemperatureSensorProbe extends SensorProbe implements TemperatureSensorKeys {
+public class AccelerometerSensorProbe extends SensorProbe implements AccelerometerSensorKeys {
 
 	public int getSensorType() {
-		return Sensor.TYPE_TEMPERATURE;
+		return Sensor.TYPE_ACCELEROMETER;
 	}
+
+	public String[] getRequiredFeatures() {
+		return new String[]{
+			"android.hardware.sensor.accelerometer"
+		};
+	}
+	
 	
 	public String[] getValueNames() {
 		return new String[] {
-			TEMPERATURE	
+				X, Y, Z
 		};
 	}
 

@@ -1,66 +1,125 @@
 package edu.mit.media.funf.probe;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import android.app.PendingIntent;
-import android.app.PendingIntent.CanceledException;
-import android.content.Intent;
 import android.test.AndroidTestCase;
-import android.util.Log;
-import edu.mit.media.funf.tests.ExampleService;
 
 public class ProbeTest extends AndroidTestCase {
 
+	private TestProbe testProbe;
 	
-	public void testPendingIntentDataTransfer() throws InterruptedException {
-		//Intent i = new Intent("edu.mit.media.funf.REQUEST");
-		//i.setType("edu.mit.media.funf.DATA/Location");
-		//i.putExtra("PARAMETERS", new Bundle[]{ new Bundle() });
-		Intent callbackIntent = new Intent(getContext(), ExampleService.class);
-		PendingIntent pi = PendingIntent.getService(getContext(), 0, callbackIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		//i.putExtra("CALLBACK", pi);
+	public class TestProbe extends Probe.Base implements Probe {
+		public BlockingQueue<String> messageQueue = new LinkedBlockingQueue<String>();
 		
-		Log.i("FunfTest", pi.getTargetPackage());
-		int resultCode = 0;
-		Intent dataIntent = new Intent();
-		dataIntent.putExtra("DATA1", 0);
-		try {
-			pi.send(getContext(), resultCode, dataIntent);
-		} catch (CanceledException e) {
-			// remove pi from send list
-			Log.i("FunfTest", "Canceled pending intent");
-			fail("Canceled pending intent");
+		public static final String 
+			ENABLED = "ENABLED",
+			DISABLED = "DISABLED",
+			STARTED = "STARTED",
+			STOPPED = "STOPPED";
+		
+		@Override
+		protected void onEnable() {
+			messageQueue.offer(ENABLED);
+		}
+
+		@Override
+		protected void onStart() {
+			messageQueue.offer(STARTED);
+		}
+
+		@Override
+		protected void onStop() {
+			messageQueue.offer(STOPPED);
+		}
+
+		@Override
+		protected void onDisable() {
+			messageQueue.offer(DISABLED);
 		}
 		
-		pi.cancel();
 		
-		try {
-			pi.send(getContext(), resultCode, dataIntent);
-		} catch (CanceledException e) {
-			// remove pi from send list
-			Log.i("FunfTest", "Canceled pending intent");
-		}
-		
-		Thread.sleep(5000L);
 	}
 	
-	
-	public void testStartServiceIntentOrder() {
-		Intent intent = new Intent(getContext(), ExampleService.class);
-		for (int i=0; i<50; i++) {
-			intent.putExtra("ORDER", i);
-			getContext().startService(intent);
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		testProbe = new TestProbe();
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		if (testProbe != null) {
+			testProbe.disable();
 		}
+		super.tearDown();
+	}
+
+	
+	public void testFullStateFlow() {
+		assertEquals(Probe.State.DISABLED, testProbe.getState());
+		testProbe.enable();
+		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.ENABLED);
+		testProbe.start();
+		assertStateChange(testProbe, Probe.State.RUNNING, TestProbe.STARTED);
+		testProbe.stop();
+		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.STOPPED);
+		testProbe.disable();
+		assertStateChange(testProbe, Probe.State.DISABLED, TestProbe.DISABLED);
+	}
+	
+	public void testIndempotence() {
+		assertEquals(Probe.State.DISABLED, testProbe.getState());
+		testProbe.disable();
+		assertStateChange(testProbe, Probe.State.DISABLED);
+		
+		// Test multiple times to ensure it doesn't call onEnabled
+		testProbe.enable();
+		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.ENABLED);
+		testProbe.enable();
+		assertStateChange(testProbe, Probe.State.ENABLED);
+		testProbe.enable();
+		assertStateChange(testProbe, Probe.State.ENABLED);
+		
+		testProbe.disable();
+		assertStateChange(testProbe, Probe.State.DISABLED, TestProbe.DISABLED);
+	}
+	
+	public void testConfigChange() {
+		testProbe.enable();
+		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.ENABLED);
+		testProbe.start();
+		assertStateChange(testProbe, Probe.State.RUNNING, TestProbe.STARTED);
+		testProbe.setConfig(null);
+		assertStateChange(testProbe, Probe.State.DISABLED, TestProbe.STOPPED, TestProbe.DISABLED);
+	}
+	
+	/**
+	 * Asserts that the current state is as defined at the end of the list of state changes.
+	 * If no state changes are provided, it is assumed that there should NOT be a state change.
+	 * @param theTestProbe
+	 * @param correctState
+	 * @param correctMessages
+	 */
+	private void assertStateChange(TestProbe theTestProbe, Probe.State correctState, String... correctMessages) {
 		try {
-			Thread.sleep(5000L);
+			if (correctMessages == null) {
+				correctMessages = new String[] { null };
+			}
+			for (String correctMessage : correctMessages) {
+				String message = testProbe.messageQueue.poll(100, TimeUnit.MILLISECONDS);
+				if (correctMessage == null) {
+					assertNull(message);
+				} else {
+					assertNotNull(message);
+					assertEquals(correctMessage, message);
+				}
+			}
+			assertEquals(correctState, testProbe.getState());
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			fail();
 		}
 	}
 	
-	public void testTimeUnit() {
-		assertEquals(1311937252000L, TimeUnit.SECONDS.convert(1311937252000L, TimeUnit.SECONDS));
-		assertEquals(1311937252, TimeUnit.SECONDS.convert(1311937252000L, TimeUnit.MILLISECONDS));
-	}
 }

@@ -69,7 +69,7 @@ public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 		// Insert file identifier information
 		String installationUuid = Utils.getInstallationId(context);
 		String fileUuid = UUID.randomUUID().toString();
-		double createdTime = Utils.getTimestamp();
+		double createdTime = Utils.getTimestamp().doubleValue();
 		db.execSQL(String.format("insert into %s (%s, %s, %s, %s) values ('%s', '%s', '%s', %d)", 
 				FILE_INFO_TABLE.name, 
 				COLUMN_DATABASE_NAME, COLUMN_INSTALLATION, COLUMN_UUID, COLUMN_CREATED,

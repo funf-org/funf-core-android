@@ -21,14 +21,12 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
-import android.app.PendingIntent;
-import android.app.PendingIntent.CanceledException;
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
-import edu.mit.media.funf.probe.Probe;
+import android.net.Uri;
+
+import com.google.gson.JsonObject;
+
+import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.ProbeTestCase;
-import edu.mit.media.funf.probe.Probe.Parameter;
 
 public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerSensorProbe> {
 
@@ -36,6 +34,23 @@ public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerSensorPro
 		super(AccelerometerSensorProbe.class);
 	}
 	
+	DataListener listener = new DataListener() {
+		@Override
+		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
+			System.out.println(completeProbeUri.toString() + " " + data.toString());
+		}
+	};
+	
+	
+	public void testData() throws InterruptedException {
+		AccelerometerSensorProbe probe = getProbe(null);
+		probe.addDataListener(listener);
+		probe.start();
+		Thread.sleep(100);
+		probe.removeDataListener(listener);
+	}
+	
+	/*
 	public void testEmptyBroadcast() throws CanceledException {
 		Intent empty = new Intent();
 		empty.putExtra("TEST", "Test");
@@ -80,6 +95,6 @@ public class AccelerometerProbeTest extends ProbeTestCase<AccelerometerSensorPro
 		}
 		stopProbe();
 	}
-	
+	*/
 
 }

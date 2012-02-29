@@ -49,7 +49,7 @@ import edu.mit.media.funf.CustomizedIntentService;
 import edu.mit.media.funf.FileUtils;
 import edu.mit.media.funf.IOUtils;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.probe.Probe;
+import edu.mit.media.funf.probe2.Probe;
 import edu.mit.media.funf.storage.BundleSerializer;
 import edu.mit.media.funf.storage.DatabaseService;
 import edu.mit.media.funf.storage.DefaultArchive;

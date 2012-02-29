@@ -1,5 +1,6 @@
-package edu.mit.media.funf.probe2;
+package edu.mit.media.funf.probe;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -18,10 +19,10 @@ import com.google.gson.JsonParser;
 
 import edu.mit.media.funf.JsonUtils;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.probe2.Probe.ContinuousProbe;
-import edu.mit.media.funf.probe2.Probe.DataListener;
-import edu.mit.media.funf.probe2.Probe.DefaultSchedule;
-import edu.mit.media.funf.probe2.Probe.StartableProbe;
+import edu.mit.media.funf.probe.Probe.ContinuousProbe;
+import edu.mit.media.funf.probe.Probe.DataListener;
+import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.probe.Probe.StartableProbe;
 
 /**
  * This service coordinates satisfying data requests by scheduling and running probes.
@@ -255,7 +256,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 			DataListener listener = listenerSatisfied.getKey();
 			Double lastSatisfied = listenerSatisfied.getValue();
 			if (lastSatisfied == null) {
-				nextRunTime = Double.valueOf(Utils.getTimestamp());
+				nextRunTime = Utils.getTimestamp().doubleValue();
 				break;
 			} else {
 				for (ProbeDataRequest request : requests.get(listener)) {

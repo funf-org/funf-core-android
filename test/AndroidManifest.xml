@@ -32,43 +32,6 @@
          Also for discovering probes to clean. -->
     <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
-        <service android:name="edu.mit.media.funf.probe.builtin.ActivityProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.AndroidInfoProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.ApplicationsProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.AudioFilesProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.BatteryProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.BluetoothProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.BrowserBookmarksProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.BrowserSearchesProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.CallLogProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.CellProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.ContactProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.HardwareInfoProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.ImagesProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.LocationProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.TimeOffsetProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.RunningApplicationsProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.ScreenProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.SMSProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.TelephonyProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.VideosProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.WifiProbe"></service>
-        
-        <service android:name="edu.mit.media.funf.probe.builtin.AccelerometerSensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.GravitySensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.GyroscopeSensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.LightSensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.LinearAccelerationSensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.MagneticFieldSensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.OrientationSensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.PressureSensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.ProximitySensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.RotationVectorSensorProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.TemperatureSensorProbe"></service>
-        
-        <service android:name="edu.mit.media.funf.probe.builtin.ProcessStatisticsProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.ServicesProbe"></service>
-        <service android:name="edu.mit.media.funf.probe.builtin.AccountsProbe"></service>
         
         <service android:name="edu.mit.media.funf.tests.ExampleService"></service>
     </application>

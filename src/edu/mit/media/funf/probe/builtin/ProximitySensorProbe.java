@@ -22,19 +22,24 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import edu.mit.media.funf.probe.SensorProbe;
+import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.probe.Probe.Description;
+import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ProximitySensorKeys;
 
+
+/**
+ * Returns sensor distance in centimeters or only a binary near/far measurement
+ * If binary, will return 0 or max range as defined by Sensor.getMaximumRange().
+ *
+ */
+@Description("Returns sensor distance in centimeters or only a binary near/far measurement.")
+@RequiredFeatures("android.hardware.sensor.proximity")
+@DefaultSchedule(period=300, duration=15)
 public class ProximitySensorProbe extends SensorProbe implements ProximitySensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_PROXIMITY;
-	}
-
-	public String[] getRequiredFeatures() {
-		return new String[]{
-			"android.hardware.sensor.proximity"
-		};
 	}
 	
 	public String[] getValueNames() {
@@ -42,15 +47,4 @@ public class ProximitySensorProbe extends SensorProbe implements ProximitySensor
 			DISTANCE
 		};
 	}
-	
-	@Override
-	protected long getDefaultDuration() {
-		return 15L;
-	}
-
-	@Override
-	protected long getDefaultPeriod() {
-		return 300L;
-	}
-
 }

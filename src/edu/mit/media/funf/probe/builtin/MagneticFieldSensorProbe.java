@@ -22,28 +22,21 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import android.hardware.SensorManager;
-import android.os.Bundle;
-import edu.mit.media.funf.probe.SensorProbe;
+import edu.mit.media.funf.probe.Probe.Description;
+import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.MagneticFieldSensorKeys;
 
+@Description("Records a three dimensional vector of the magnetic field.")
+@RequiredFeatures("android.hardware.sensor.compass")
 public class MagneticFieldSensorProbe extends SensorProbe implements MagneticFieldSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_MAGNETIC_FIELD;
 	}
-
-	public String[] getRequiredFeatures() {
-		return new String[]{
-			"android.hardware.sensor.compass"
-		};
-	}
-	
 	public String[] getValueNames() {
 		return new String[] {
 			X, Y, Z
 		};
 	}
-
-
+	
 }

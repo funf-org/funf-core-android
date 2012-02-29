@@ -1,4 +1,4 @@
-package edu.mit.media.funf.probe2;
+package edu.mit.media.funf.probe;
 
 import static edu.mit.media.funf.Utils.TAG;
 

@@ -22,21 +22,18 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import android.hardware.SensorManager;
-import android.os.Bundle;
-import edu.mit.media.funf.probe.SensorProbe;
+import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.probe.Probe.Description;
+import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.OrientationSensorKeys;
 
+@Description("Records a three dimensional vector of the magnetic field.")
+@RequiredFeatures("android.hardware.sensor.gyroscope")
+@DefaultSchedule(period=180, duration=15)
 public class OrientationSensorProbe extends SensorProbe implements OrientationSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_ORIENTATION;
-	}
-
-	public String[] getRequiredFeatures() {
-		return new String[]{
-			"android.hardware.sensor.gyroscope"
-		};
 	}
 	
 	public String[] getValueNames() {
@@ -44,17 +41,5 @@ public class OrientationSensorProbe extends SensorProbe implements OrientationSe
 			AZIMUTH, PITCH, ROLL
 		};
 	}
-
-	@Override
-	protected long getDefaultDuration() {
-		return 15L;
-	}
-
-	@Override
-	protected long getDefaultPeriod() {
-		return 180L;
-	}
-
-	
 
 }

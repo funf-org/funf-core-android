@@ -21,9 +21,8 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
-import android.hardware.SensorManager;
-import android.os.Bundle;
-import edu.mit.media.funf.probe.SensorProbe;
+import edu.mit.media.funf.probe.Probe.Description;
+import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.GravitySensorKeys;
 
 /**
@@ -33,17 +32,12 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.GravitySensorKeys;
  * Android Reference http://developer.android.com/reference/android/hardware/SensorEvent.html
  *
  */
+@Description("A three dimensional vector indicating the direction and magnitude of gravity. Units are m/s^2. The coordinate system is the same as is used by the acceleration sensor.")
+@RequiredFeatures({"android.hardware.sensor.accelerometer", "android.hardware.sensor.gyroscope"})
 public class GravitySensorProbe extends SensorProbe implements GravitySensorKeys {
 
 	public int getSensorType() {
 		return 9;  //SensorKeys.TYPE_GRAVITY; // API Level 9
-	}
-
-	public String[] getRequiredFeatures() {
-		return new String[]{
-			"android.hardware.sensor.accelerometer",
-			"android.hardware.sensor.gyroscope"
-		};
 	}
 	
 	public String[] getValueNames() {
@@ -51,6 +45,4 @@ public class GravitySensorProbe extends SensorProbe implements GravitySensorKeys
 			X, Y, Z
 		};
 	}
-
-
 }

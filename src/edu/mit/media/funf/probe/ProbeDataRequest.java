@@ -1,4 +1,4 @@
-package edu.mit.media.funf.probe2;
+package edu.mit.media.funf.probe;
 
 import android.net.Uri;
 

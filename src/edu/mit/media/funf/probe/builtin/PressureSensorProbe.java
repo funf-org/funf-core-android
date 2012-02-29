@@ -22,21 +22,15 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import android.hardware.SensorManager;
-import android.os.Bundle;
-import edu.mit.media.funf.probe.SensorProbe;
+import edu.mit.media.funf.probe.Probe.Description;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.PressureSensorKeys;
 
+@Description("Records a three dimensional vector of the magnetic field.")
+//@RequiredFeatures("android.hardware.sensor.barometer") // varies
 public class PressureSensorProbe extends SensorProbe implements PressureSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_PRESSURE;
-	}
-
-	public String[] getRequiredFeatures() {
-		return new String[]{
-			//"android.hardware.sensor.barometer" // varies
-		};
 	}
 	
 	public String[] getValueNames() {
@@ -44,6 +38,4 @@ public class PressureSensorProbe extends SensorProbe implements PressureSensorKe
 			PRESSURE
 		};
 	}
-
-
 }

@@ -22,20 +22,24 @@
 package edu.mit.media.funf;
 
 import static edu.mit.media.funf.AsyncSharedPrefs.async;
+import static edu.mit.media.funf.Utils.TAG;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import com.google.gson.JsonElement;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -45,7 +49,8 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.os.PowerManager;
 import android.util.Log;
-import edu.mit.media.funf.probe.ProbeExceptions.UnstorableTypeException;
+import edu.mit.media.funf.ProbeExceptions.UnstorableTypeException;
+import edu.mit.media.funf.probe.Probe.Configurable;
 
 public final class Utils {
 
@@ -246,8 +251,12 @@ public final class Utils {
 	}
 	
 	public static PowerManager.WakeLock getWakeLock(Context context) {
+		return getWakeLock(context, context.getClass().getName());
+	}
+	
+	public static PowerManager.WakeLock getWakeLock(Context context, String tag) {
 		PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-		PowerManager.WakeLock lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, context.getClass().getName());
+		PowerManager.WakeLock lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, tag);
 		lock.acquire();
 		return lock;
 	}
@@ -330,8 +339,35 @@ public final class Utils {
 		return false;
 	}
 	
-	public static double getTimestamp() {
-		return millisToSeconds(System.currentTimeMillis());
+	/**
+	 * @param fields
+	 * @param type
+	 * @return
+	 */
+	public static List<Field> getAllFields(List<Field> fields, Class<?> type) {
+	    return getAllFieldsWithAnnotation(fields, type, null);
+	}
+	
+	public static List<Field> getAllFieldsWithAnnotation(List<Field> fields, Class<?> type, Class<? extends Annotation> annotationType) {
+		for (Field field: type.getDeclaredFields()) {
+			if (annotationType == null || field.getAnnotation(annotationType) != null) {
+				fields.add(field);
+			}
+	    }
+
+	    if (type.getSuperclass() != null) {
+	        fields = getAllFieldsWithAnnotation(fields, type.getSuperclass(), annotationType);
+	    }
+
+	    return fields;
+	}
+
+	public static final int
+		NANO = 9,
+		MILLI = 3;
+	
+	public static BigDecimal getTimestamp() {
+		return BigDecimal.valueOf(System.currentTimeMillis(), MILLI);
 	}
 	
 	public static double millisToSeconds(long millis) {
@@ -342,10 +378,9 @@ public final class Utils {
 		return (long)(seconds*1000);
 	}
 	
-	public static final long NANOS_IN_SECOND = 1000000000; // 10^9
 	private static long referenceNanos;
 	private static long referenceMillis;
-	private static double secondsOffset;
+	private static BigDecimal secondsOffset;
 	
 	/**
 	 * Aligns the nano seconds to the start of a new millisecond.
@@ -359,23 +394,32 @@ public final class Utils {
 		}
 		referenceNanos = System.nanoTime();
 		referenceMillis = updatedMillis;
-		secondsOffset = millisToSeconds(referenceMillis) - (double)referenceNanos / (double)NANOS_IN_SECOND;
+		secondsOffset = BigDecimal.valueOf(referenceMillis, MILLI).subtract(BigDecimal.valueOf(referenceNanos, NANO));
 	}
 	
+	
+	private static final double CLOCK_OFFSET_TOLERANCE = 0.001;
 	/**
 	 * Converts uptime nanos to a real UTC timestamp in seconds.
 	 * @param nanos
 	 * @return
 	 */
-	public static double uptimeNanosToTimestamp(long nanos) {
-		long currentMillisAccordingToNanos = secondsToMillis(_uptimeNanosToTimestamp(System.nanoTime()));
-		if (Math.abs(currentMillisAccordingToNanos - System.currentTimeMillis()) > 1) {
+	public static BigDecimal uptimeNanosToTimestamp(long nanos) {
+		if (secondsOffset == null) {
 			calibrateNanosConversion();
+		}	else {
+			BigDecimal currentTimeStamp = getTimestamp();
+			long currentNanos = System.nanoTime();
+			if (_uptimeNanosToTimestamp(currentNanos).subtract(currentTimeStamp).abs().doubleValue() > CLOCK_OFFSET_TOLERANCE) {
+				calibrateNanosConversion();
+			}
 		}
 		return _uptimeNanosToTimestamp(nanos);
 	}
 	
-	private static double _uptimeNanosToTimestamp(long nanos) {
-		return ((double)nanos / (double)NANOS_IN_SECOND) + secondsOffset;
+	// Round to microseconds, because of the inaccuracy associated with our method of syncing the clocks
+	private static final MathContext NANO_PRECISION_CONTEXT = new MathContext(16, RoundingMode.HALF_EVEN);
+	private static BigDecimal _uptimeNanosToTimestamp(long nanos) {
+		return BigDecimal.valueOf(nanos, NANO).add(secondsOffset).round(NANO_PRECISION_CONTEXT);
 	}
 }

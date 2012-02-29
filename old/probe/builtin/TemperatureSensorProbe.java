@@ -22,8 +22,9 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
-import edu.mit.media.funf.probe.Probe.Description;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import edu.mit.media.funf.probe.SensorProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.TemperatureSensorKeys;
 
 /**
@@ -31,19 +32,32 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.TemperatureSensorKeys;
  *	Some will record temperature of battery, others temperature of CPU or environment.
  *
  */
-@Description("Returns sensor distance in centimeters or only a binary near/far measurement.")
-//@RequiredFeatures("android.hardware.sensor.temperature") // doesn't exist yet
-@DefaultSchedule(period=1200, duration=10)
 public class TemperatureSensorProbe extends SensorProbe implements TemperatureSensorKeys {
 
 	public int getSensorType() {
 		return Sensor.TYPE_TEMPERATURE;
+	}
+
+	public String[] getRequiredFeatures() {
+		return new String[]{
+			//"android.hardware.sensor.temperature"  doesn't exist yet
+		};
 	}
 	
 	public String[] getValueNames() {
 		return new String[] {
 			TEMPERATURE	
 		};
+	}
+
+	@Override
+	protected long getDefaultDuration() {
+		return 10L;
+	}
+	
+	@Override
+	protected long getDefaultPeriod() {
+		return 1200;
 	}
 
 }
