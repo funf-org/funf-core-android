@@ -7,6 +7,8 @@ import edu.mit.media.funf.probe.Probe.Base;
 
 public abstract class SimpleProbe<T> extends Base {
 	
+	// TODO: possibly integrate this into base, so that both impulse and continuous probes can make use of it
+	
 	@Override
 	protected GsonBuilder getGsonBuilder() {
 		GsonBuilder builder = super.getGsonBuilder();

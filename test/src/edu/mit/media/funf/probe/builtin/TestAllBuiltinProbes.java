@@ -28,6 +28,11 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
 			Log.i(TAG, completeProbeUri.toString() + " " + data.toString());
 		}
+
+		@Override
+		public void onDataCompleted(Uri completeProbeUri) {
+			Log.i(TAG, completeProbeUri.toString() + " Data complete!");
+		}
 	};
 	
 	private StateListener stateListener = new StateListener() {
@@ -70,9 +75,8 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 			config.addProperty("asdf", 1);
 			config.addProperty("zzzz", "__");
 			Probe probe = factory.getProbe(probeClass, config);
-			probe.addDataListener(listener);
 			probe.addStateListener(stateListener);
-			probe.enable();
+			probe.registerListener(listener);
 			if (probe instanceof StartableProbe) {
 				((StartableProbe) probe).start();
 			}
@@ -80,7 +84,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 			if (probe instanceof ContinuousProbe) {
 				((ContinuousProbe) probe).stop();
 			}
-			probe.disable();
+			probe.unregisterListener(listener);
 		}
 		// Run simultaneously
 		List<Probe> probes = new ArrayList<Probe>();
@@ -88,9 +92,8 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 			probes.add(factory.getProbe(probeClass, null));
 		}
 		for (Probe probe : probes) {
-			probe.addDataListener(listener);
 			probe.addStateListener(stateListener);
-			probe.enable();
+			probe.registerListener(listener);
 			if (probe instanceof StartableProbe) {
 				((StartableProbe) probe).start();
 			}
@@ -100,7 +103,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 			if (probe instanceof ContinuousProbe) {
 				((ContinuousProbe) probe).stop();
 			}
-			probe.disable();
+			probe.unregisterListener(listener);
 		}
 		
 		Thread.sleep(1000L); // Give probes time stop

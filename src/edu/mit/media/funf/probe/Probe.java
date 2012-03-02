@@ -764,6 +764,11 @@ public interface Probe {
 						listener.onDataReceived(getCompleteProbeUri(), JsonUtils.deepCopy(data));
 					}
 				}
+				synchronized (passiveDataListeners) {
+					for (DataListener listener : passiveDataListeners) {
+						listener.onDataReceived(getCompleteProbeUri(), JsonUtils.deepCopy(data));
+					}
+				}
 			}
 		}
 		
@@ -793,7 +798,7 @@ public interface Probe {
 			}
 		}
 		
-		public synchronized void enablePassive() {
+		protected synchronized void enablePassive() {
 			ensureLooperThreadExists();
 			handler.post(new Runnable() {
 				@Override
@@ -803,7 +808,7 @@ public interface Probe {
 			});
 		}
 	
-		public synchronized void start() {
+		protected synchronized void start() {
 			ensureLooperThreadExists();
 			handler.post(new Runnable() {
 				@Override
@@ -813,7 +818,7 @@ public interface Probe {
 			});
 		}
 	
-		public synchronized void stop() {
+		protected synchronized void stop() {
 			ensureLooperThreadExists();
 			handler.post(new Runnable() {
 				@Override
@@ -823,7 +828,7 @@ public interface Probe {
 			});
 		}
 	
-		public synchronized void disablePassive() {
+		protected synchronized void disablePassive() {
 			if (handler != null) {
 				handler.post(new Runnable() {
 					@Override
@@ -965,14 +970,14 @@ public interface Probe {
 		 ********************************/
 		
 		@Configurable
-		private boolean hidSensitiveData = true;
+		private boolean hideSensitiveData = true;
 		
 		protected String sensitiveData(String data) {
 			return sensitiveData(data, null);
 		}
 		
 		protected String sensitiveData(String data, DataNormalizer<String> normalizer) {
-			if (hidSensitiveData) {
+			if (hideSensitiveData) {
 				if (normalizer != null) {
 					data = normalizer.normalize(data);
 				}
