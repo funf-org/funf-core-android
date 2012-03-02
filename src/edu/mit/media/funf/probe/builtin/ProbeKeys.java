@@ -79,9 +79,10 @@ public class ProbeKeys {
 	
 	public static interface ActivityKeys extends BaseProbeKeys {
 		public static final String 
-		TOTAL_INTERVALS = "TOTAL_INTERVALS",
-		LOW_ACTIVITY_INTERVALS = "LOW_ACTIVITY_INTERVALS",
-		HIGH_ACTIVITY_INTERVALS = "HIGH_ACTIVITY_INTERVALS";
+		ACTIVITY_LEVEL = "ACTIVITY_LEVEL",
+		ACTIVITY_LEVEL_NONE = "none",
+		ACTIVITY_LEVEL_LOW = "low",
+		ACTIVITY_LEVEL_HIGH = "high";
 	}
 	
 	public static interface AndroidInfoKeys extends BaseProbeKeys {

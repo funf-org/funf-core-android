@@ -37,6 +37,6 @@ public class AccountsProbe extends SimpleProbe<Account> implements StartableProb
 		for (Account account : am.getAccounts()) {
 			sendData(account);
 		}
-		disable();
+		disablePassive();
 	}
 }

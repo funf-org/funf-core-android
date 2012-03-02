@@ -47,16 +47,6 @@ public interface Probe {
 	public static final boolean DEFAULT_OPPORTUNISTIC = true;
 	public static final boolean DEFAULT_STRICT = false;
 	
-	/**
-	 * Turns this probe on.  When enabled a probe may emit data.
-	 */
-	public void enable();
-	
-	
-	/**
-	 * Turns this probe off.  Disabled probes do not emit data.
-	 */
-	public void disable();
 	
 	/**
 	 * Set a Context to give this probe access to system resources.
@@ -81,7 +71,14 @@ public interface Probe {
 	 */
 	public JsonObject getCompleteConfig();
 	
+	/**
+	 * @return
+	 */
 	public Uri getProbeUri();
+	
+	/**
+	 * @return
+	 */
 	public Uri getCompleteProbeUri();
 	
 	/**
@@ -91,18 +88,30 @@ public interface Probe {
 	public void setProbeFactory(ProbeFactory factory);
 
 	/**
-	 * Listeners added to this probe will receive data callbacks from this probe.
+	 * Listeners added to this probe will receive data callbacks from this probe,
+	 * until this listener is unregistered.  The probe should continue to be active
+	 * and send data to this listener until it is unregistered.
 	 * This method is indempotent and thread safe.
 	 * @param listener
 	 */
-	public void addDataListener(DataListener listener);
+	public void registerListener(DataListener... listener);
+	
+	/**
+	 * @param listener
+	 */
+	public void registerPassiveListener(DataListener... listener);
 	
 	/**
 	 * Listeners removed from this probe will no longer receive data callbacks from this probe.
 	 * This method is indempotent and thread safe.
 	 * @param listener
 	 */
-	public void removeDataListener(DataListener listener);
+	public void unregisterListener(DataListener... listener);
+	
+	/**
+	 * @param listener
+	 */
+	public void unregisterPassiveListener(DataListener... listener);
 	
 
 	/**
@@ -202,6 +211,8 @@ public interface Probe {
 		 * @param data
 		 */
 		public void onDataReceived(Uri completeProbeUri, JsonObject data);
+		
+		public void onDataCompleted(Uri completeProbeUri);
 	}
 	
 
@@ -346,7 +357,7 @@ public interface Probe {
 			protected void enable(Base probe) {
 				synchronized (probe) {
 					probe.state = ENABLED;
-					probe.onEnable();
+					probe.onEnablePassive();
 					probe.notifyStateChange();
 				}
 			}
@@ -402,7 +413,7 @@ public interface Probe {
 			protected void disable(Base probe) {
 				synchronized (probe) {
 					probe.state = DISABLED;
-					probe.onDisable();
+					probe.onDisablePassive();
 					probe.notifyStateChange();
 					// Shutdown handler thread
 					probe.looper.quit();
@@ -550,7 +561,7 @@ public interface Probe {
 
 		@Override
 		public synchronized void setConfig(JsonObject config) {
-			disable();
+			disablePassive();
 			this.specifiedConfig = (config == null) ? null : new JsonObject();
 			this.completeConfig = null;
 			this.probeUri = null;
@@ -666,6 +677,7 @@ public interface Probe {
 	
 		
 		private Set<DataListener> dataListeners = Collections.synchronizedSet(new HashSet<DataListener>());
+		private Set<DataListener> passiveDataListeners = Collections.synchronizedSet(new HashSet<DataListener>());
 		
 		/**
 		 * Returns the set of data listeners.  Make sure to synchronize on this object, 
@@ -675,17 +687,52 @@ public interface Probe {
 			return dataListeners;
 		}
 		
+		/**
+		 * Returns the set of passive data listeners.  Make sure to synchronize on this object, 
+		 * if you plan to modify it or iterate over it.
+		 */
+		protected Set<DataListener> getPassiveDataListeners() {
+			return dataListeners;
+		}
+		
 		@Override
-		public void addDataListener(DataListener listener) {
-			dataListeners.add(listener);
+		public void registerListener(DataListener... listeners) {
+			for (DataListener listener : listeners) {
+				dataListeners.add(listener);
+			}
+			start();
 		}
 	
 		@Override
-		public void removeDataListener(DataListener listener) {
-			dataListeners.remove(listener);
+		public void unregisterListener(DataListener... listeners) {
+			for (DataListener listener : listeners) {
+				dataListeners.remove(listener);
+			}
 			// If no one is listening, stop using device resources
 			if (dataListeners.isEmpty()) {
-				disable();
+				stop();
+			}
+			if (passiveDataListeners.isEmpty()) {
+				disablePassive();
+			}
+		}
+		
+		@Override
+		public void registerPassiveListener(DataListener... listeners) {
+			for (DataListener listener : listeners) {
+				dataListeners.add(listener);
+			}
+			enablePassive();
+		}
+	
+		@Override
+		public void unregisterPassiveListener(DataListener... listeners) {
+			for (DataListener listener : listeners) {
+				dataListeners.remove(listener);
+			}
+			// If no one is listening, stop using device resources
+			if (dataListeners.isEmpty() && passiveDataListeners.isEmpty()) {
+				disablePassive();
 			}
 		}
 		
@@ -746,8 +793,7 @@ public interface Probe {
 			}
 		}
 		
-		@Override
-		public synchronized void enable() {
+		public synchronized void enablePassive() {
 			ensureLooperThreadExists();
 			handler.post(new Runnable() {
 				@Override
@@ -777,8 +823,7 @@ public interface Probe {
 			});
 		}
 	
-		@Override
-		public synchronized void disable() {
+		public synchronized void disablePassive() {
 			if (handler != null) {
 				handler.post(new Runnable() {
 					@Override
@@ -797,7 +842,7 @@ public interface Probe {
 		 * the device to stay awake consider implementing a StartableProbe, and
 		 * using the onStart method.
 		 */
-		protected void onEnable() {
+		protected void onEnablePassive() {
 			
 		}
 		
@@ -827,7 +872,7 @@ public interface Probe {
 		 * This method should be used to stop any passive listeners created in the onEnable method.
 		 * This is the time to cleanup and release any resources before the probe is destroyed.
 		 */
-		protected void onDisable() {
+		protected void onDisablePassive() {
 			
 		}
 		

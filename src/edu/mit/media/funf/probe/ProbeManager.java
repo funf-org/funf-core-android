@@ -1,6 +1,5 @@
 package edu.mit.media.funf.probe;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -81,20 +80,31 @@ public class ProbeManager extends Service implements ProbeFactory {
 			if (probe != null) {
 				Set<DataListener> listeners = requestSatisfiedTimestamps.get(intent.getData()).keySet();
 				//listeners.add(this);  // TODO: enable this to be a listener, for triggers
-				for (DataListener listener : listeners) {
-					probe.addDataListener(listener);
-				}
+				
 				if (ACTION_ENABLE_PROBE.equals(action)) {
-					probe.enable();
+					// TODO: clean this up, it is way to complicated
+					Set<DataListener> opportunisticListeners = new HashSet<DataListener>();
+					for (DataListener listener : listeners) {
+						 Set<ProbeDataRequest> dataRequests = requests.get(listener);
+						 boolean opportunistic = false;
+						 for (ProbeDataRequest dataRequest : dataRequests) {
+							 BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.Identifier.getProbeName(intent.getData())), dataRequest.getSchedule());
+							 opportunistic = opportunistic || schedule.isOpportunistic();
+						 }
+						 if (opportunistic) {
+							 opportunisticListeners.add(listener);
+						 }
+					}
+					probe.unregisterPassiveListener((DataListener[])opportunisticListeners.toArray());
 				} else if (ACTION_DISABLE_PROBE.equals(action)) {
-					probe.disable();
+					probe.unregisterPassiveListener((DataListener[])listeners.toArray());
 				} else if (ACTION_START_PROBE.equals(action) && probe instanceof StartableProbe) {
-					((StartableProbe)probe).start();
+					probe.registerListener((DataListener[])listeners.toArray());
 					if (probe instanceof ContinuousProbe) {
 						scheduleStop(intent.getData());
 					}
 				} else if (ACTION_STOP_PROBE.equals(action)  && probe instanceof ContinuousProbe) {
-					((ContinuousProbe)probe).stop();
+					probe.unregisterListener((DataListener[])listeners.toArray());
 				} 
 			}
 		} else if (ACTION_SCHEDULE.equals(action)) {
@@ -251,7 +261,6 @@ public class ProbeManager extends Service implements ProbeFactory {
 		Double nextRunTime = null;
 		Double minPeriod = null;
 		boolean strict = false;
-		boolean opportunistic = false;
 		for (Map.Entry<DataListener,Double> listenerSatisfied : requestSatisfiedTimestamps.get(probeUri).entrySet()) {
 			DataListener listener = listenerSatisfied.getKey();
 			Double lastSatisfied = listenerSatisfied.getValue();
@@ -270,15 +279,8 @@ public class ProbeManager extends Service implements ProbeFactory {
 							strict = strict || schedule.isStrict();
 						}
 					}
-
-					opportunistic = opportunistic || schedule.isOpportunistic();
 				}
 			}
-		}
-		
-		// Enable if we also are interested in opportunistic data
-		if (opportunistic) {
-			getProbe(probeUri).enable();
 		}
 
 		Intent i = new Intent(ACTION_START_PROBE, probeUri);

@@ -21,7 +21,7 @@ public class ScreenProbe extends Base implements ScreenKeys  {
 	private BroadcastReceiver screenReceiver;
 	
 	@Override
-	protected void onEnable() {
+	protected void onEnablePassive() {
 		IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
 		filter.addAction(Intent.ACTION_SCREEN_OFF);
 		screenReceiver = new BroadcastReceiver() {
@@ -43,7 +43,7 @@ public class ScreenProbe extends Base implements ScreenKeys  {
 	}
 
 	@Override
-	protected void onDisable() {
+	protected void onDisablePassive() {
 		getContext().unregisterReceiver(screenReceiver);
 	}
 
