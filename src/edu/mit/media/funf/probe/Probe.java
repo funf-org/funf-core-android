@@ -363,7 +363,7 @@ public interface Probe {
 			protected void enable(Base probe) {
 				synchronized (probe) {
 					probe.state = ENABLED;
-					probe.onEnablePassive();
+					probe.onEnable();
 					probe.notifyStateChange();
 				}
 			}
@@ -417,7 +417,7 @@ public interface Probe {
 			protected void disable(Base probe) {
 				synchronized (probe) {
 					probe.state = DISABLED;
-					probe.onDisablePassive();
+					probe.onDisable();
 					probe.notifyStateChange();
 					// Shutdown handler thread
 					probe.looper.quit();
@@ -565,7 +565,7 @@ public interface Probe {
 
 		@Override
 		public synchronized void setConfig(JsonObject config) {
-			disablePassive();
+			disable();
 			this.specifiedConfig = (config == null) ? null : new JsonObject();
 			this.completeConfig = null;
 			this.probeUri = null;
@@ -716,7 +716,7 @@ public interface Probe {
 				stop();
 			}
 			if (passiveDataListeners.isEmpty()) {
-				disablePassive();
+				disable();
 			}
 		}
 		
@@ -724,7 +724,7 @@ public interface Probe {
 			for (DataListener listener : listeners) {
 				dataListeners.add(listener);
 			}
-			enablePassive();
+			enable();
 		}
 	
 		public void unregisterPassiveListener(DataListener... listeners) {
@@ -733,7 +733,7 @@ public interface Probe {
 			}
 			// If no one is listening, stop using device resources
 			if (dataListeners.isEmpty() && passiveDataListeners.isEmpty()) {
-				disablePassive();
+				disable();
 			}
 		}
 		
@@ -792,7 +792,7 @@ public interface Probe {
 			}
 		}
 		
-		protected synchronized void enablePassive() {
+		protected final synchronized void enable() {
 			ensureLooperThreadExists();
 			handler.post(new Runnable() {
 				@Override
@@ -802,7 +802,7 @@ public interface Probe {
 			});
 		}
 	
-		protected synchronized void start() {
+		protected final synchronized void start() {
 			ensureLooperThreadExists();
 			handler.post(new Runnable() {
 				@Override
@@ -812,7 +812,7 @@ public interface Probe {
 			});
 		}
 	
-		protected synchronized void stop() {
+		protected final synchronized void stop() {
 			ensureLooperThreadExists();
 			handler.post(new Runnable() {
 				@Override
@@ -822,7 +822,7 @@ public interface Probe {
 			});
 		}
 	
-		protected synchronized void disablePassive() {
+		protected final synchronized void disable() {
 			if (handler != null) {
 				handler.post(new Runnable() {
 					@Override
@@ -841,7 +841,7 @@ public interface Probe {
 		 * the device to stay awake consider implementing a StartableProbe, and
 		 * using the onStart method.
 		 */
-		protected void onEnablePassive() {
+		protected void onEnable() {
 			
 		}
 		
@@ -871,7 +871,7 @@ public interface Probe {
 		 * This method should be used to stop any passive listeners created in the onEnable method.
 		 * This is the time to cleanup and release any resources before the probe is destroyed.
 		 */
-		protected void onDisablePassive() {
+		protected void onDisable() {
 			
 		}
 		

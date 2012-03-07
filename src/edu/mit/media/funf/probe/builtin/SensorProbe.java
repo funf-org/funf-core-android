@@ -37,8 +37,8 @@ public abstract class SensorProbe extends Base implements ContinuousProbe, Senso
 	private SensorEventListener sensorListener;
 	
 	@Override
-	protected void onEnablePassive() {
-		super.onEnablePassive();
+	protected void onEnable() {
+		super.onEnable();
 		sensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
 		sensor = sensorManager.getDefaultSensor(getSensorType());
 		final String[] valueNames = getValueNames();

@@ -24,9 +24,14 @@ public abstract class ImpulseProbe extends Base {
 		@Override
 		public void onStateChanged(Probe probe) {
 			if (getState() != State.RUNNING) {
-				unregisterListener((DataListener[])getDataListeners().toArray());
+				Set<DataListener> listeners = getDataListeners();
+				DataListener[] listenerArray = new DataListener[listeners.size()];
+				listeners.toArray(listenerArray);
+				unregisterListener(listenerArray);
 				synchronized (queuedListeners) {
-					registerListener((DataListener[])queuedListeners.toArray());
+					DataListener[] queuedListenerArray = new DataListener[queuedListeners.size()];
+					queuedListeners.toArray(queuedListenerArray);
+					registerListener(queuedListenerArray);
 					queuedListeners.clear();
 				}
 			}

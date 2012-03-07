@@ -22,7 +22,7 @@ public class ScreenProbe extends Base implements ContinuousProbe, ScreenKeys  {
 	private BroadcastReceiver screenReceiver;
 	
 	@Override
-	protected void onEnablePassive() {
+	protected void onEnable() {
 		IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
 		filter.addAction(Intent.ACTION_SCREEN_OFF);
 		screenReceiver = new BroadcastReceiver() {
@@ -54,7 +54,7 @@ public class ScreenProbe extends Base implements ContinuousProbe, ScreenKeys  {
 
 
 	@Override
-	protected void onDisablePassive() {
+	protected void onDisable() {
 		getContext().unregisterReceiver(screenReceiver);
 	}
 

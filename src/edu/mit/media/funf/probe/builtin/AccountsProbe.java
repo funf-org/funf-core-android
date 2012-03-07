@@ -36,6 +36,6 @@ public class AccountsProbe extends SimpleProbe<Account> implements AccountsKeys 
 		for (Account account : am.getAccounts()) {
 			sendData(account);
 		}
-		disablePassive();
+		disable();
 	}
 }

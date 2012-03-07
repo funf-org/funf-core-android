@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -65,6 +66,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 	public void onCreate() {
 		super.onCreate();
 		manager = (AlarmManager)getSystemService(ALARM_SERVICE);
+		Log.e("FunfJournal", "MANAGER: " + manager);
 		cacheFactory = ProbeFactory.CachingProbeFactory.getInstance(this);
 		requests = new WeakHashMap<Probe.DataListener, Set<ProbeDataRequest>>();
 		requestSatisfiedTimestamps = new HashMap<Uri, Map<DataListener,Double>>();
@@ -106,16 +108,24 @@ public class ProbeManager extends Service implements ProbeFactory {
 							 opportunisticListeners.add(listener);
 						 }
 					}
-					((PassiveProbe)probe).registerPassiveListener((DataListener[])opportunisticListeners.toArray());
+					DataListener[] opportunisticListenersArray = new DataListener[opportunisticListeners.size()];
+					opportunisticListeners.toArray(opportunisticListenersArray);
+					((PassiveProbe)probe).registerPassiveListener(opportunisticListenersArray);
 				} else if (ACTION_DISABLE_PASSIVE_PROBE.equals(action) && probe instanceof PassiveProbe) {
-					((PassiveProbe)probe).unregisterPassiveListener((DataListener[])listeners.toArray());
+					DataListener[] listenerArray = new DataListener[listeners.size()];
+					listeners.toArray(listenerArray);
+					((PassiveProbe)probe).unregisterPassiveListener(listenerArray);
 				} else if (ACTION_START_PROBE.equals(action)) {
-					probe.registerListener((DataListener[])listeners.toArray());
+					DataListener[] listenerArray = new DataListener[listeners.size()];
+					listeners.toArray(listenerArray);
+					probe.registerListener(listenerArray);
 					if (probe instanceof ContinuousProbe) {
 						scheduleStop(intent.getData());
 					}
 				} else if (ACTION_STOP_PROBE.equals(action)  && probe instanceof ContinuousProbe) {
-					((ContinuousProbe)probe).unregisterListener((DataListener[])listeners.toArray());
+					DataListener[] listenerArray = new DataListener[listeners.size()];
+					listeners.toArray(listenerArray);
+					((ContinuousProbe)probe).unregisterListener(listenerArray);
 				} 
 			}
 		} else if (ACTION_SCHEDULE.equals(action)) {
@@ -234,12 +244,14 @@ public class ProbeManager extends Service implements ProbeFactory {
 			}
 			
 			JsonObject schedule = defaultSchedule;
-			JsonUtils.deepCopyOnto(values, schedule, true);
+			if (values != null) {
+				JsonUtils.deepCopyOnto(values, schedule, true);
+			}
 			
-			try {period = schedule.get("period").getAsDouble(); } catch (ClassCastException e) {} catch (IllegalStateException e) {}
-			try {duration = schedule.get("duration").getAsDouble(); } catch (ClassCastException e) {} catch (IllegalStateException e) {}
-			try {opportunistic = schedule.get("opportunistic").getAsBoolean(); } catch (ClassCastException e) {} catch (IllegalStateException e) {}
-			try {opportunistic = schedule.get("strict").getAsBoolean(); } catch (ClassCastException e) {} catch (IllegalStateException e) {}
+			try {period = schedule.get("period").getAsDouble(); } catch (ClassCastException e) {} catch (IllegalStateException e) {} catch (NullPointerException e) {}
+			try {duration = schedule.get("duration").getAsDouble(); } catch (ClassCastException e) {} catch (IllegalStateException e) {} catch (NullPointerException e) {}
+			try {opportunistic = schedule.get("opportunistic").getAsBoolean(); } catch (ClassCastException e) {} catch (IllegalStateException e) {} catch (NullPointerException e) {}
+			try {opportunistic = schedule.get("strict").getAsBoolean(); } catch (ClassCastException e) {} catch (IllegalStateException e) {} catch (NullPointerException e) {}
 		}
 
 		public Double getPeriod() {
@@ -316,23 +328,28 @@ public class ProbeManager extends Service implements ProbeFactory {
 	}
 	
 	private void scheduleStop(Uri probeUri) {
-		Double maxDuration = null;
-		for (Map.Entry<DataListener,Double> listenerSatisfied : requestSatisfiedTimestamps.get(probeUri).entrySet()) {
-			DataListener listener = listenerSatisfied.getKey();
-			for (ProbeDataRequest request : requests.get(listener)) {
-				BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.Identifier.getProbeName(probeUri)), request.getSchedule());
-				Double duration = schedule.getDuration();
-				if (duration != null) {
-					maxDuration = (maxDuration == null) ? duration : Math.max(maxDuration, duration);
+		Class<? extends Probe> probeClass = Probe.Base.getProbeClass(Probe.Identifier.getProbeName(probeUri));
+		// Only continuous probes can be stopped
+		if (ContinuousProbe.class.isAssignableFrom(probeClass)) {
+			Double maxDuration = null;
+			for (Map.Entry<DataListener,Double> listenerSatisfied : requestSatisfiedTimestamps.get(probeUri).entrySet()) {
+				DataListener listener = listenerSatisfied.getKey();
+				for (ProbeDataRequest request : requests.get(listener)) {
+					BasicSchedule schedule = new BasicSchedule(probeClass, request.getSchedule());
+					Double duration = schedule.getDuration();
+					if (duration != null) {
+						maxDuration = (maxDuration == null) ? duration : Math.max(maxDuration, duration);
+					}
 				}
 			}
+			if (maxDuration != null) {
+				Intent i = new Intent(ACTION_STOP_PROBE, probeUri);
+				i.setClass(this, getClass());
+				PendingIntent pi = PendingIntent.getService(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+				long triggerAtTimeMillis = Utils.secondsToMillis(maxDuration);
+				manager.set(AlarmManager.RTC_WAKEUP, triggerAtTimeMillis, pi);
+			}
 		}
-		
-		Intent i = new Intent(ACTION_STOP_PROBE, probeUri);
-		i.setClass(this, getClass());
-		PendingIntent pi = PendingIntent.getService(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-		long triggerAtTimeMillis = Utils.secondsToMillis(maxDuration);
-		manager.set(AlarmManager.RTC_WAKEUP, triggerAtTimeMillis, pi);
 	}
 
 

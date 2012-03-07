@@ -1,11 +1,9 @@
 package edu.mit.media.funf.probe.builtin;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static edu.mit.media.funf.Utils.TAG;
 
-import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningTaskInfo;
@@ -13,6 +11,9 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.PowerManager;
 import android.util.Log;
+
+import com.google.gson.JsonObject;
+
 import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
@@ -111,6 +112,7 @@ public class RunningApplicationsProbe extends SimpleProbe<RunningTaskInfo> imple
 		
 		@Override
 		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
+			Log.d(TAG, "RunningApplications: " + data);
 			if (ScreenProbe.class.getName().equals(Probe.Identifier.getProbeName(completeProbeUri))) {
 				boolean screenOn = data.get(ScreenProbe.SCREEN_ON).getAsBoolean();
 				if (screenOn) {
@@ -128,8 +130,9 @@ public class RunningApplicationsProbe extends SimpleProbe<RunningTaskInfo> imple
 	};
 	
 	@Override
-	protected synchronized void enablePassive() {
-		super.enablePassive();
+	protected synchronized void onEnable() {
+		super.onEnable();
+		Log.d(TAG, "Running applications: Enable passive.");
 		getProbeFactory().getProbe(ScreenProbe.class, null).registerListener(screenListener);
 
 		// Set for current state
@@ -160,8 +163,8 @@ public class RunningApplicationsProbe extends SimpleProbe<RunningTaskInfo> imple
 	}
 
 	@Override
-	protected void onDisablePassive() {
-		super.onDisablePassive();
+	protected void onDisable() {
+		super.onDisable();
 		runningAppsPoller.reset();
 		getProbeFactory().getProbe(ScreenProbe.class, null).unregisterListener(screenListener);
 	}

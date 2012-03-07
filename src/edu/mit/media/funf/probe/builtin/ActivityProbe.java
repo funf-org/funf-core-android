@@ -22,8 +22,8 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 	private ActivityCounter activityCounter = new ActivityCounter();
 	
 	@Override
-	protected void onEnablePassive() {
-		super.onEnablePassive();
+	protected void onEnable() {
+		super.onEnable();
 		getAccelerometerProbe().registerPassiveListener(activityCounter);
 	}
 
@@ -40,8 +40,8 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 	}
 
 	@Override
-	protected void onDisablePassive() {
-		super.onDisablePassive();
+	protected void onDisable() {
+		super.onDisable();
 		getAccelerometerProbe().unregisterPassiveListener(activityCounter);
 	}
 
