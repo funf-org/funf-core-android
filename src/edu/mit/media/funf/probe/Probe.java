@@ -754,10 +754,6 @@ public interface Probe {
 				if (!data.has(TIMESTAMP)) {
 					data.addProperty(TIMESTAMP, Utils.getTimestamp());
 				}
-				// TODO: do we really need this if we are sending the complete probe uri?
-				if (!data.has(PROBE)) {
-					data.addProperty(PROBE, getClass().getName());
-				}
 				synchronized (dataListeners) {
 					for (DataListener listener : dataListeners) {
 						listener.onDataReceived(getCompleteProbeUri(), JsonUtils.deepCopy(data));

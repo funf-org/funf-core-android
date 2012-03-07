@@ -40,46 +40,46 @@ public class ProbeKeys {
 	
 	public static interface BaseProbeKeys {
 		public static final String 
-		PROBE = "PROBE",
+		PROBE = "probe",
 		// TODO: add probe version
-		TIMESTAMP = "TIMESTAMP";
+		TIMESTAMP = "timestamp";
 	}
 	
 	public static interface SensorKeys extends BaseProbeKeys {
 		public static final String 
-		MAXIMUM_RANGE = "MAXIMUM_RANGE",
-		NAME = "NAME",
-		POWER = "POWER",
-		RESOLUTION = "RESOLUTION",
-		TYPE = "TYPE",
-		VENDOR = "VENDOR",
-		VERSION = "VERSION",
-		SENSOR = "SENSOR",
-		EVENT_TIMESTAMP = "EVENT_TIMESTAMP",
-		ACCURACY = "ACCURACY";
+		MAXIMUM_RANGE = "maximumRange",
+		NAME = "name",
+		POWER = "power",
+		RESOLUTION = "resolution",
+		TYPE = "type",
+		VENDOR = "vendor",
+		VERSION = "version",
+		SENSOR = "sensor",
+		EVENT_TIMESTAMP = "eventTimestamp",
+		ACCURACY = "accuracy";
 	}
 	
 	public static interface AccelerometerFeaturesKeys extends BaseProbeKeys {
 		public static final String 
-		DIFF_FRAME_SECS = "DIFF_FRAME_SECS",
-		NUM_FRAME_SAMPLES = "NUM_FRAME_SAMPLES",
-		MEAN = "MEAN",
-		ABSOLUTE_CENTRAL_MOMENT = "ABSOLUTE_CENTRAL_MOMENT",
-		STANDARD_DEVIATION = "STANDARD_DEVIATION",
-		MAX_DEVIATION = "MAX_DEVIATION",
-		PSD_ACROSS_FREQUENCY_BANDS = "PSD_ACROSS_FREQUENCY_BANDS";
+		DIFF_FRAME_SECS = "diffFrameSecs",
+		NUM_FRAME_SAMPLES = "numFrameSamples",
+		MEAN = "mean",
+		ABSOLUTE_CENTRAL_MOMENT = "absoluteCentralMoment",
+		STANDARD_DEVIATION = "standardDeviation",
+		MAX_DEVIATION = "maxDeviation",
+		PSD_ACROSS_FREQUENCY_BANDS = "psdAcrossFrequencyBands";
 	}
 	
 	public static interface AccelerometerSensorKeys extends SensorKeys {
 		public static final String 
-		X = "X", 
-		Y = "Y", 
-		Z = "Z";	
+		X = "x", 
+		Y = "y", 
+		Z = "z";	
 	}
 	
 	public static interface ActivityKeys extends BaseProbeKeys {
 		public static final String 
-		ACTIVITY_LEVEL = "ACTIVITY_LEVEL",
+		ACTIVITY_LEVEL = "activityLevel",
 		ACTIVITY_LEVEL_NONE = "none",
 		ACTIVITY_LEVEL_LOW = "low",
 		ACTIVITY_LEVEL_HIGH = "high";
@@ -87,34 +87,34 @@ public class ProbeKeys {
 	
 	public static interface AndroidInfoKeys extends BaseProbeKeys {
 		public static final String 
-		FIRMWARE_VERSION = "FIRMWARE_VERSION",
-		BUILD_NUMBER = "BUILD_NUMBER",
-		SDK = "SDK";
+		FIRMWARE_VERSION = "firmwareVersion",
+		BUILD_NUMBER = "buildNumber",
+		SDK = "sdk";
 	}
 	
 	public static interface ApplicationsKeys extends BaseProbeKeys {
 		public static final String 
-		INSTALLED_APPLICATIONS = "INSTALLED_APPLICATIONS",
-		UNINSTALLED_APPLICATIONS = "UNINSTALLED_APPLICATIONS";
+		INSTALLED_APPLICATIONS = "installedApplications",
+		UNINSTALLED_APPLICATIONS = "uninstalledApplications";
 	}
 	
 	public static interface AudioFeaturesKeys extends BaseProbeKeys {
 		public static final String 
-		DIFF_SECS = "DIFF_SECS",
-		L1_NORM = "L1_NORM",
-		L2_NORM = "L2_NORM",
-		LINF_NORM = "LINF_NORM",
-		PSD_ACROSS_FREQUENCY_BANDS = "PSD_ACROSS_FREQUENCY_BANDS",
-		MFCCS = "MFCCS";
+		DIFF_SECS = "diffSecs",
+		L1_NORM = "l1Norm",
+		L2_NORM = "l2Norm",
+		LINF_NORM = "linfNorm",
+		PSD_ACROSS_FREQUENCY_BANDS = "psdAcrossFrequencyBands",
+		MFCCS = "mfccs";
 	}
 	
 	public static interface AudioFilesKeys extends BaseProbeKeys, android.provider.MediaStore.Audio.AudioColumns {
-		public static final String AUDIO_FILES = "AUDIO_FILES";
+		public static final String AUDIO_FILES = "audioFiles";
 	}
 	
 	public static interface BatteryKeys extends BaseProbeKeys {
 		public static final String 
-		ICON_SMALL = "icon-small",
+		ICON_SMALL = "iconSmall",
 		PRESENT = "present",
 		SCALE = "scale",
 		LEVEL = "level",
@@ -127,19 +127,19 @@ public class ProbeKeys {
 	
 	public static interface BluetoothKeys extends BaseProbeKeys {
 		public static final String 
-		DEVICES = "DEVICES";
+		DEVICES = "devices";
 	}
 	
 	public static class BrowserBookmarksKeys extends android.provider.Browser.BookmarkColumns implements BaseProbeKeys {
-		public static final String BOOKMARKS = "BOOKMARKS";
+		public static final String BOOKMARKS = "bookmarks";
 	}
 	
 	public static class BrowserSearchesKeys extends android.provider.Browser.SearchColumns implements BaseProbeKeys {
-		public static final String SEARCHES = "SEARCHES";
+		public static final String SEARCHES = "searches";
 	}
 	
 	public static class CallLogKeys extends android.provider.CallLog.Calls implements BaseProbeKeys {
-		public static final String CALLS = "CALLS";
+		public static final String CALLS = "calls";
 	}
 	
 	public static interface CellKeys extends BaseProbeKeys {
@@ -157,155 +157,155 @@ public class ProbeKeys {
 	}
 	
 	public static interface ContactKeys extends BaseProbeKeys {
-		public static final String CONTACT_DATA = "CONTACT_DATA";
+		public static final String CONTACT_DATA = "contactData";
 		// Cannot extend android final class android.provider.ContactsContract.Data, or inherit from protected interfaces
 	}
 	
 	public static interface GravitySensorKeys extends SensorKeys {
 		public static final String 
-		X = "X", 
-		Y = "Y", 
-		Z = "Z";	
+		X = "x", 
+		Y = "y", 
+		Z = "z";	
 	}
 	
 	public static interface GyroscopeSensorKeys extends SensorKeys {
 		public static final String 
-		X = "X", 
-		Y = "Y", 
-		Z = "Z";	
+		X = "x", 
+		Y = "y", 
+		Z = "z";	
 	}
 	
 	public static interface HardwareInfoKeys extends BaseProbeKeys {
 		public static final String 
-		WIFI_MAC = "WIFI_MAC", 
-		BLUETOOTH_MAC = "BLUETOOTH_MAC", 
-		ANDROID_ID = "ANDROID_ID",
-		BRAND = "BRAND", 
-		MODEL = "MODEL", 
-		DEVICE_ID = "DEVICE_ID";	
+		WIFI_MAC = "wifiMac", 
+		BLUETOOTH_MAC = "bluetoothMac", 
+		ANDROID_ID = "androidId",
+		BRAND = "brand", 
+		MODEL = "model", 
+		DEVICE_ID = "deviceId";	
 	}
 	
 	public static interface ImagesKeys extends BaseProbeKeys, android.provider.MediaStore.Images.ImageColumns {
 		public static final String 
-		IMAGES = "IMAGES";	
+		IMAGES = "images";	
 	}
 	
 	public static interface LightSensorKeys extends SensorKeys {
 		public static final String 
-		LUX = "LUX";	
+		LUX = "lux";	
 	}
 	
 	public static interface LinearAccelerationSensorKeys extends SensorKeys {
 		public static final String 
-		X = "X", 
-		Y = "Y", 
-		Z = "Z";	
+		X = "x", 
+		Y = "y", 
+		Z = "z";	
 	}
 	
 	public static interface LocationKeys extends BaseProbeKeys {
 		public static final String 
-		LOCATION = "LOCATION";
+		LOCATION = "location";
 	}
 	
 	public static interface MagneticFieldSensorKeys extends SensorKeys {
 		public static final String 
-		X = "X", 
-		Y = "Y", 
-		Z = "Z";
+		X = "x", 
+		Y = "y", 
+		Z = "z";
 	}
 	
 	public static interface OrientationSensorKeys extends SensorKeys {
 		public static final String 
-		AZIMUTH = "AZIMUTH", 
-		PITCH = "PITCH", 
-		ROLL = "ROLL";
+		AZIMUTH = "azimuth", 
+		PITCH = "pitch", 
+		ROLL = "roll";
 	}
 	
 	public static interface PressureSensorKeys extends SensorKeys {
 		public static final String 
-		PRESSURE = "PRESSURE";
+		PRESSURE = "pressure";
 	}
 	
 	public static interface ProximitySensorKeys extends SensorKeys {
 		public static final String 
-		DISTANCE = "DISTANCE";
+		DISTANCE = "distance";
 	}
 	
 	public static interface RotationVectorSensorKeys extends SensorKeys {
 		public static final String 
-		X_SIN_THETA_OVER_2 = "X_SIN_THETA_OVER_2", 
-		Y_SIN_THETA_OVER_2 = "Y_SIN_THETA_OVER_2", 
-		Z_SIN_THETA_OVER_2 = "Z_SIN_THETA_OVER_2",
-		COS_THETA_OVER_2 = "COS_THETA_OVER_2";
+		X_SIN_THETA_OVER_2 = "xSinThetaOver2", 
+		Y_SIN_THETA_OVER_2 = "ySinThetaOver2", 
+		Z_SIN_THETA_OVER_2 = "zSinThetaOver2",
+		COS_THETA_OVER_2 = "cosThetaOver2";
 	}
 	
 	public static interface RunningApplicationsKeys extends BaseProbeKeys {
 		public static final String 
-		RUNNING_TASKS = "RUNNING_TASKS";
+		RUNNING_TASKS = "runningTasks";
 	}
 	
 	public static interface ScreenKeys extends BaseProbeKeys {
 		public static final String 
-		SCREEN_ON = "SCREEN_ON";
+		SCREEN_ON = "screenOn";
 	}
 	
 	public static interface SMSKeys extends BaseProbeKeys, AndroidInternal.TextBasedSmsColumns {
 		public static final String 
-		MESSAGES = "MESSAGES";
+		MESSAGES = "messages";
 	}
 	
 	public static interface TelephonyKeys extends BaseProbeKeys {
 		public static final String 
-		CALL_STATE = "CALL_STATE",
-		DEVICE_ID = "DEVICE_ID",
-		DEVICE_SOFTWARE_VERSION = "DEVICE_SOFTWARE_VERSION",
-		LINE_1_NUMBER = "LINE_1_NUMBER",
-		NETWORK_COUNTRY_ISO = "NETWORK_COUNTRY_ISO",
-		NETWORK_OPERATOR = "NETWORK_OPERATOR",
-		NETWORK_OPERATOR_NAME = "NETWORK_OPERATOR_NAME",
-		NETWORK_TYPE = "NETWORK_TYPE",
-		PHONE_TYPE = "PHONE_TYPE",
-		SIM_COUNTRY_ISO = "SIM_COUNTRY_ISO",
-		SIM_OPERATOR = "SIM_OPERATOR",
-		SIM_OPERATOR_NAME = "SIM_OPERATOR_NAME",
-		SIM_SERIAL_NUMBER = "SIM_SERIAL_NUMBER",
-		SIM_STATE = "SIM_STATE",
-		SUBSCRIBER_ID = "SUBSCRIBER_ID",
-		VOICEMAIL_ALPHA_TAG = "VOICEMAIL_ALPHA_TAG",
-		VOICEMAIL_NUMBER = "VOICEMAIL_NUMBER",
-		HAS_ICC_CARD = "HAS_ICC_CARD";
+		CALL_STATE = "callState",
+		DEVICE_ID = "deviceId",
+		DEVICE_SOFTWARE_VERSION = "deviceSoftwareVersion",
+		LINE_1_NUMBER = "line1Number",
+		NETWORK_COUNTRY_ISO = "networkCountryIso",
+		NETWORK_OPERATOR = "networkOperator",
+		NETWORK_OPERATOR_NAME = "networkOperatorName",
+		NETWORK_TYPE = "networkType",
+		PHONE_TYPE = "phoneType",
+		SIM_COUNTRY_ISO = "simCountryIso",
+		SIM_OPERATOR = "simOperator",
+		SIM_OPERATOR_NAME = "simOperatorName",
+		SIM_SERIAL_NUMBER = "simSerialNumber",
+		SIM_STATE = "simState",
+		SUBSCRIBER_ID = "subscriberId",
+		VOICEMAIL_ALPHA_TAG = "voicemailAlphaTag",
+		VOICEMAIL_NUMBER = "voicemailNumber",
+		HAS_ICC_CARD = "hassIccCard";
 	}
 	
 	public static interface TemperatureSensorKeys extends SensorKeys {
 		public static final String 
-		TEMPERATURE = "TEMPERATURE";
+		TEMPERATURE = "temperature";
 	}
 	
 	public static interface TimeOffsetKeys extends BaseProbeKeys {
 		public static final String 
-		TIME_OFFSET = "TIME_OFFSET";
+		TIME_OFFSET = "timeOffset";
 	}
 	
 	public static interface VideosKeys extends BaseProbeKeys, android.provider.MediaStore.Video.VideoColumns {
 		public static final String 
-		VIDEOS = "VIDEOS";	
+		VIDEOS = "videos";	
 	}
 	
 	public static interface WifiKeys extends BaseProbeKeys {
 		public static final String 
-		SCAN_RESULTS = "SCAN_RESULTS";
+		SCAN_RESULTS = "scanResults";
 	}
 	
 	public static interface ServicesKeys extends BaseProbeKeys {
 		public static final String 
-		RUNNING_SERVICES = "RUNNING_SERVICES";
+		RUNNING_SERVICES = "runningServices";
 	}
 	
 	public static interface AccountsKeys extends BaseProbeKeys {
 		public static final String 
-		ACCOUNTS = "ACCOUNTS",
-		NAME = "NAME",
-		TYPE = "TYPE";
+		ACCOUNTS = "accounts",
+		NAME = "name",
+		TYPE = "type";
 	}
 	
 	public interface AndroidInternal {
@@ -316,7 +316,7 @@ public class ProbeKeys {
 	
 		public interface Sms extends TextBasedSmsColumns {
 			public static final Uri CONTENT_URI = Uri.parse("content://sms");
-			public static final String MESSAGES = "MESSAGES";
+			public static final String MESSAGES = "messages";
 			/* NOTE: other fields and methods not copied */
 		}
 		

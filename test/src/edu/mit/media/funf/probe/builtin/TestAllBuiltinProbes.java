@@ -92,7 +92,9 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		}
 		Thread.sleep(100L);
 		for (Probe probe : probes) {
-			((ContinuousProbe)probe).unregisterListener(listener);
+			if (probe instanceof ContinuousProbe) {
+				((ContinuousProbe)probe).unregisterListener(listener);
+			}
 		}
 		
 		Thread.sleep(1000L); // Give probes time stop
