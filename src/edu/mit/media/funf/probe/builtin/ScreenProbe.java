@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.probe.Probe.Base;
+import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Description;
 import edu.mit.media.funf.probe.Probe.DisplayName;
@@ -16,7 +17,7 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.ScreenKeys;
 @DisplayName("Screen On/Off")
 @Description("Records when the screen turns off and on.")
 @DefaultSchedule(opportunistic=true)
-public class ScreenProbe extends Base implements ScreenKeys  {
+public class ScreenProbe extends Base implements ContinuousProbe, ScreenKeys  {
 
 	private BroadcastReceiver screenReceiver;
 	
@@ -41,6 +42,16 @@ public class ScreenProbe extends Base implements ScreenKeys  {
 		};
 		getContext().registerReceiver(screenReceiver, filter);
 	}
+	
+	
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		stop(); // Passive Only, Don't ever keep the device awake
+	}
+
+
 
 	@Override
 	protected void onDisablePassive() {

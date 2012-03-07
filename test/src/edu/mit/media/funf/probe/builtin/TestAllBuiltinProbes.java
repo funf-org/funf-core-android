@@ -56,6 +56,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		PressureSensorProbe.class,
 		ProximitySensorProbe.class,
 		RotationVectorSensorProbe.class,
+		RunningApplicationsProbe.class,
 		ScreenProbe.class,
 		TemperatureSensorProbe.class
 	};
@@ -90,7 +91,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 			probe.addStateListener(stateListener);
 			probe.registerListener(listener);
 		}
-		Thread.sleep(100L);
+		Thread.sleep(10000L);
 		for (Probe probe : probes) {
 			if (probe instanceof ContinuousProbe) {
 				((ContinuousProbe)probe).unregisterListener(listener);

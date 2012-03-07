@@ -11,6 +11,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.IBinder;
 
 import com.google.gson.JsonObject;
@@ -44,10 +45,20 @@ public class ProbeManager extends Service implements ProbeFactory {
 	private Map<Uri,Map<Probe.DataListener,Double>> requestSatisfiedTimestamps; // Map used in place of set only for WeakRefs
 	private AlarmManager manager;
 
+	/**
+	 * Binder interface to the probe
+	 */
+	public class LocalBinder extends Binder {
+		public ProbeManager getService() {
+			return ProbeManager.this;
+		}
+	}
+
+	private final IBinder binder = new LocalBinder();
+
 	@Override
-	public IBinder onBind(Intent arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public IBinder onBind(Intent intent) {
+		return binder;
 	}
 	
 	@Override
@@ -189,7 +200,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 	}
 
 	@Override
-	public Probe getProbe(Class<? extends Probe> probeClass, JsonObject config) {
+	public <T extends Probe> T getProbe(Class<? extends T> probeClass, JsonObject config) {
 		return cacheFactory.getProbe(probeClass, config);
 	}
 
@@ -271,7 +282,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 				for (ProbeDataRequest request : requests.get(listener)) {
 					BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.Identifier.getProbeName(probeUri)), request.getSchedule());
 					Double period = schedule.getPeriod();
-					if (period != null) {
+					if (period != null && period != 0) {
 						double requestNextRunTime = lastSatisfied + period;
 						nextRunTime = (nextRunTime == null) ? requestNextRunTime : Math.min(nextRunTime, requestNextRunTime);
 						minPeriod = (minPeriod == null) ? period :  Math.min(minPeriod, period);

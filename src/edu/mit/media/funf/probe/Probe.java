@@ -398,8 +398,10 @@ public interface Probe {
 			@Override
 			protected void start(Base probe) {
 				synchronized (probe) {
-					Uri probeUri = Probe.Identifier.getProbeUri(probe);
-					probe.lock = Utils.getWakeLock(probe.getContext(), probeUri.toString());
+					if (probe.isWakeLockedWhileRunning()) {
+						Uri probeUri = Probe.Identifier.getProbeUri(probe);
+						probe.lock = Utils.getWakeLock(probe.getContext(), probeUri.toString());
+					}
 					probe.state = RUNNING;
 					probe.onStart();
 					probe.notifyStateChange();
@@ -744,7 +746,7 @@ public interface Probe {
 		}
 		
 		protected void sendData(final JsonObject data) {
-			if (data == null) {
+			if (data == null || looper == null) {
 				return;
 			} else if (Thread.currentThread() != looper.getThread()) {
 				// Ensure the data send runs on the probe's thread
@@ -989,6 +991,10 @@ public interface Probe {
 		 */
 		protected TypeAdapterFactory getSerializationFactory() {
 			return null;
+		}
+		
+		protected boolean isWakeLockedWhileRunning() {
+			return true;
 		}
 	}
 }

@@ -35,7 +35,7 @@ public interface ProbeFactory {
 	 * @param config
 	 * @return
 	 */
-	public Probe getProbe(Class<? extends Probe> probeClass, JsonObject config);
+	public <T extends Probe> T getProbe(Class<? extends T> probeClass, JsonObject config);
 	
 	/**
 	 * Returns the probe specified by the uri.  (e.g. "probe://edu.mit.media.funf.builtin.LocationProbe")
@@ -81,9 +81,9 @@ public interface ProbeFactory {
 		}
 
 		@Override
-		public Probe getProbe(Class<? extends Probe> probeClass, JsonObject config) {
+		public <T extends Probe> T getProbe(Class<? extends T> probeClass, JsonObject config) {
 			try {
-				Probe probe = probeClass.newInstance();
+				T probe = probeClass.newInstance();
 				probe.setContext(context);
 				probe.setProbeFactory(this);
 				probe.setConfig(config);
@@ -131,9 +131,10 @@ public interface ProbeFactory {
 		 * @param config
 		 * @return
 		 */
-		private Probe getCachedProbe(Class<? extends Probe> probeClass, JsonObject config) {
+		@SuppressWarnings("unchecked")
+		private <T extends Probe> T getCachedProbe(Class<? extends T> probeClass, JsonObject config) {
 			Map<JsonObject,Probe> cacheByConfig = cache.get(probeClass);
-			return (cacheByConfig == null) ? null : cacheByConfig.get(config);
+			return (cacheByConfig == null) ? null : (T)cacheByConfig.get(config);
 		}
 		
 		/**
@@ -165,8 +166,8 @@ public interface ProbeFactory {
 		}
 	
 		@Override
-		public Probe getProbe(Class<? extends Probe> probeClass, JsonObject config) {
-			Probe probe = getCachedProbe(probeClass, config);
+		public <T extends Probe> T getProbe(Class<? extends T> probeClass, JsonObject config) {
+			T probe = getCachedProbe(probeClass, config);
 			if (probe == null) { // Avoid synchronized block on every call
 				synchronized (cache) {
 					probe = getCachedProbe(probeClass, config);
