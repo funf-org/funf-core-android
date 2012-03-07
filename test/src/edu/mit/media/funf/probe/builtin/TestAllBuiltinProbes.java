@@ -14,7 +14,6 @@ import com.google.gson.JsonObject;
 import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DataListener;
-import edu.mit.media.funf.probe.Probe.StartableProbe;
 import edu.mit.media.funf.probe.Probe.StateListener;
 import edu.mit.media.funf.probe.ProbeFactory;
 
@@ -77,14 +76,10 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 			Probe probe = factory.getProbe(probeClass, config);
 			probe.addStateListener(stateListener);
 			probe.registerListener(listener);
-			if (probe instanceof StartableProbe) {
-				((StartableProbe) probe).start();
-			}
 			Thread.sleep(100L);
 			if (probe instanceof ContinuousProbe) {
-				((ContinuousProbe) probe).stop();
+				((ContinuousProbe)probe).unregisterListener(listener);
 			}
-			probe.unregisterListener(listener);
 		}
 		// Run simultaneously
 		List<Probe> probes = new ArrayList<Probe>();
@@ -94,16 +89,10 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		for (Probe probe : probes) {
 			probe.addStateListener(stateListener);
 			probe.registerListener(listener);
-			if (probe instanceof StartableProbe) {
-				((StartableProbe) probe).start();
-			}
 		}
 		Thread.sleep(100L);
 		for (Probe probe : probes) {
-			if (probe instanceof ContinuousProbe) {
-				((ContinuousProbe) probe).stop();
-			}
-			probe.unregisterListener(listener);
+			((ContinuousProbe)probe).unregisterListener(listener);
 		}
 		
 		Thread.sleep(1000L); // Give probes time stop
