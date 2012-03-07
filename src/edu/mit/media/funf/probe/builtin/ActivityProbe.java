@@ -1,23 +1,19 @@
 package edu.mit.media.funf.probe.builtin;
 
 import static edu.mit.media.funf.Utils.TAG;
-
-import java.math.BigDecimal;
-
 import android.net.Uri;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ActivityKeys;
 
 @DefaultSchedule(period=120, duration=15)
-public class ActivityProbe extends Base implements ContinuousProbe, ActivityKeys {
+public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe, ActivityKeys {
 
 	@Configurable
 	private double interval = 1.0;
@@ -49,8 +45,8 @@ public class ActivityProbe extends Base implements ContinuousProbe, ActivityKeys
 		getAccelerometerProbe().unregisterPassiveListener(activityCounter);
 	}
 
-	private Probe getAccelerometerProbe() {
-		return getProbeFactory().getProbe(AccelerometerSensorProbe.class, null);
+	private AccelerometerSensorProbe getAccelerometerProbe() {
+		return (AccelerometerSensorProbe)getProbeFactory().getProbe(AccelerometerSensorProbe.class, null);
 	}
 
 	

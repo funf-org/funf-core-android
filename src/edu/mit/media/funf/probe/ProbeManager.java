@@ -21,7 +21,7 @@ import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
-import edu.mit.media.funf.probe.Probe.StartableProbe;
+import edu.mit.media.funf.probe.Probe.PassiveProbe;
 
 /**
  * This service coordinates satisfying data requests by scheduling and running probes.
@@ -34,10 +34,10 @@ public class ProbeManager extends Service implements ProbeFactory {
 	public static final String PREFIX = "edu.mit.media.funf.probe";
 	public static final String
 		ACTION_SCHEDULE = PREFIX + ".SCHEDULE",
-		ACTION_ENABLE_PROBE = PREFIX + ".ENABLE",
+		ACTION_ENABLE_PASSIVE_PROBE = PREFIX + ".ENABLE",
 		ACTION_START_PROBE = PREFIX + ".START",
 		ACTION_STOP_PROBE = PREFIX + ".STOP",
-		ACTION_DISABLE_PROBE = PREFIX + ".DISABLE";
+		ACTION_DISABLE_PASSIVE_PROBE = PREFIX + ".DISABLE";
 	
 	private ProbeFactory cacheFactory;
 	private Map<Probe.DataListener, Set<ProbeDataRequest>> requests;
@@ -72,8 +72,8 @@ public class ProbeManager extends Service implements ProbeFactory {
 		String action = intent.getAction();
 		if (action == null) {
 			
-		} else if (ACTION_ENABLE_PROBE.equals(action)
-				|| ACTION_DISABLE_PROBE.equals(action)
+		} else if (ACTION_ENABLE_PASSIVE_PROBE.equals(action)
+				|| ACTION_DISABLE_PASSIVE_PROBE.equals(action)
 				|| ACTION_START_PROBE.equals(action)
 				|| ACTION_STOP_PROBE.equals(action)) {
 			Probe probe = getProbe(intent.getData());
@@ -81,7 +81,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 				Set<DataListener> listeners = requestSatisfiedTimestamps.get(intent.getData()).keySet();
 				//listeners.add(this);  // TODO: enable this to be a listener, for triggers
 				
-				if (ACTION_ENABLE_PROBE.equals(action)) {
+				if (ACTION_ENABLE_PASSIVE_PROBE.equals(action) && probe instanceof PassiveProbe) {
 					// TODO: clean this up, it is way to complicated
 					Set<DataListener> opportunisticListeners = new HashSet<DataListener>();
 					for (DataListener listener : listeners) {
@@ -95,16 +95,16 @@ public class ProbeManager extends Service implements ProbeFactory {
 							 opportunisticListeners.add(listener);
 						 }
 					}
-					probe.unregisterPassiveListener((DataListener[])opportunisticListeners.toArray());
-				} else if (ACTION_DISABLE_PROBE.equals(action)) {
-					probe.unregisterPassiveListener((DataListener[])listeners.toArray());
-				} else if (ACTION_START_PROBE.equals(action) && probe instanceof StartableProbe) {
+					((PassiveProbe)probe).registerPassiveListener((DataListener[])opportunisticListeners.toArray());
+				} else if (ACTION_DISABLE_PASSIVE_PROBE.equals(action) && probe instanceof PassiveProbe) {
+					((PassiveProbe)probe).unregisterPassiveListener((DataListener[])listeners.toArray());
+				} else if (ACTION_START_PROBE.equals(action)) {
 					probe.registerListener((DataListener[])listeners.toArray());
 					if (probe instanceof ContinuousProbe) {
 						scheduleStop(intent.getData());
 					}
 				} else if (ACTION_STOP_PROBE.equals(action)  && probe instanceof ContinuousProbe) {
-					probe.unregisterListener((DataListener[])listeners.toArray());
+					((ContinuousProbe)probe).unregisterListener((DataListener[])listeners.toArray());
 				} 
 			}
 		} else if (ACTION_SCHEDULE.equals(action)) {
@@ -270,14 +270,12 @@ public class ProbeManager extends Service implements ProbeFactory {
 			} else {
 				for (ProbeDataRequest request : requests.get(listener)) {
 					BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.Identifier.getProbeName(probeUri)), request.getSchedule());
-					if (StartableProbe.class.isAssignableFrom(probeClass)) {
-						Double period = schedule.getPeriod();
-						if (period != null) {
-							double requestNextRunTime = lastSatisfied + period;
-							nextRunTime = (nextRunTime == null) ? requestNextRunTime : Math.min(nextRunTime, requestNextRunTime);
-							minPeriod = (minPeriod == null) ? period :  Math.min(minPeriod, period);
-							strict = strict || schedule.isStrict();
-						}
+					Double period = schedule.getPeriod();
+					if (period != null) {
+						double requestNextRunTime = lastSatisfied + period;
+						nextRunTime = (nextRunTime == null) ? requestNextRunTime : Math.min(nextRunTime, requestNextRunTime);
+						minPeriod = (minPeriod == null) ? period :  Math.min(minPeriod, period);
+						strict = strict || schedule.isStrict();
 					}
 				}
 			}

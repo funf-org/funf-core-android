@@ -8,6 +8,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import android.net.Uri;
 import android.test.AndroidTestCase;
 import android.text.Annotation;
 
@@ -92,5 +93,11 @@ public class AnnotationsTest extends AndroidTestCase {
 		t2.addProperty("test2", 2);
 		t2.addProperty("test1", 1);
 		System.out.println(gson.toJson(t2));
+	}
+	
+	public void testUri() {
+		Uri test = Uri.parse("http://www.test.com/test");
+		Uri test2 = test.buildUpon().appendPath("/another?query=value").build();
+		System.out.println(test2.toString());
 	}
 }

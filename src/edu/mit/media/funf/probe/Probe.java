@@ -32,14 +32,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonSerializer;
 import com.google.gson.TypeAdapterFactory;
 
 import edu.mit.media.funf.DataNormalizer;
 import edu.mit.media.funf.HashUtil;
+import edu.mit.media.funf.HashUtil.HashingType;
 import edu.mit.media.funf.JsonUtils;
 import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.HashUtil.HashingType;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
 public interface Probe {
@@ -96,23 +95,6 @@ public interface Probe {
 	 */
 	public void registerListener(DataListener... listener);
 	
-	/**
-	 * @param listener
-	 */
-	public void registerPassiveListener(DataListener... listener);
-	
-	/**
-	 * Listeners removed from this probe will no longer receive data callbacks from this probe.
-	 * This method is indempotent and thread safe.
-	 * @param listener
-	 */
-	public void unregisterListener(DataListener... listener);
-	
-	/**
-	 * @param listener
-	 */
-	public void unregisterPassiveListener(DataListener... listener);
-	
 
 	/**
 	 * @return the current state of the probe.
@@ -121,14 +103,38 @@ public interface Probe {
 	public void addStateListener(StateListener listener);
 	public void removeStateListener(StateListener listener);
 	
-	public interface StartableProbe extends Probe {
-		public static final double DEFAULT_PERIOD = 3600; // Once an hour
-		public void start();
+
+	public static final double DEFAULT_PERIOD = 3600; 
+	
+	public interface PassiveProbe extends Probe {
+
+
+		/**
+		 * Listeners removed from this probe will no longer receive data callbacks from this probe.
+		 * This method is indempotent and thread safe.
+		 * @param listener
+		 */
+		public void registerPassiveListener(DataListener... listener);
+		
+		/**
+		 * Listeners removed from this probe will no longer receive data callbacks from this probe.
+		 * This method is indempotent and thread safe.
+		 * 
+		 * @param listener
+		 */
+		public void unregisterPassiveListener(DataListener... listener);
 	}
 	
-	public interface ContinuousProbe extends StartableProbe {
+	public interface ContinuousProbe extends Probe {
 		public static final double DEFAULT_DURATION = 60; // One minute
-		public void stop();
+		
+		/**
+		 * Listeners removed from this probe will no longer receive data callbacks from this probe.
+		 * This method is indempotent and thread safe.
+		 * @param listener
+		 */
+		public void unregisterListener(DataListener... listener);
+		
 	}
 	
 	public interface DiffableProbe extends Probe {
@@ -144,7 +150,7 @@ public interface Probe {
 	@Inherited
 	public @interface DefaultSchedule {
 		String value() default "";
-		double period() default StartableProbe.DEFAULT_PERIOD;
+		double period() default Probe.DEFAULT_PERIOD;
 		double duration() default ContinuousProbe.DEFAULT_DURATION;
 		boolean opportunistic() default DEFAULT_OPPORTUNISTIC;
 		boolean strict() default DEFAULT_STRICT;
@@ -391,16 +397,12 @@ public interface Probe {
 	
 			@Override
 			protected void start(Base probe) {
-				if (probe instanceof Probe.StartableProbe) {
-					synchronized (probe) {
-						Uri probeUri = Probe.Identifier.getProbeUri(probe);
-						probe.lock = Utils.getWakeLock(probe.getContext(), probeUri.toString());
-						probe.state = RUNNING;
-						probe.onStart();
-						probe.notifyStateChange();
-					}
-				} else {
-					Log.w(TAG, "Attempted to start non-startable probe '" + probe.getClass().getName() + "'");
+				synchronized (probe) {
+					Uri probeUri = Probe.Identifier.getProbeUri(probe);
+					probe.lock = Utils.getWakeLock(probe.getContext(), probeUri.toString());
+					probe.state = RUNNING;
+					probe.onStart();
+					probe.notifyStateChange();
 				}
 			}
 	
@@ -423,7 +425,7 @@ public interface Probe {
 			}
 		},
 		RUNNING {
-
+ 
 			@Override
 			protected void enable(Base probe) {
 				// Nothing
@@ -703,7 +705,6 @@ public interface Probe {
 			start();
 		}
 	
-		@Override
 		public void unregisterListener(DataListener... listeners) {
 			for (DataListener listener : listeners) {
 				dataListeners.remove(listener);
@@ -717,7 +718,6 @@ public interface Probe {
 			}
 		}
 		
-		@Override
 		public void registerPassiveListener(DataListener... listeners) {
 			for (DataListener listener : listeners) {
 				dataListeners.add(listener);
@@ -725,7 +725,6 @@ public interface Probe {
 			enablePassive();
 		}
 	
-		@Override
 		public void unregisterPassiveListener(DataListener... listeners) {
 			for (DataListener listener : listeners) {
 				dataListeners.remove(listener);
@@ -771,9 +770,6 @@ public interface Probe {
 				}
 			}
 		}
-		
-		
-	
 		
 		
 		

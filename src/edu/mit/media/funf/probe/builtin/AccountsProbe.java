@@ -12,11 +12,10 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
-import edu.mit.media.funf.probe.Probe.StartableProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AccountsKeys;
 
 @RequiredPermissions(android.Manifest.permission.GET_ACCOUNTS)
-public class AccountsProbe extends SimpleProbe<Account> implements StartableProbe, AccountsKeys {
+public class AccountsProbe extends SimpleProbe<Account> implements AccountsKeys {
 
 	@Override
 	protected JsonSerializer<Account> getSerializer() {

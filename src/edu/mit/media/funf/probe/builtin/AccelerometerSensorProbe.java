@@ -1,11 +1,12 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
+import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerSensorKeys;
 
 @RequiredFeatures("android.hardware.sensor.accelerometer")
-public class AccelerometerSensorProbe extends SensorProbe implements AccelerometerSensorKeys {
+public class AccelerometerSensorProbe extends SensorProbe implements PassiveProbe, AccelerometerSensorKeys {
 
 	@Override
 	public int getSensorType() {
