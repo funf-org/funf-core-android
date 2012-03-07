@@ -20,32 +20,10 @@ public class ProbeTest extends AndroidTestCase {
 			STOPPED = "STOPPED";
 		
 		
-		@Override
-		public synchronized void disablePassive() {
-			// TODO Auto-generated method stub
-			super.disablePassive();
-		}
+
 
 		@Override
-		public synchronized void enablePassive() {
-			// TODO Auto-generated method stub
-			super.enablePassive();
-		}
-
-		@Override
-		public synchronized void start() {
-			// TODO Auto-generated method stub
-			super.start();
-		}
-
-		@Override
-		public synchronized void stop() {
-			// TODO Auto-generated method stub
-			super.stop();
-		}
-
-		@Override
-		protected void onEnablePassive() {
+		protected void onEnable() {
 			messageQueue.offer(ENABLED);
 		}
 
@@ -60,7 +38,7 @@ public class ProbeTest extends AndroidTestCase {
 		}
 
 		@Override
-		protected void onDisablePassive() {
+		protected void onDisable() {
 			messageQueue.offer(DISABLED);
 		}
 		
@@ -76,7 +54,7 @@ public class ProbeTest extends AndroidTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		if (testProbe != null) {
-			testProbe.disablePassive();
+			testProbe.disable();
 		}
 		super.tearDown();
 	}
@@ -84,35 +62,35 @@ public class ProbeTest extends AndroidTestCase {
 	
 	public void testFullStateFlow() {
 		assertEquals(Probe.State.DISABLED, testProbe.getState());
-		testProbe.enablePassive();
+		testProbe.enable();
 		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.ENABLED);
 		testProbe.start();
 		assertStateChange(testProbe, Probe.State.RUNNING, TestProbe.STARTED);
 		testProbe.stop();
 		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.STOPPED);
-		testProbe.disablePassive();
+		testProbe.disable();
 		assertStateChange(testProbe, Probe.State.DISABLED, TestProbe.DISABLED);
 	}
 	
 	public void testIndempotence() {
 		assertEquals(Probe.State.DISABLED, testProbe.getState());
-		testProbe.disablePassive();
+		testProbe.disable();
 		assertStateChange(testProbe, Probe.State.DISABLED);
 		
 		// Test multiple times to ensure it doesn't call onEnabled
-		testProbe.enablePassive();
+		testProbe.enable();
 		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.ENABLED);
-		testProbe.enablePassive();
+		testProbe.enable();
 		assertStateChange(testProbe, Probe.State.ENABLED);
-		testProbe.enablePassive();
+		testProbe.enable();
 		assertStateChange(testProbe, Probe.State.ENABLED);
 		
-		testProbe.disablePassive();
+		testProbe.disable();
 		assertStateChange(testProbe, Probe.State.DISABLED, TestProbe.DISABLED);
 	}
 	
 	public void testConfigChange() {
-		testProbe.enablePassive();
+		testProbe.enable();
 		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.ENABLED);
 		testProbe.start();
 		assertStateChange(testProbe, Probe.State.RUNNING, TestProbe.STARTED);

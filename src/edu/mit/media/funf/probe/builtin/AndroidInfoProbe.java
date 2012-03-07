@@ -4,10 +4,9 @@ import android.os.Build;
 
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AndroidInfoKeys;
 
-public class AndroidInfoProbe extends Base implements AndroidInfoKeys {
+public class AndroidInfoProbe extends ImpulseProbe implements AndroidInfoKeys {
 
 	@Override
 	protected void onStart() {
