@@ -2,11 +2,10 @@ package edu.mit.media.funf.probe.builtin;
 
 import static edu.mit.media.funf.Utils.TAG;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import android.app.ActivityManager;
-import android.app.ActivityManager.RunningTaskInfo;
+import android.app.ActivityManager.RecentTaskInfo;
 import android.content.Context;
 import android.net.Uri;
 import android.os.PowerManager;
@@ -27,7 +26,7 @@ import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 @Description("Emits the applications the user is running using a polling method.")
 @RequiredPermissions(android.Manifest.permission.GET_TASKS)
 @DefaultSchedule(period=0, duration=Double.MAX_VALUE, opportunistic=true)
-public class RunningApplicationsProbe extends SimpleProbe<RunningTaskInfo> implements ContinuousProbe, PassiveProbe {
+public class RunningApplicationsProbe extends SimpleProbe<RecentTaskInfo> implements ContinuousProbe, PassiveProbe {
 
 	@Configurable
 	private double pollInterval = 1.0;
@@ -37,72 +36,25 @@ public class RunningApplicationsProbe extends SimpleProbe<RunningTaskInfo> imple
 	
 	private class RunningAppsPoller implements Runnable {
 		
-		private List<RunningTaskInfo> lastSentRunningTasks = null;
+		private RecentTaskInfo lastSentRunningTask = null;
 		
 		@Override
 		public void run() {
 			if (am != null) {
-				Log.d(TAG, "Last sent running tasks " + lastSentRunningTasks);
-				if (lastSentRunningTasks == null) {
+				//Log.d(TAG, "RunningApplicationsProbe: Last sent running tasks " + lastSentRunningTasks);
+				List<RecentTaskInfo> currentTasks = am.getRecentTasks(maxTasksToCompare, ActivityManager.RECENT_WITH_EXCLUDED);
+				RecentTaskInfo currentTask = currentTasks.get(0);
+				if (lastSentRunningTask == null || !lastSentRunningTask.baseIntent.filterEquals(currentTask.baseIntent)) {
 					Log.d(TAG, "Initial send");
-					lastSentRunningTasks =  am.getRunningTasks(maxTasksToCompare);
-					sendData(lastSentRunningTasks.get(0));
-				} else {
-					Log.d(TAG, "Polling running apps.");
-					List<RunningTaskInfo> currentTasks = am.getRunningTasks(maxTasksToCompare);
-					List<RunningTaskInfo> sentTasks = new ArrayList<ActivityManager.RunningTaskInfo>(); 
-					List<RunningTaskInfo> unchangedTasks = new ArrayList<ActivityManager.RunningTaskInfo>();
-					// Diff the two lists, looking for order changes as well
-					for (RunningTaskInfo taskInfo : currentTasks) {
-						Log.d(TAG, "Testing task: " + taskInfo.baseActivity.getPackageName());
-						if (isChanged(taskInfo, unchangedTasks.size())) {
-							Log.d(TAG, "Changed task: " + taskInfo.baseActivity.getPackageName());
-							// Send all ones though unchanged until this point, as their order has changed
-							for (RunningTaskInfo incorrectlyThoughtUnchangedTaskInfo : unchangedTasks) {
-								sentTasks.add(incorrectlyThoughtUnchangedTaskInfo);
-								sendData(incorrectlyThoughtUnchangedTaskInfo);
-							}
-							unchangedTasks.clear();
-							sentTasks.add(taskInfo);
-							sendData(taskInfo);
-						} else {
-							Log.d(TAG, "Unchanged task: " + taskInfo.baseActivity.getPackageName());
-							// Keep track of unchanged tasks in case their order has changed
-							unchangedTasks.add(taskInfo);
-						}
-					}
-					lastSentRunningTasks = sentTasks;
-				}
+					sendData(currentTask); // Just send current task
+					lastSentRunningTask = currentTask;
+				} 
 				getHandler().postDelayed(this, Utils.secondsToMillis(pollInterval));
 			}
 		}
 		
 		public void reset() {
-			lastSentRunningTasks = null;
-		}
-		
-		private boolean isChanged(RunningTaskInfo taskInfo, int existingTaskIndex) {
-			if (lastSentRunningTasks == null) {
-				Log.d(TAG, "Last running tasks are null");
-				return true;
-			}
-			if (lastSentRunningTasks.size() <= existingTaskIndex) {
-				Log.d(TAG, "Last running tasks size " + lastSentRunningTasks.size() + " is lte index " + existingTaskIndex);
-				return false; // If we go past the end of our list, assume unchanged.  Shouldn't happen in practice.
-			}
-			RunningTaskInfo sentTask = lastSentRunningTasks.get(existingTaskIndex);
-			if (sentTask.id != taskInfo.id) {
-				Log.d(TAG, "Task ids are different");
-			}
-			if (sentTask.numActivities != taskInfo.numActivities) {
-				Log.d(TAG, "Num activities are different");
-			}
-			if (!sentTask.topActivity.equals(taskInfo.topActivity)) {
-				Log.d(TAG, "Top activity is different");
-			}
-			return sentTask.id != taskInfo.id
-					|| sentTask.numActivities != taskInfo.numActivities
-					|| !sentTask.topActivity.equals(taskInfo.topActivity);
+			lastSentRunningTask = null;
 		}
 	}
 	
@@ -132,7 +84,7 @@ public class RunningApplicationsProbe extends SimpleProbe<RunningTaskInfo> imple
 	@Override
 	protected synchronized void onEnable() {
 		super.onEnable();
-		Log.d(TAG, "Running applications: Enable passive.");
+		Log.d(TAG, "RunningApplicationsProbe: onEnable");
 		getProbeFactory().getProbe(ScreenProbe.class, null).registerListener(screenListener);
 
 		// Set for current state
@@ -145,6 +97,7 @@ public class RunningApplicationsProbe extends SimpleProbe<RunningTaskInfo> imple
 	@Override
 	protected void onStart() {
 		super.onStart();
+		Log.d(TAG, "RunningApplicationsProbe: onStart");
 		PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
 		if (pm.isScreenOn()) {
 			am = (ActivityManager)getContext().getSystemService(Context.ACTIVITY_SERVICE);
@@ -158,6 +111,7 @@ public class RunningApplicationsProbe extends SimpleProbe<RunningTaskInfo> imple
 	@Override
 	protected void onStop() {
 		super.onStop();
+		Log.d(TAG, "RunningApplicationsProbe: onStop");
 		am = null;
 		getHandler().removeCallbacks(runningAppsPoller);
 	}
@@ -165,6 +119,7 @@ public class RunningApplicationsProbe extends SimpleProbe<RunningTaskInfo> imple
 	@Override
 	protected void onDisable() {
 		super.onDisable();
+		Log.d(TAG, "RunningApplicationsProbe: onDisable");
 		runningAppsPoller.reset();
 		getProbeFactory().getProbe(ScreenProbe.class, null).unregisterListener(screenListener);
 	}

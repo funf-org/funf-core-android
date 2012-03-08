@@ -66,7 +66,6 @@ public class ProbeManager extends Service implements ProbeFactory {
 	public void onCreate() {
 		super.onCreate();
 		manager = (AlarmManager)getSystemService(ALARM_SERVICE);
-		Log.e("FunfJournal", "MANAGER: " + manager);
 		cacheFactory = ProbeFactory.CachingProbeFactory.getInstance(this);
 		requests = new WeakHashMap<Probe.DataListener, Set<ProbeDataRequest>>();
 		requestSatisfiedTimestamps = new HashMap<Uri, Map<DataListener,Double>>();
