@@ -241,7 +241,9 @@ public class ProbeKeys {
 	
 	public static interface RunningApplicationsKeys extends BaseProbeKeys {
 		public static final String 
-		RUNNING_TASKS = "runningTasks";
+		RUNNING_TASKS = "runningTasks",
+		DURATION = "duration",
+		TASK_INFO = "taskInfo";
 	}
 	
 	public static interface ScreenKeys extends BaseProbeKeys {
