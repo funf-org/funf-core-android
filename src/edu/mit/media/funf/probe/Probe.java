@@ -701,39 +701,47 @@ public interface Probe {
 		
 		@Override
 		public void registerListener(DataListener... listeners) {
-			for (DataListener listener : listeners) {
-				dataListeners.add(listener);
+			if (listeners != null) {
+				for (DataListener listener : listeners) {
+					dataListeners.add(listener);
+				}
+				start();
 			}
-			start();
 		}
 	
 		public void unregisterListener(DataListener... listeners) {
-			for (DataListener listener : listeners) {
-				dataListeners.remove(listener);
-			}
-			// If no one is listening, stop using device resources
-			if (dataListeners.isEmpty()) {
-				stop();
-			}
-			if (passiveDataListeners.isEmpty()) {
-				disable();
+			if (listeners != null) {
+				for (DataListener listener : listeners) {
+					dataListeners.remove(listener);
+				}
+				// If no one is listening, stop using device resources
+				if (dataListeners.isEmpty()) {
+					stop();
+				}
+				if (passiveDataListeners.isEmpty()) {
+					disable();
+				}
 			}
 		}
 		
 		public void registerPassiveListener(DataListener... listeners) {
-			for (DataListener listener : listeners) {
-				dataListeners.add(listener);
+			if (listeners != null) {
+				for (DataListener listener : listeners) {
+					dataListeners.add(listener);
+				}
+				enable();
 			}
-			enable();
 		}
 	
 		public void unregisterPassiveListener(DataListener... listeners) {
-			for (DataListener listener : listeners) {
-				dataListeners.remove(listener);
-			}
-			// If no one is listening, stop using device resources
-			if (dataListeners.isEmpty() && passiveDataListeners.isEmpty()) {
-				disable();
+			if (listeners != null) {
+				for (DataListener listener : listeners) {
+					dataListeners.remove(listener);
+				}
+				// If no one is listening, stop using device resources
+				if (dataListeners.isEmpty() && passiveDataListeners.isEmpty()) {
+					disable();
+				}
 			}
 		}
 		

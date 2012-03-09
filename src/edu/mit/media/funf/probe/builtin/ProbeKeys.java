@@ -95,7 +95,9 @@ public class ProbeKeys {
 	public static interface ApplicationsKeys extends BaseProbeKeys {
 		public static final String 
 		INSTALLED_APPLICATIONS = "installedApplications",
-		UNINSTALLED_APPLICATIONS = "uninstalledApplications";
+		UNINSTALLED_APPLICATIONS = "uninstalledApplications",
+		INSTALLED = "installed",
+		INSTALLED_TIMESTAMP = "installedTimestamp";
 	}
 	
 	public static interface AudioFeaturesKeys extends BaseProbeKeys {

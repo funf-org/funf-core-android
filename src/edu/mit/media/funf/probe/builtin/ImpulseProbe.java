@@ -25,9 +25,11 @@ public abstract class ImpulseProbe extends Base {
 		public void onStateChanged(Probe probe) {
 			if (getState() != State.RUNNING) {
 				Set<DataListener> listeners = getDataListeners();
-				DataListener[] listenerArray = new DataListener[listeners.size()];
-				listeners.toArray(listenerArray);
-				unregisterListener(listenerArray);
+				if (!listeners.isEmpty()) {
+					DataListener[] listenerArray = new DataListener[listeners.size()];
+					listeners.toArray(listenerArray);
+					unregisterListener(listenerArray);
+				}
 				synchronized (queuedListeners) {
 					DataListener[] queuedListenerArray = new DataListener[queuedListeners.size()];
 					queuedListeners.toArray(queuedListenerArray);
@@ -46,26 +48,30 @@ public abstract class ImpulseProbe extends Base {
 	
 	@Override
 	public void registerListener(DataListener... listeners) {
-		// TODO: may want to introduce a small delay in running the probe, in case register listener is called multiple times in a row
-		if (getState() ==  State.RUNNING) {
-			synchronized (queuedListeners) {
-				Set<DataListener> currentListeners = getDataListeners();
-				for (DataListener listener : listeners) {
-					if (!currentListeners.contains(listener)) {
-						queuedListeners.add(listener);
+		if (listeners != null) {
+			// TODO: may want to introduce a small delay in running the probe, in case register listener is called multiple times in a row
+			if (getState() ==  State.RUNNING) {
+				synchronized (queuedListeners) {
+					Set<DataListener> currentListeners = getDataListeners();
+					for (DataListener listener : listeners) {
+						if (!currentListeners.contains(listener)) {
+							queuedListeners.add(listener);
+						}
 					}
 				}
+			} else {
+				super.registerListener(listeners);
 			}
-		} else {
-			super.registerListener(listeners);
 		}
 	}
 
 	@Override
 	public void unregisterListener(DataListener... listeners) {
-		synchronized (queuedListeners) {
-			for (DataListener listener : listeners) {
-				queuedListeners.remove(listener);
+		if (listeners != null) {
+			synchronized (queuedListeners) {
+				for (DataListener listener : listeners) {
+					queuedListeners.remove(listener);
+				}
 			}
 		}
 		super.unregisterListener(listeners);
