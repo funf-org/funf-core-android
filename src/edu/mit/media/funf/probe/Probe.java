@@ -95,6 +95,10 @@ public interface Probe {
 	 */
 	public void registerListener(DataListener... listener);
 	
+	/**
+	 * Remove all listeners and disable;
+	 */
+	public void destroy();
 
 	/**
 	 * @return the current state of the probe.
@@ -419,6 +423,8 @@ public interface Probe {
 					probe.state = DISABLED;
 					probe.onDisable();
 					probe.notifyStateChange();
+					probe.passiveDataListeners.clear();
+					probe.dataListeners.clear();
 					// Shutdown handler thread
 					probe.looper.quit();
 					probe.looper = null;
@@ -841,6 +847,11 @@ public interface Probe {
 			}
 		}
 		
+
+		public void destroy() {
+			disable();
+		}
+		
 	
 		/**
 		 * Called when the probe switches from the disabled to the enabled state.  
@@ -882,6 +893,7 @@ public interface Probe {
 		protected void onDisable() {
 			
 		}
+		
 		
 	
 		private volatile Looper looper;

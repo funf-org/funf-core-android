@@ -73,8 +73,17 @@ public class ProbeManager extends Service implements ProbeFactory {
 
 	@Override
 	public void onDestroy() {
-		// TODO Auto-generated method stub
 		super.onDestroy();
+		Set<Uri> activeProbeUris = new HashSet<Uri>();
+		for (Set<ProbeDataRequest> requestEntries : requests.values()) {
+			for (ProbeDataRequest request : requestEntries) {
+				activeProbeUris.add(request.getProbeUri());
+			}
+		}
+		for (Uri probeUri : activeProbeUris) {
+			cancelAlarm(probeUri);
+			getProbe(probeUri).destroy();
+		}
 	}
 	
 	
@@ -90,7 +99,9 @@ public class ProbeManager extends Service implements ProbeFactory {
 				|| ACTION_STOP_PROBE.equals(action)) {
 			Probe probe = getProbe(intent.getData());
 			if (probe != null) {
-				Set<DataListener> listeners = requestSatisfiedTimestamps.get(intent.getData()).keySet();
+				Map<Probe.DataListener,Double> timestamps = requestSatisfiedTimestamps.get(intent.getData());
+				
+				Set<DataListener> listeners = (timestamps == null) ? new HashSet<Probe.DataListener>() : timestamps.keySet();
 				//listeners.add(this);  // TODO: enable this to be a listener, for triggers
 				
 				if (ACTION_ENABLE_PASSIVE_PROBE.equals(action) && probe instanceof PassiveProbe) {
@@ -276,6 +287,17 @@ public class ProbeManager extends Service implements ProbeFactory {
 		}
 	}
 	
+	private void cancelAlarm(Uri probeUri) {
+		for (String action : new String[] {ACTION_START_PROBE, ACTION_STOP_PROBE, ACTION_DISABLE_PASSIVE_PROBE, ACTION_ENABLE_PASSIVE_PROBE}) {
+			Intent i = new Intent(action, probeUri);
+			i.setClass(this, getClass());
+			PendingIntent pi = PendingIntent.getService(this, 0, i, PendingIntent.FLAG_NO_CREATE);
+			if (pi != null) {
+				manager.cancel(pi);
+			}
+		}
+	}
+	
 	private void schedule(Uri probeUri) {
 		Class<? extends Probe> probeClass = Probe.Base.getProbeClass(Probe.Identifier.getProbeName(probeUri));
 		
@@ -331,6 +353,10 @@ public class ProbeManager extends Service implements ProbeFactory {
 		// Only continuous probes can be stopped
 		if (ContinuousProbe.class.isAssignableFrom(probeClass)) {
 			Double maxDuration = null;
+			Map<DataListener,Double> timestamps = requestSatisfiedTimestamps.get(probeUri);
+			if (timestamps == null) {
+				timestamps = new HashMap<Probe.DataListener, Double>();
+			}
 			for (Map.Entry<DataListener,Double> listenerSatisfied : requestSatisfiedTimestamps.get(probeUri).entrySet()) {
 				DataListener listener = listenerSatisfied.getKey();
 				for (ProbeDataRequest request : requests.get(listener)) {
