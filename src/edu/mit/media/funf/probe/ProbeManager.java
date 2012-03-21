@@ -357,13 +357,16 @@ public class ProbeManager extends Service implements ProbeFactory {
 			if (timestamps == null) {
 				timestamps = new HashMap<Probe.DataListener, Double>();
 			}
-			for (Map.Entry<DataListener,Double> listenerSatisfied : requestSatisfiedTimestamps.get(probeUri).entrySet()) {
-				DataListener listener = listenerSatisfied.getKey();
-				for (ProbeDataRequest request : requests.get(listener)) {
-					BasicSchedule schedule = new BasicSchedule(probeClass, request.getSchedule());
-					Double duration = schedule.getDuration();
-					if (duration != null) {
-						maxDuration = (maxDuration == null) ? duration : Math.max(maxDuration, duration);
+			Map<DataListener,Double> listenerSatisfieds = requestSatisfiedTimestamps.get(probeUri);
+			if (listenerSatisfieds != null) {
+				for (Map.Entry<DataListener,Double> listenerSatisfied : listenerSatisfieds.entrySet()) {
+					DataListener listener = listenerSatisfied.getKey();
+					for (ProbeDataRequest request : requests.get(listener)) {
+						BasicSchedule schedule = new BasicSchedule(probeClass, request.getSchedule());
+						Double duration = schedule.getDuration();
+						if (duration != null) {
+							maxDuration = (maxDuration == null) ? duration : Math.max(maxDuration, duration);
+						}
 					}
 				}
 			}
