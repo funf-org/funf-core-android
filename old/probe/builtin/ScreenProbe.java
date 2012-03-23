@@ -88,6 +88,7 @@ public class ScreenProbe extends Probe implements ScreenKeys {
 	@Override
 	protected void onRun(Bundle params) {
 		sendProbeData();
+		stop();
 	}
 
 	@Override

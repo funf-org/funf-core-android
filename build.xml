@@ -45,21 +45,19 @@
             unless="sdk.dir"
     />
 
-
-<!-- extension targets. Uncomment the ones where you want to do custom work
-     in between standard targets -->
-<!--
-    <target name="-pre-build">
-    </target>
-    <target name="-pre-compile">
-    </target>
-
-    /* This is typically used for code obfuscation.
-       Compiled code location: ${out.classes.absolute.dir}
-       If this is not done in place, override ${out.dex.input.absolute.dir} */
-    <target name="-post-compile">
-    </target>
--->
+    <!--
+        Import per project custom build rules if present at the root of the project.
+        This is the place to put custom intermediary targets such as:
+            -pre-build
+            -pre-compile
+            -post-compile (This is typically used for code obfuscation.
+                           Compiled code location: ${out.classes.absolute.dir}
+                           If this is not done in place, override ${out.dex.input.absolute.dir})
+            -post-package
+            -post-build
+            -pre-clean
+    -->
+    <import file="custom_rules.xml" optional="true" />
 
     <!-- Import the actual build file.
 
@@ -79,51 +77,7 @@
          In all cases you must update the value of version-tag below to read 'custom' instead of an integer,
          in order to avoid having your file be overridden by tools such as "android update project"
     -->
-    <!-- version-tag: custom -->
+    <!-- version-tag: 1 -->
     <import file="${sdk.dir}/tools/ant/build.xml" />
 
-
-	<target name="getgitdetails" >
-	        <exec executable="git" outputproperty="git.tagstring">
-	                <arg value="describe"/>
-	        </exec>
-	        <exec executable="git" outputproperty="git.revision">
-	                <arg value="rev-parse"/>
-	                <arg value="HEAD"/>
-	        </exec>
-	        <condition property="git.tag" value="dev" else="${git.tagstring}">
-	                <contains string="${git.tagstring}" substring="fatal"/>
-	        </condition>
-	</target>
-	
-	<target name="jar" depends="compile,getgitdetails">
-	        <delete file="bin/funf.jar"/>
-	        <mkdir dir="bin" />
-	        <tstamp>
-	                <format property="now" pattern="yyyy-MM-dd HH:mm:ss" />
-	        </tstamp>
-	        <manifest file="bin/MANIFEST.MF">
-	        <attribute name="Built-By" value="${user.name}"/>
-	                <attribute name="Implementation-Title" value="Funf"/>
-	        <attribute name="Implementation-Version"  value="${git.tag}r${git.revision}"/>
-	                <attribute name="Implementation-Vendor"  value="Funf at MIT Media Lab"/>
-	                <attribute name="Built-Date" value="${now}"/>  
-	        </manifest>
-	        <jar destfile="bin/funf.jar"
-	                basedir="bin/classes"
-	                includes="**/*.class"
-	                manifest="bin/MANIFEST.MF" />
-	</target>
-	
-	<target name="debug" depends="jar">
-	</target>
-	
-	<target name="release" depends="jar">
-		<input message="Please enter keystore password:" addproperty="keypass" />
-		<signjar jar="bin/funf.jar" 
-			keystore="${keystore}" 
-			alias="${keystore.alias}"
-			storepass="${keypass}"
-			signedjar="bin/funf-${git.tag}.jar"></signjar>
-	</target>
 </project>
