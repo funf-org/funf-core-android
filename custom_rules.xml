@@ -33,10 +33,10 @@
 	                manifest="bin/MANIFEST.MF" />
 	</target>
 	
-	<target name="debug" depends="jar">
+	<target name="jardebug" depends="jar">
 	</target>
 	
-	<target name="release" depends="jar">
+	<target name="jarrelease" depends="jar">
 		<input message="Please enter keystore password:" addproperty="keypass" />
 		<signjar jar="bin/funf.jar" 
 			keystore="${keystore}" 
