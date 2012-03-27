@@ -61,6 +61,9 @@ public class ProbeKeys {
 	
 	public static interface AccelerometerFeaturesKeys extends BaseProbeKeys {
 		public static final String 
+		X = "x", 
+		Y = "y", 
+		Z = "z",
 		DIFF_FRAME_SECS = "diffFrameSecs",
 		NUM_FRAME_SAMPLES = "numFrameSamples",
 		MEAN = "mean",

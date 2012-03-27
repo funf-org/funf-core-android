@@ -167,7 +167,7 @@ public class AccelerometerFeaturesProbe extends Probe implements SensorEventList
 	@Override
 	public void onSensorChanged(SensorEvent event)
 	{
-		SensorEvent ev = SensorEvent.class.newInstance();
+		//SensorEvent ev = SensorEvent.class.newInstance();
 		if (isRunning())
 		{
 	    	double currentSecs = ((double)event.timestamp)/1000000000.0d;

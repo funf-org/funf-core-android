@@ -46,6 +46,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 	
 	@SuppressWarnings("rawtypes")
 	public static final Class[] ALL_PROBES = {
+		AccelerometerFeaturesProbe.class,
 		AccelerometerSensorProbe.class,
 		ApplicationsProbe.class,
 		GravitySensorProbe.class,

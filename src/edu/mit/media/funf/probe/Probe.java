@@ -777,7 +777,9 @@ public interface Probe {
 				}
 				synchronized (passiveDataListeners) {
 					for (DataListener listener : passiveDataListeners) {
-						listener.onDataReceived(getCompleteProbeUri(), JsonUtils.deepCopy(data));
+						if (!dataListeners.contains(listener)) { // Don't send data twice to passive listeners
+							listener.onDataReceived(getCompleteProbeUri(), JsonUtils.deepCopy(data));
+						}
 					}
 				}
 			}
