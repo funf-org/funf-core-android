@@ -418,7 +418,7 @@ public final class Utils {
 	}
 	
 	// Round to microseconds, because of the inaccuracy associated with our method of syncing the clocks
-	private static final MathContext NANO_PRECISION_CONTEXT = new MathContext(16, RoundingMode.HALF_EVEN);
+	public static final MathContext NANO_PRECISION_CONTEXT = new MathContext(16, RoundingMode.HALF_EVEN);
 	private static BigDecimal _uptimeNanosToTimestamp(long nanos) {
 		return BigDecimal.valueOf(nanos, NANO).add(secondsOffset).round(NANO_PRECISION_CONTEXT);
 	}

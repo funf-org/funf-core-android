@@ -1,5 +1,6 @@
 package edu.mit.media.funf.probe.builtin;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 
 import android.net.Uri;
@@ -8,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.FFT;
+import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.Window;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
@@ -83,7 +85,8 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
         		
         		double diffFrameSecs = currentSecs - prevFrameSecs;
                 prevFrameSecs = currentSecs;
-                data.addProperty(DIFF_FRAME_SECS, diffFrameSecs);
+                data.addProperty(TIMESTAMP, currentSecs);
+                data.addProperty(DIFF_FRAME_SECS, new BigDecimal(diffFrameSecs).round(Utils.NANO_PRECISION_CONTEXT));
                 data.addProperty(NUM_FRAME_SAMPLES, frameSamples);
                 
                 data.add(X, getFeatures(0, fN));
