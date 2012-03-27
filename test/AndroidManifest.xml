@@ -85,6 +85,9 @@
     <!-- Accounts Probe -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     
+    <!-- Audio Features Probe -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    
     <!--
     This declares that this application uses the instrumentation test runner targeting
     the package of edu.mit.media.funf.  To run the tests use the command:

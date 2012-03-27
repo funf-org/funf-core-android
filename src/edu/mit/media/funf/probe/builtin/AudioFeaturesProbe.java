@@ -5,25 +5,39 @@ import java.util.Arrays;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
-import android.os.Bundle;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 import edu.mit.media.funf.FFT;
 import edu.mit.media.funf.MFCC;
 import edu.mit.media.funf.Window;
-import edu.mit.media.funf.probe.Probe;
+import edu.mit.media.funf.probe.Probe.Base;
+import edu.mit.media.funf.probe.Probe.ContinuousProbe;
+import edu.mit.media.funf.probe.Probe.RequiredFeatures;
+import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AudioFeaturesKeys;
 
-public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
-	private static String STREAM_NAME = "hdl_audio";
+/**
+ * @author Max Little and Alan Gardner
+ *
+ */
+@RequiredFeatures("android.hardware.microphone")
+@RequiredPermissions(android.Manifest.permission.RECORD_AUDIO)
+public class AudioFeaturesProbe extends Base implements ContinuousProbe, AudioFeaturesKeys {
+
+	// TODO: may need to change this to 44100 sampling to make it more compatible across devices
+	// Alternatively, we could dynamically discover it 
+	// http://stackoverflow.com/questions/6745344/record-audio-using-audiorecord-in-android
 	
 	private static int RECORDER_SOURCE = MediaRecorder.AudioSource.VOICE_RECOGNITION;
-	private static int RECORDER_SAMPLERATE = 8000;
 	private static int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
 	private static int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+	private static int RECORDER_SAMPLERATE = 8000;
 	
 	private static int FFT_SIZE = 8192;
 	private static int MFCCS_VALUE = 12;
 	private static int MEL_BANDS = 20;
-	private static int STREAM_FEATURES = 20;
 	private static double[] FREQ_BANDEDGES = {50,250,500,1000,2000};
 	
 	private Thread recordingThread = null;
@@ -39,42 +53,12 @@ public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
 	
     public double prevSecs = 0;
 	public double[] featureBuffer = null;
-    
+	
 	@Override
-	public Parameter[] getAvailableParameters() {
-		return new Parameter[] {
-				new Parameter(Parameter.Builtin.DURATION, 30L),
-				new Parameter(Parameter.Builtin.PERIOD, 300L),
-				new Parameter(Parameter.Builtin.START, 0L),
-				new Parameter(Parameter.Builtin.END, 0L)
-		};
-	}
+	protected void onStart() {
+		super.onStart();
+		
 
-	@Override
-	public String[] getRequiredFeatures() {
-		return null;
-	}
-
-	@Override
-	public String[] getRequiredPermissions() {
-		return new String[] {
-				android.Manifest.permission.RECORD_AUDIO
-		};
-	}
-
-	@Override
-	protected void onDisable() {
-		if (null != audioRecorder)
-	    {
-	        audioRecorder.stop();
-	        audioRecorder.release();
-	        audioRecorder = null;
-	        recordingThread = null;
-	    }
-	}
-
-	@Override
-	protected void onEnable() {
     	bufferSize = AudioRecord.getMinBufferSize(
         		RECORDER_SAMPLERATE,
         		RECORDER_CHANNELS,
@@ -103,20 +87,7 @@ public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
 				RECORDER_CHANNELS,
 				RECORDER_AUDIO_ENCODING,
 				bufferSize);
-	}
-
-	
-	@Override
-	protected void onRun(Bundle params) {
-	   // String timeStamp = timeString(startTime);
-
-	    // Create new stream file(s)
-	    //if (getBooleanPref(Globals.PREF_KEY_RAW_STREAMS_ENABLED))
-	    //{
-	    //	audioStreamRaw = new DataOutputStream(openStreamFile(STREAM_NAME, timeStamp, Globals.STREAM_EXTENSION_RAW));
-	    //}
-	    //audioStreamFeatures = new DataOutputStream(openStreamFile(STREAM_NAME, timeStamp, Globals.STREAM_EXTENSION_BIN));
-	    
+	    prevSecs = (double)System.currentTimeMillis()/1000.0d;
 	    audioRecorder.startRecording();
 	    recordingThread = new Thread(new Runnable()
 	    {
@@ -127,23 +98,18 @@ public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
 	        }
 	    }, "AudioRecorder Thread");
 	    recordingThread.start();
-	    
-	    //writeLogTextLine("Audio recording started");
 	}
 
 	@Override
 	protected void onStop() {
+		super.onStop();
 		audioRecorder.stop();
-	}
-	
-	
-
-	@Override
-	public void sendProbeData() {
-		// TODO Auto-generated method stub
-
+        audioRecorder.release();
+        audioRecorder = null;
+        recordingThread = null;
 	}
 
+	
 	private void handleAudioStream()
 	{
         short data16bit[] = new short[bufferSamples];
@@ -153,19 +119,19 @@ public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
     	double featureCepstrum[] = new double[MFCCS_VALUE];
     	
 	    int readAudioSamples = 0;
-	    while (isRunning())
+	    while (State.RUNNING.equals(getState()))
 	    {
 	    	readAudioSamples = audioRecorder.read(data16bit, 0, bufferSamples);
 	    	double currentSecs = (double)(System.currentTimeMillis())/1000.0d;
 	    	double diffSecs = currentSecs - prevSecs;
 	    	prevSecs = currentSecs;
 	    	
-	    	Bundle data = new Bundle();
+	    	JsonObject data = new JsonObject();
 	    	if (readAudioSamples > 0)
 	    	{
 	    		double fN = (double)readAudioSamples;
 
-	    		data.putDouble(DIFF_SECS, diffSecs);
+	    		data.addProperty(DIFF_SECS, diffSecs);
 
 	    		// Convert shorts to 8-bit bytes for raw audio output
 	    		for (int i = 0; i < bufferSamples; i ++)
@@ -181,7 +147,7 @@ public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
 	    		{
 	    			accum += Math.abs((double)data16bit[i]);
 	    		}
-	    		data.putDouble(L1_NORM, accum/fN);
+	    		data.addProperty(L1_NORM, accum/fN);
 
 	    		// L2-norm
 	    		accum = 0;
@@ -189,7 +155,7 @@ public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
 	    		{
 	    			accum += (double)data16bit[i]*(double)data16bit[i];
 	    		}
-	    		data.putDouble(L2_NORM, Math.sqrt(accum/fN));
+	    		data.addProperty(L2_NORM, Math.sqrt(accum/fN));
 
 	    		// Linf-norm
 	    		accum = 0;
@@ -197,7 +163,7 @@ public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
 	    		{
 	    			accum = Math.max(Math.abs((double)data16bit[i]),accum);
 	    		}
-	    		data.putDouble(LINF_NORM, Math.sqrt(accum));
+	    		data.addProperty(LINF_NORM, Math.sqrt(accum));
 
 	    		// Frequency analysis
 	    		Arrays.fill(fftBufferR, 0);
@@ -228,31 +194,19 @@ public class AudioFeaturesProbe extends Probe implements AudioFeaturesKeys {
 	    			}
 	    			psdAcrossFrequencyBands[b] = accum/((double)(k - j));
 	    		}
-	    		data.putDoubleArray(PSD_ACROSS_FREQUENCY_BANDS, psdAcrossFrequencyBands);
+	    		Gson gson = getGson();
+	    		data.add(PSD_ACROSS_FREQUENCY_BANDS, gson.toJsonTree(psdAcrossFrequencyBands));
 
 	    		// Get MFCCs
 	    		featureCepstrum = featureMFCC.cepstrum(fftBufferR, fftBufferI);
-	    		data.putDoubleArray(MFCCS, featureCepstrum);
-
-	    		// Write out raw audio, if enabled
-//	    		if (getBooleanPref(Globals.PREF_KEY_RAW_STREAMS_ENABLED))
-//	    		{
-//	    			try
-//	    			{
-//	    				audioStreamRaw.write(data8bit, 0, readAudioSamples*2);
-//	    				audioStreamRaw.flush();
-//	    			}
-//	    			catch (IOException e)
-//	    			{
-//	    				e.printStackTrace();
-//	    			}
-//	    		}
+	    		data.add(MFCCS, gson.toJsonTree(featureCepstrum));
 
 	    		// Write out features
-	    		sendProbeData((long)currentSecs, data);
+	    		sendData(data);
 	    		
 	    	}
 	    }
 
 	}
+	
 }
