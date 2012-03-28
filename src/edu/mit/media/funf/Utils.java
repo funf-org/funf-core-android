@@ -22,7 +22,6 @@
 package edu.mit.media.funf;
 
 import static edu.mit.media.funf.AsyncSharedPrefs.async;
-import static edu.mit.media.funf.Utils.TAG;
 
 import java.io.Closeable;
 import java.io.File;
@@ -50,7 +49,6 @@ import android.os.Parcelable;
 import android.os.PowerManager;
 import android.util.Log;
 import edu.mit.media.funf.ProbeExceptions.UnstorableTypeException;
-import edu.mit.media.funf.probe.Probe.Configurable;
 
 public final class Utils {
 
@@ -367,15 +365,11 @@ public final class Utils {
 		MILLI = 3;
 	
 	public static BigDecimal getTimestamp() {
-		return BigDecimal.valueOf(System.currentTimeMillis(), MILLI);
+		return DecimalTimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 	}
 	
-	public static double millisToSeconds(long millis) {
-		return ((double)millis)/1000;
-	}
-	
-	public static long secondsToMillis(double seconds) {
-		return (long)(seconds*1000);
+	public static long secondsToMillis(Number seconds) {
+		return DecimalTimeUnit.SECONDS.toMillis(seconds).longValue();
 	}
 	
 	private static long referenceNanos;
