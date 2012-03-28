@@ -53,6 +53,8 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		AudioMediaProbe.class,
 		BatteryProbe.class,
 		BluetoothProbe.class,
+		BrowserBookmarksProbe.class,
+		BrowserSearchesProbe.class,
 		GravitySensorProbe.class,
 		GyroscopeSensorProbe.class,
 		LightSensorProbe.class,
