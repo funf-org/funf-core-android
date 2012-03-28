@@ -5,6 +5,7 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -32,13 +33,18 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 import edu.mit.media.funf.DataNormalizer;
 import edu.mit.media.funf.HashUtil;
 import edu.mit.media.funf.HashUtil.HashingType;
 import edu.mit.media.funf.JsonUtils;
 import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.json.BundleTypeAdapter;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 
 public interface Probe {
@@ -509,6 +515,7 @@ public interface Probe {
 			if (adapterFactory != null) {
 				builder.registerTypeAdapterFactory(adapterFactory);
 			}
+			builder.registerTypeAdapterFactory(BundleTypeAdapter.FACTORY);
 			return builder;
 		}
 		
@@ -1006,7 +1013,7 @@ public interface Probe {
 		/**********************************
 		 * Custom serialization
 		 ********************************/
-
+		
 		/**
 		 * Used to override the serialiazation technique for multiple types
 		 * @return
