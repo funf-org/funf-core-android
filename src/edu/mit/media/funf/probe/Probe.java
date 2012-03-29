@@ -817,42 +817,22 @@ public interface Probe {
 		
 		protected final synchronized void enable() {
 			ensureLooperThreadExists();
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					state.enable(Base.this);
-				}
-			});
+			handler.sendMessage(handler.obtainMessage(ENABLE_MESSAGE));
 		}
 	
 		protected final synchronized void start() {
 			ensureLooperThreadExists();
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					state.start(Base.this);
-				}
-			});
+			handler.sendMessage(handler.obtainMessage(START_MESSAGE));
 		}
 	
 		protected final synchronized void stop() {
 			ensureLooperThreadExists();
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					state.stop(Base.this);
-				}
-			});
+			handler.sendMessage(handler.obtainMessage(STOP_MESSAGE));
 		}
 	
 		protected final synchronized void disable() {
 			if (handler != null) {
-				handler.post(new Runnable() {
-					@Override
-					public void run() {
-						state.disable(Base.this);
-					}
-				});
+				handler.sendMessage(handler.obtainMessage(DISABLE_MESSAGE));
 			}
 		}
 		
@@ -925,18 +905,39 @@ public interface Probe {
 			return false;
 		}
 		
-		protected static final int SEND_DATA_MESSAGE = 534334;
+		protected static final int 
+			ENABLE_MESSAGE = 1,
+			START_MESSAGE = 2,
+			STOP_MESSAGE = 3,
+			DISABLE_MESSAGE = 4,
+			SEND_DATA_MESSAGE = 5;
 		
 		private class ProbeHandlerCallback implements Handler.Callback {
 	
 			@Override
 			public boolean handleMessage(Message msg) {
-				if (msg.what == SEND_DATA_MESSAGE && msg.obj instanceof JsonObject) {
-					sendData((JsonObject)msg.obj);
-					return true;
-				} else {
+				switch (msg.what) {
+				case ENABLE_MESSAGE:
+					state.enable(Base.this);
+					break;
+				case START_MESSAGE:
+					state.start(Base.this);
+					break;
+				case STOP_MESSAGE:
+					state.stop(Base.this);
+					break;
+				case DISABLE_MESSAGE:
+					state.disable(Base.this);
+					break;
+				case SEND_DATA_MESSAGE:
+					if (msg.obj instanceof JsonObject) {
+						sendData((JsonObject)msg.obj);
+					}
+					break;
+				default:
 					return Base.this.handleMessage(msg);
 				}
+				return true;  // Message was handled
 			}
 			
 		}

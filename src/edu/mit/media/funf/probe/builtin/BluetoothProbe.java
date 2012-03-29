@@ -1,13 +1,15 @@
 package edu.mit.media.funf.probe.builtin;
 
+import java.math.BigDecimal;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.Base;
-import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
@@ -15,10 +17,13 @@ import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 
 @DisplayName("Nearby Bluetooth Devices Probe")
-@DefaultSchedule(period=300, duration=30)
+@DefaultSchedule(period=300)
 @RequiredFeatures("android.hardware.bluetooth")
 @RequiredPermissions({android.Manifest.permission.BLUETOOTH, android.Manifest.permission.BLUETOOTH_ADMIN})
-public class BluetoothProbe extends Base implements ContinuousProbe, PassiveProbe {
+public class BluetoothProbe extends Base implements PassiveProbe {
+	
+	@Configurable
+	private BigDecimal maxScanTime = BigDecimal.valueOf(30.0);
 	
 	private BluetoothAdapter adapter;
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -72,6 +77,9 @@ public class BluetoothProbe extends Base implements ContinuousProbe, PassiveProb
 	protected void onStart() {
 		super.onStart();
 		startDiscovery();
+		if (maxScanTime != null) {
+			getHandler().sendMessageDelayed(getHandler().obtainMessage(STOP_MESSAGE), Utils.secondsToMillis(maxScanTime));
+		}
 	}
 
 	@Override
