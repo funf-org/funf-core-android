@@ -1,9 +1,7 @@
 package edu.mit.media.funf.probe.builtin;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 import android.database.Cursor;

@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.probe.Probe;
@@ -29,7 +30,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		}
 
 		@Override
-		public void onDataCompleted(Uri completeProbeUri) {
+		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
 			Log.i(TAG, completeProbeUri.toString() + " Data complete!");
 		}
 	};

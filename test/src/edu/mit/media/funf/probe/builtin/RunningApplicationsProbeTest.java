@@ -3,6 +3,7 @@ package edu.mit.media.funf.probe.builtin;
 import android.net.Uri;
 import android.util.Log;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.probe.Probe.DataListener;
@@ -29,7 +30,7 @@ public class RunningApplicationsProbeTest extends ProbeTestCase<RunningApplicati
 	}
 
 	@Override
-	public void onDataCompleted(Uri completeProbeUri) {
+	public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
 		// TODO Auto-generated method stub
 		
 	}
