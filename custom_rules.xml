@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="funf" default="help">
+
+	<target name="getgitdetails" >
+	        <exec executable="git" outputproperty="git.tagstring">
+	                <arg value="describe"/>
+	        </exec>
+	        <exec executable="git" outputproperty="git.revision">
+	                <arg value="rev-parse"/>
+	                <arg value="HEAD"/>
+	        </exec>
+	        <condition property="git.tag" value="dev" else="${git.tagstring}">
+	                <contains string="${git.tagstring}" substring="fatal"/>
+	        </condition>
+	</target>
+	
+	<target name="jar" depends="-compile,getgitdetails">
+	        <delete file="bin/funf.jar"/>
+	        <mkdir dir="bin" />
+	        <tstamp>
+	                <format property="now" pattern="yyyy-MM-dd HH:mm:ss" />
+	        </tstamp>
+	        <manifest file="bin/MANIFEST.MF">
+	        <attribute name="Built-By" value="${user.name}"/>
+	                <attribute name="Implementation-Title" value="Funf"/>
+	        <attribute name="Implementation-Version"  value="${git.tag}r${git.revision}"/>
+	                <attribute name="Implementation-Vendor"  value="Funf at MIT Media Lab"/>
+	                <attribute name="Built-Date" value="${now}"/>  
+	        </manifest>
+	        <jar destfile="bin/funf.jar"
+	                basedir="bin/classes"
+	                includes="**/*.class"
+	                manifest="bin/MANIFEST.MF" />
+	</target>
+	
+	<target name="jardebug" depends="jar">
+	</target>
+	
+	<target name="jarrelease" depends="jar">
+		<input message="Please enter keystore password:" addproperty="keypass" />
+		<signjar jar="bin/funf.jar" 
+			keystore="${keystore}" 
+			alias="${keystore.alias}"
+			storepass="${keypass}"
+			signedjar="bin/funf-${git.tag}.jar"></signjar>
+	</target>
+</project>
