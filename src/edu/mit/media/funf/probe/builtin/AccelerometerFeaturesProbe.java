@@ -6,6 +6,7 @@ import java.util.Arrays;
 import android.net.Uri;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.FFT;
@@ -169,7 +170,7 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
 		}
 
 		@Override
-		public void onDataCompleted(Uri completeProbeUri) {
+		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
 			// TODO Auto-generated method stub
 			
 		}

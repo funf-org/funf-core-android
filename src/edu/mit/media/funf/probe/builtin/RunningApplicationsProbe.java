@@ -13,6 +13,7 @@ import android.os.PowerManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.Utils;
@@ -100,8 +101,9 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 		}
 		
 		@Override
-		public void onDataCompleted(Uri completeProbeUri) {
-			// Unused
+		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
+			// Shuts this down if something unregisters the listener
+			disable();
 		}
 	};
 	

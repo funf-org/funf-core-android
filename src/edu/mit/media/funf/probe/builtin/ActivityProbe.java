@@ -4,6 +4,7 @@ import static edu.mit.media.funf.Utils.TAG;
 import android.net.Uri;
 import android.util.Log;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.probe.Probe.Base;
@@ -112,8 +113,8 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 		}
 
 		@Override
-		public void onDataCompleted(Uri completeProbeUri) {
-			// Will never get called
+		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
+			// Do nothing
 		}
 	}
 }

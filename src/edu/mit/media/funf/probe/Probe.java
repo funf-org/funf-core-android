@@ -147,11 +147,24 @@ public interface Probe {
 		
 	}
 	
-	public interface DiffableProbe extends Probe {
-		// TODO: think of better names for these functions
-		public boolean isDiffConfigured();
-		public void setDiffParams(JsonObject diffParamValue);
-		public JsonObject getUpdatedDiffParams(JsonObject oldDiffParamValue, JsonObject... newData);
+	/**
+	 * A probe that can continue where it left off, using a checkpoint.
+	 *
+	 */
+	public interface ContinuableProbe extends Probe {
+		
+
+		/**
+		 * @return The checkpoint that represents the state of the data stream at the point this is called.
+		 */
+		public JsonElement getCheckpoint();
+		
+		/**
+		 * Sets the checkpoint the probe should start the sending data from.  Like setConfig, 
+		 * calling this will disable the probe.
+		 * @param checkpoint
+		 */
+		public void setCheckpoint(JsonElement checkpoint);
 	}
 	
 	@Documented
@@ -216,6 +229,7 @@ public interface Probe {
 		String[] value();
 	}
 	
+	
 	/**
 	 * Interface implemented by Probe data observers.
 	 */
@@ -228,7 +242,16 @@ public interface Probe {
 		 */
 		public void onDataReceived(Uri completeProbeUri, JsonObject data);
 		
-		public void onDataCompleted(Uri completeProbeUri);
+
+		/**
+		 * Called when the probe is finished sending a stream of data.  This can be used to know when the probe
+		 * was run, even if it didn't send data.  It can also be used to get a checkpoint of far through the
+		 * data stream the probe ran.  Continuable probes can use this checkpoint to start the data stream 
+		 * where it previously left off.
+		 * @param completeProbeUri
+		 * @param checkpoint
+		 */
+		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint);
 	}
 	
 
@@ -721,11 +744,21 @@ public interface Probe {
 				start();
 			}
 		}
+		
+		private JsonElement getCheckpointIfContinuable() {
+			JsonElement checkpoint = null;
+			if (this instanceof ContinuableProbe) {
+				checkpoint = ((ContinuableProbe)this).getCheckpoint();
+			}
+			return checkpoint;
+		}
 	
 		public void unregisterListener(DataListener... listeners) {
 			if (listeners != null) {
+				JsonElement checkpoint = getCheckpointIfContinuable();
 				for (DataListener listener : listeners) {
 					dataListeners.remove(listener);
+					listener.onDataCompleted(getCompleteProbeUri(), checkpoint);
 				}
 				// If no one is listening, stop using device resources
 				if (dataListeners.isEmpty()) {
@@ -748,8 +781,10 @@ public interface Probe {
 	
 		public void unregisterPassiveListener(DataListener... listeners) {
 			if (listeners != null) {
+				JsonElement checkpoint = getCheckpointIfContinuable();
 				for (DataListener listener : listeners) {
 					dataListeners.remove(listener);
+					listener.onDataCompleted(getCompleteProbeUri(), checkpoint);
 				}
 				// If no one is listening, stop using device resources
 				if (dataListeners.isEmpty() && passiveDataListeners.isEmpty()) {
@@ -791,7 +826,6 @@ public interface Probe {
 				}
 			}
 		}
-		
 		
 		
 		/*****************************************
@@ -910,7 +944,8 @@ public interface Probe {
 			START_MESSAGE = 2,
 			STOP_MESSAGE = 3,
 			DISABLE_MESSAGE = 4,
-			SEND_DATA_MESSAGE = 5;
+			SEND_DATA_MESSAGE = 5,
+			SEND_DATA_COMPLETE_MESSAGE = 6;
 		
 		private class ProbeHandlerCallback implements Handler.Callback {
 	
@@ -930,6 +965,11 @@ public interface Probe {
 					state.disable(Base.this);
 					break;
 				case SEND_DATA_MESSAGE:
+					if (msg.obj instanceof JsonObject) {
+						sendData((JsonObject)msg.obj);
+					}
+					break;
+				case SEND_DATA_COMPLETE_MESSAGE:
 					if (msg.obj instanceof JsonObject) {
 						sendData((JsonObject)msg.obj);
 					}

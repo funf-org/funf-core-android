@@ -16,7 +16,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.HashUtil;
-import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.AnyCell;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.BooleanCell;
@@ -27,7 +26,7 @@ import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.LongCell
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.StringCell;
 
 @DefaultSchedule(period=3600)
-public abstract class ContentProviderProbe extends Base {
+public abstract class ContentProviderProbe extends ImpulseProbe {
 
 	private Gson gson;
 	

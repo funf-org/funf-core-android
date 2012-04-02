@@ -85,6 +85,7 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 	@Override
 	protected void onStop() {
 		super.onStop();
+		getHandler().removeMessages(STOP_MESSAGE);
 		try { 
 			getContext().unregisterReceiver(stateChangedReceiver);
 		} catch (IllegalArgumentException e) {
