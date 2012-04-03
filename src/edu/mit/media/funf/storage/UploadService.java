@@ -121,7 +121,7 @@ public abstract class UploadService extends Service {
 			uploadThread.start();
 		}
 		
-		return Service.START_STICKY;
+		return START_REDELIVER_INTENT;
 	}
 	
 	/**
