@@ -30,10 +30,10 @@ public class AudioMediaProbe extends DatedContentProviderProbe {
 		// Ignoring DATA, too large and not relevant
 		projectionMap.put(Audio.Media.DATE_ADDED, longCell());
 		projectionMap.put(Audio.Media.DATE_MODIFIED, longCell());
-		projectionMap.put(Audio.Media.DISPLAY_NAME, hashedStringCell());
+		projectionMap.put(Audio.Media.DISPLAY_NAME, sensitiveStringCell());
 		projectionMap.put(Audio.Media.MIME_TYPE, stringCell());
 		projectionMap.put(Audio.Media.SIZE, longCell());
-		projectionMap.put(Audio.Media.TITLE, hashedStringCell());
+		projectionMap.put(Audio.Media.TITLE, sensitiveStringCell());
 		projectionMap.put(Audio.Media.ALBUM, stringCell());
 		//projectionMap.put(Audio.Media.ALBUM_ART, stringCell());  Not there for some reason
 		projectionMap.put(Audio.Media.ALBUM_ID, longCell());

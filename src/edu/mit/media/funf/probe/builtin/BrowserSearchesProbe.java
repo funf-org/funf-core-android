@@ -26,7 +26,7 @@ public class BrowserSearchesProbe extends DatedContentProviderProbe {
 	protected Map<String, CursorCell<?>> getProjectionMap() {
 		Map<String,CursorCell<?>> projectionKeyToType = new HashMap<String, CursorCell<?>>();
 		projectionKeyToType.put(Browser.SearchColumns._ID, intCell());
-		projectionKeyToType.put(Browser.SearchColumns.SEARCH, hashedStringCell());
+		projectionKeyToType.put(Browser.SearchColumns.SEARCH, sensitiveStringCell());
 		projectionKeyToType.put(Browser.SearchColumns.DATE, longCell());
 		return projectionKeyToType;
 	}

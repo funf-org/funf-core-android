@@ -8,7 +8,6 @@ import android.provider.CallLog;
 import android.provider.CallLog.Calls;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
-import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.HashedCell;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.PhoneNumberCell;
 
 @DefaultSchedule(period=36000)
@@ -29,13 +28,13 @@ public class CallLogProbe extends DatedContentProviderProbe {
 	protected Map<String,CursorCell<?>> getProjectionMap() {
 		Map<String,CursorCell<?>> projectionKeyToType = new HashMap<String, CursorCell<?>>();
 		projectionKeyToType.put(Calls._ID, intCell());
-		projectionKeyToType.put(Calls.NUMBER, new HashedCell(getContext(), new PhoneNumberCell()));
+		projectionKeyToType.put(Calls.NUMBER, new SensitiveCell(new PhoneNumberCell()));
 		projectionKeyToType.put(Calls.DATE, longCell());
 		projectionKeyToType.put(Calls.TYPE, intCell());
 		projectionKeyToType.put(Calls.DURATION, longCell());
-		projectionKeyToType.put(Calls.CACHED_NAME, hashedStringCell());
-		projectionKeyToType.put(Calls.CACHED_NUMBER_LABEL, hashedStringCell());
-		projectionKeyToType.put(Calls.CACHED_NUMBER_TYPE, hashedStringCell());
+		projectionKeyToType.put(Calls.CACHED_NAME, sensitiveStringCell());
+		projectionKeyToType.put(Calls.CACHED_NUMBER_LABEL, sensitiveStringCell());
+		projectionKeyToType.put(Calls.CACHED_NUMBER_TYPE, sensitiveStringCell());
 		return projectionKeyToType;
 	}
 

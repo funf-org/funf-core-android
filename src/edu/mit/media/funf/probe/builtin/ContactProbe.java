@@ -57,45 +57,45 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys, C
 			cursorCells = new HashMap<String, CursorCell<?>>();
 			
 			// Email
-			cursorCells.put(getKey(Email.CONTENT_ITEM_TYPE, Data.DATA1), hashedStringCell());
+			cursorCells.put(getKey(Email.CONTENT_ITEM_TYPE, Data.DATA1), sensitiveStringCell());
 			cursorCells.put(getKey(Email.CONTENT_ITEM_TYPE, Email.TYPE), intCell());
 			cursorCells.put(getKey(Email.CONTENT_ITEM_TYPE, Email.LABEL), stringCell());
-			cursorCells.put(getKey(Email.CONTENT_ITEM_TYPE, Email.DISPLAY_NAME), hashedStringCell());
+			cursorCells.put(getKey(Email.CONTENT_ITEM_TYPE, Email.DISPLAY_NAME), sensitiveStringCell());
 			
 			// Event
 			cursorCells.put(getKey(Event.CONTENT_ITEM_TYPE, Event.START_DATE), stringCell());
 			cursorCells.put(getKey(Event.CONTENT_ITEM_TYPE, Event.TYPE), intCell());
-			cursorCells.put(getKey(Event.CONTENT_ITEM_TYPE, Event.LABEL), hashedStringCell());
+			cursorCells.put(getKey(Event.CONTENT_ITEM_TYPE, Event.LABEL), sensitiveStringCell());
 			
 			// Group Membership
 			cursorCells.put(getKey(Event.CONTENT_ITEM_TYPE, GroupMembership.GROUP_ROW_ID), longCell());
 			
 			// IM Address
-			cursorCells.put(getKey(Im.CONTENT_ITEM_TYPE, Im.DATA), hashedStringCell());
+			cursorCells.put(getKey(Im.CONTENT_ITEM_TYPE, Im.DATA), sensitiveStringCell());
 			cursorCells.put(getKey(Im.CONTENT_ITEM_TYPE, Im.TYPE), intCell());
-			cursorCells.put(getKey(Im.CONTENT_ITEM_TYPE, Im.LABEL), hashedStringCell());
+			cursorCells.put(getKey(Im.CONTENT_ITEM_TYPE, Im.LABEL), sensitiveStringCell());
 			cursorCells.put(getKey(Im.CONTENT_ITEM_TYPE, Im.PROTOCOL), stringCell());
 			cursorCells.put(getKey(Im.CONTENT_ITEM_TYPE, Im.CUSTOM_PROTOCOL), stringCell());
 			
 			// Nickname
-			cursorCells.put(getKey(Nickname.CONTENT_ITEM_TYPE, Nickname.NAME), hashedStringCell());
+			cursorCells.put(getKey(Nickname.CONTENT_ITEM_TYPE, Nickname.NAME), sensitiveStringCell());
 			cursorCells.put(getKey(Nickname.CONTENT_ITEM_TYPE, Nickname.TYPE), intCell());
 			cursorCells.put(getKey(Nickname.CONTENT_ITEM_TYPE, Nickname.LABEL), stringCell());
 			
 			// Note
-			cursorCells.put(getKey(Note.CONTENT_ITEM_TYPE, Note.NOTE), hashedStringCell());
+			cursorCells.put(getKey(Note.CONTENT_ITEM_TYPE, Note.NOTE), sensitiveStringCell());
 			// TODO: do we need notes?
 			
 			// Organization
-			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.COMPANY), hashedStringCell());
+			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.COMPANY), sensitiveStringCell());
 			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.TYPE), intCell());
-			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.LABEL), hashedStringCell());
-			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.TITLE), hashedStringCell());
-			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.DEPARTMENT), hashedStringCell());
-			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.JOB_DESCRIPTION), hashedStringCell());
-			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.SYMBOL), hashedStringCell());
-			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.PHONETIC_NAME), hashedStringCell());
-			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.OFFICE_LOCATION), hashedStringCell());
+			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.LABEL), sensitiveStringCell());
+			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.TITLE), sensitiveStringCell());
+			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.DEPARTMENT), sensitiveStringCell());
+			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.JOB_DESCRIPTION), sensitiveStringCell());
+			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.SYMBOL), sensitiveStringCell());
+			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.PHONETIC_NAME), sensitiveStringCell());
+			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Organization.OFFICE_LOCATION), sensitiveStringCell());
 			cursorCells.put(getKey(Organization.CONTENT_ITEM_TYPE, Data.DATA10), stringCell()); // Phonetic_Name_Style
 			
 			// Phone
@@ -107,37 +107,37 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys, C
 			cursorCells.put(getKey(Photo.CONTENT_ITEM_TYPE, Photo.PHOTO), new NullCell());
 			
 			// Relation
-			cursorCells.put(getKey(Relation.CONTENT_ITEM_TYPE, Relation.NAME), hashedStringCell());
+			cursorCells.put(getKey(Relation.CONTENT_ITEM_TYPE, Relation.NAME), sensitiveStringCell());
 			cursorCells.put(getKey(Relation.CONTENT_ITEM_TYPE, Relation.TYPE), intCell());
 			cursorCells.put(getKey(Relation.CONTENT_ITEM_TYPE, Relation.LABEL), stringCell());
 			
 			// SipAddress (API 9) Used defaults
 			
 			// StructuredName
-			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.DISPLAY_NAME), hashedStringCell());
-			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.GIVEN_NAME), hashedStringCell());
-			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.FAMILY_NAME), hashedStringCell());
-			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.PREFIX), hashedStringCell());
-			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.MIDDLE_NAME), hashedStringCell());
-			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.SUFFIX), hashedStringCell());
-			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.PHONETIC_GIVEN_NAME), hashedStringCell());
-			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.PHONETIC_MIDDLE_NAME), hashedStringCell());
-			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.PHONETIC_FAMILY_NAME), hashedStringCell());
+			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.DISPLAY_NAME), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.GIVEN_NAME), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.FAMILY_NAME), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.PREFIX), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.MIDDLE_NAME), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.SUFFIX), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.PHONETIC_GIVEN_NAME), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.PHONETIC_MIDDLE_NAME), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredName.CONTENT_ITEM_TYPE, StructuredName.PHONETIC_FAMILY_NAME), sensitiveStringCell());
 			
 			// Structured Postal
-			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.FORMATTED_ADDRESS), hashedStringCell());
+			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.FORMATTED_ADDRESS), sensitiveStringCell());
 			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.TYPE), intCell());
 			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.LABEL), stringCell());
-			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.STREET), hashedStringCell());
-			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.POBOX), hashedStringCell());
-			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.NEIGHBORHOOD), hashedStringCell());
-			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.CITY), hashedStringCell());
-			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.REGION), hashedStringCell());
-			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.POSTCODE), hashedStringCell());
-			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.COUNTRY), hashedStringCell());
+			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.STREET), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.POBOX), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.NEIGHBORHOOD), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.CITY), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.REGION), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.POSTCODE), sensitiveStringCell());
+			cursorCells.put(getKey(StructuredPostal.CONTENT_ITEM_TYPE, StructuredPostal.COUNTRY), sensitiveStringCell());
 			
 			// Website
-			cursorCells.put(getKey(Website.CONTENT_ITEM_TYPE, Website.URL), hashedStringCell());
+			cursorCells.put(getKey(Website.CONTENT_ITEM_TYPE, Website.URL), sensitiveStringCell());
 			cursorCells.put(getKey(Website.CONTENT_ITEM_TYPE, Website.TYPE), intCell());
 			cursorCells.put(getKey(Website.CONTENT_ITEM_TYPE, Website.LABEL), stringCell());
 			
@@ -205,13 +205,13 @@ public class ContactProbe extends ContentProviderProbe implements ContactKeys, C
 			//projectionKeyToType.put(Data.AGGREGATION_MODE, intCell());  Doesn't exist for some reason
 			//projectionKeyToType.put(Data.DELETED, intCell());  Doesn't exist for some reason
 			projectionKeyToType.put(Data.LOOKUP_KEY, stringCell());
-			projectionKeyToType.put(Data.DISPLAY_NAME, hashedStringCell());
+			projectionKeyToType.put(Data.DISPLAY_NAME, sensitiveStringCell());
 			projectionKeyToType.put(Data.PHOTO_ID, longCell());
 			projectionKeyToType.put(Data.IN_VISIBLE_GROUP, intCell());
 			projectionKeyToType.put(Data.TIMES_CONTACTED, intCell());
 			projectionKeyToType.put(Data.LAST_TIME_CONTACTED, intCell());
 			projectionKeyToType.put(Data.STARRED, intCell());
-			projectionKeyToType.put(Data.CUSTOM_RINGTONE, hashedStringCell());
+			projectionKeyToType.put(Data.CUSTOM_RINGTONE, sensitiveStringCell());
 			projectionKeyToType.put(Data.SEND_TO_VOICEMAIL, intCell());
 			contactProjectionMap = projectionKeyToType;
 		}

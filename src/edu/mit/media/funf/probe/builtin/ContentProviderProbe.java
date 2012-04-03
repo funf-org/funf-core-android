@@ -160,9 +160,26 @@ public abstract class ContentProviderProbe extends ImpulseProbe {
 		return new AnyCell();
 	}
 	
-	protected CursorCell<String> hashedStringCell() {
-		return hashedStringCell(getContext());
+	protected CursorCell<String> sensitiveStringCell() {
+		return new SensitiveCell(stringCell());
 	}
+	
+	protected class SensitiveCell extends CursorCell<String> {
+		// TODO: Possible return a json object, instead of a string
+		private CursorCell<String> upstreamCell = stringCell();
+		
+		public SensitiveCell(CursorCell<String> upstreamCell) {
+			this.upstreamCell = upstreamCell;
+		}
+		
+		@Override
+		public String getData(Cursor cursor, int columnIndex) {
+			return sensitiveData(upstreamCell.getData(cursor, columnIndex));
+		}
+		
+	}
+	
+	
 	protected static CursorCell<String> hashedStringCell(Context context) {
 		return new HashedCell(context, stringCell());
 	}
