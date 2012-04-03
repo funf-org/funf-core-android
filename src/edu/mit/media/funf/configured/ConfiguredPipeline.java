@@ -70,6 +70,8 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 	ACTION_ENABLE = PREFIX + "enable",
 	ACTION_DISABLE = PREFIX + "disable";
 	
+	public static final String
+	EXTRA_FORCE_UPLOAD = "FORCE";
 
 	public static final String LAST_CONFIG_UPDATE = "LAST_CONFIG_UPDATE";
 	public static final String LAST_DATA_UPLOAD = "LAST_DATA_UPLOAD";
@@ -137,7 +139,8 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 				updateConfig();
 			}
 		} else if(ACTION_UPLOAD_DATA.equals(action)) {
-			uploadData();
+			boolean force = intent.getBooleanExtra(EXTRA_FORCE_UPLOAD, false);
+			uploadData(force);
 		} else if(ACTION_ARCHIVE_DATA.equals(action)) {
 			archiveData();
 		} else if(ACTION_ENABLE.equals(action)) {
@@ -194,7 +197,10 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 		FunfConfig config = getConfig();
 		scheduleAlarm(ACTION_UPDATE_CONFIG, config.getConfigUpdatePeriod());
 		scheduleAlarm(ACTION_ARCHIVE_DATA, config.getDataArchivePeriod());
-		scheduleAlarm(ACTION_UPLOAD_DATA, config.getDataUploadPeriod());
+		long uploadPeriod = config.getDataUploadPeriod();
+		if (uploadPeriod > 0) {
+			scheduleAlarm(ACTION_UPLOAD_DATA, config.getDataUploadPeriod());
+		}
 	}
 	
 	private void scheduleAlarm(String action, long delayInSeconds) {
@@ -333,15 +339,20 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 		startService(i);
 	}
 	
-	public void uploadData() {
+	public void uploadData(boolean force) {
 		archiveData();
 		String archiveName = getPipelineName();
 		String uploadUrl = getConfig().getDataUploadUrl();
 		Intent i = new Intent(this, getUploadServiceClass());
 		i.putExtra(UploadService.ARCHIVE_ID, archiveName);
 		i.putExtra(UploadService.REMOTE_ARCHIVE_ID, uploadUrl);
+		i.putExtra(UploadService.NETWORK, (!force && getConfig().getDataUploadOnWifiOnly()) ? UploadService.NETWORK_WIFI_ONLY : UploadService.NETWORK_ANY);
 		startService(i);
 		getSystemPrefs().edit().putLong(LAST_DATA_UPLOAD, System.currentTimeMillis()).commit();
+	}
+	
+	public void uploadData() {
+		uploadData(false);
 	}
 	
 	public void archiveData() {

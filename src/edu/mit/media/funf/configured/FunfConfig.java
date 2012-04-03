@@ -52,6 +52,7 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 		CONFIG_UPDATE_PERIOD_KEY = "configUpdatePeriod",
 		DATA_UPLOAD_URL_KEY = "dataUploadUrl",
 		DATA_UPLOAD_PERIOD_KEY = "dataUploadPeriod",
+		DATA_UPLOAD_ON_WIFI_ONLY_KEY = "dataUploadOnWifiOnly",		
 		DATA_ARCHIVE_PERIOD_KEY = "dataArchivePeriod",
 		DATA_REQUESTS_KEY = "dataRequests";
 	public static final long 
@@ -59,6 +60,8 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 		DEFAULT_DATA_ARCHIVE_PERIOD = 3 * 60 * 60,  // 3 hours
 		DEFAULT_DATA_UPLOAD_PERIOD = 6 * 60 * 60,  // 6 hours
 		DEFAULT_CONFIG_UPDATE_PERIOD = 1 * 60 * 60; // 1 hour
+	public static final boolean
+		DEFAULT_DATA_UPLOAD_ON_WIFI_ONLY = false;
 	public static final String DEFAULT_DATA_REQUESTS = "{}"; // No requests
 	
 	
@@ -114,6 +117,10 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 
 	public String getDataUploadUrl() {
 		return prefs.getString(DATA_UPLOAD_URL_KEY, null);
+	}
+	
+	public boolean getDataUploadOnWifiOnly() {
+		return prefs.getBoolean(DATA_UPLOAD_ON_WIFI_ONLY_KEY, DEFAULT_DATA_UPLOAD_ON_WIFI_ONLY);
 	}
 
 	public long getDataUploadPeriod() {
@@ -224,6 +231,11 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 			editor.putString(DATA_UPLOAD_URL_KEY, dataUploadUrl);
 			return this;
 		}
+		
+		public Editor setDataUploadOnWifiOnly(boolean dataUploadOnWifiOnly) {
+			editor.putBoolean(DATA_UPLOAD_ON_WIFI_ONLY_KEY, dataUploadOnWifiOnly);
+			return this;
+		}
 
 		public Editor setDataUploadPeriod(long dataUploadPeriod) {
 			editor.putLong(DATA_UPLOAD_PERIOD_KEY, dataUploadPeriod);
@@ -271,6 +283,14 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 			}
 		}
 		
+		private void setBoolean(JSONObject jsonObject, String key) {
+			if (jsonObject.has(key)) {
+				editor.putBoolean(key, jsonObject.optBoolean(key));
+			} else {
+				editor.remove(key);
+			}
+		}
+		
 		private void setPositiveLong(JSONObject jsonObject, String key) {
 			long value = jsonObject.optLong(key, 0L);
 			if (value <= 0) {
@@ -289,6 +309,7 @@ public class FunfConfig implements OnSharedPreferenceChangeListener {
 			setString(jsonObject, CONFIG_UPDATE_URL_KEY);
 			setPositiveLong(jsonObject, CONFIG_UPDATE_PERIOD_KEY);
 			setString(jsonObject, DATA_UPLOAD_URL_KEY);
+			setBoolean(jsonObject, DATA_UPLOAD_ON_WIFI_ONLY_KEY);
 			setPositiveLong(jsonObject, DATA_UPLOAD_PERIOD_KEY);
 			setPositiveLong(jsonObject, DATA_ARCHIVE_PERIOD_KEY);
 			
