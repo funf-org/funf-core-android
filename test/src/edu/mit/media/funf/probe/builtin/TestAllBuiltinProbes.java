@@ -62,6 +62,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		GravitySensorProbe.class,
 		GyroscopeSensorProbe.class,
 		HardwareInfoProbe.class,
+		ImageMediaProbe.class,
 		LightSensorProbe.class,
 		LinearAccelerationSensorProbe.class,
 		MagneticFieldSensorProbe.class,
