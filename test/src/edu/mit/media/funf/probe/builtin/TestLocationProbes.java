@@ -20,13 +20,7 @@ import edu.mit.media.funf.probe.Probe.StateListener;
 import edu.mit.media.funf.probe.ProbeFactory;
 
 
-/**
- * This class turns on and off all of the builtin probes.  
- * While it doesn't test any of the output, it does ensure that basic use of the probes does not crash the process.
- * @author alangardner
- *
- */
-public class TestAllBuiltinProbes extends AndroidTestCase {
+public class TestLocationProbes extends AndroidTestCase {
 
 	public static final String TAG = "FunfTest";
 	
@@ -54,34 +48,8 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 	
 	@SuppressWarnings("rawtypes")
 	public static final Class[] ALL_PROBES = {
-		AccelerometerFeaturesProbe.class,
-		AccelerometerSensorProbe.class,
-		ApplicationsProbe.class,
-		AudioFeaturesProbe.class,
-		AudioMediaProbe.class,
-		BatteryProbe.class,
-		BluetoothProbe.class,
-		BrowserBookmarksProbe.class,
-		BrowserSearchesProbe.class,
-		CallLogProbe.class,
-		CellTowerProbe.class,
-		ContactProbe.class,
-		GravitySensorProbe.class,
-		GyroscopeSensorProbe.class,
-		HardwareInfoProbe.class,
-		ImageMediaProbe.class,
-		LightSensorProbe.class,
-		LinearAccelerationSensorProbe.class,
 		LocationProbe.class,
-		MagneticFieldSensorProbe.class,
-		OrientationSensorProbe.class,
-		PressureSensorProbe.class,
-		ProximitySensorProbe.class,
-		RotationVectorSensorProbe.class,
-		RunningApplicationsProbe.class,
-		SimpleLocationProbe.class,
-		ScreenProbe.class,
-		TemperatureSensorProbe.class
+		SimpleLocationProbe.class
 	};
 	
 	
@@ -94,7 +62,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		ProbeFactory factory = ProbeFactory.BasicProbeFactory.getInstance(getContext());
 		for (Class<? extends Probe> probeClass : allProbeClasses) {
 			JsonObject config = new JsonObject();
-			config.addProperty("sensorDelay", SensorProbe.SENSOR_DELAY_NORMAL);
+			config.addProperty("maxWaitTime", 1);
 			config.addProperty("asdf", 1);
 			config.addProperty("zzzz", "__");
 			Probe probe = factory.getProbe(probeClass, config);
@@ -108,7 +76,12 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		// Run simultaneously
 		List<Probe> probes = new ArrayList<Probe>();
 		for (Class<? extends Probe> probeClass : allProbeClasses) {
-			probes.add(factory.getProbe(probeClass, null));
+			JsonObject config = new JsonObject();
+			config.addProperty("maxWaitTime", 8);
+			config.addProperty("asdf", 1);
+			config.addProperty("zzzz", "__");
+			Probe probe = factory.getProbe(probeClass, config);
+			probes.add(probe);
 		}
 		for (Probe probe : probes) {
 			probe.addStateListener(stateListener);

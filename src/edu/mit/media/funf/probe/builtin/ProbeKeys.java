@@ -209,7 +209,9 @@ public class ProbeKeys {
 	
 	public static interface LocationKeys extends BaseProbeKeys {
 		public static final String 
-		LOCATION = "location";
+		ACCURACY = "mAccuracy",
+		LATITUDE = "mLatitude",
+		LONGITUDE= "mLongitude";
 	}
 	
 	public static interface MagneticFieldSensorKeys extends SensorKeys {

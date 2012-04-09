@@ -22,8 +22,8 @@ public abstract class ImpulseProbe extends Base {
 	
 	private StateListener listenerQueueProcessor = new StateListener() {
 		@Override
-		public void onStateChanged(Probe probe) {
-			if (getState() != State.RUNNING) {
+		public void onStateChanged(Probe probe, State previousState) {
+			if (previousState == State.RUNNING && getState() != State.RUNNING) {
 				Set<DataListener> listeners = getDataListeners();
 				if (!listeners.isEmpty()) {
 					DataListener[] listenerArray = new DataListener[listeners.size()];

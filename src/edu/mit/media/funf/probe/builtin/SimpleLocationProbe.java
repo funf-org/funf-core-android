@@ -1,0 +1,154 @@
+package edu.mit.media.funf.probe.builtin;
+
+import static edu.mit.media.funf.Utils.TAG;
+
+import java.math.BigDecimal;
+
+import android.net.Uri;
+import android.util.Log;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.probe.Probe.Base;
+import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.probe.Probe.PassiveProbe;
+import edu.mit.media.funf.probe.Probe.RequiredFeatures;
+import edu.mit.media.funf.probe.Probe.RequiredPermissions;
+import edu.mit.media.funf.probe.Probe.RequiredProbes;
+import edu.mit.media.funf.probe.builtin.ProbeKeys.LocationKeys;
+
+/**
+ * Filters the verbose location set for the most accurate location within a max wait time,
+ * ending early if it finds a location that has at most the goodEnoughAccuracy.
+ * Useful for sparse polling of location to limit battery usage.
+ * @author alangardner
+ *
+ */
+@RequiredPermissions({android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION})
+@RequiredFeatures("android.hardware.location")
+@DefaultSchedule(period=1800)
+@RequiredProbes(LocationProbe.class)
+public class SimpleLocationProbe extends Base implements PassiveProbe, LocationKeys {
+
+	@Configurable
+	private BigDecimal maxWaitTime = BigDecimal.valueOf(120);
+	
+	@Configurable
+	private BigDecimal maxAge =  BigDecimal.valueOf(120); 
+	
+	@Configurable
+	private BigDecimal goodEnoughAccuracy = BigDecimal.valueOf(80);
+
+	@Configurable
+	private boolean useGps = true;
+	
+	@Configurable
+	private boolean useNetwork = true;
+
+
+	private LocationProbe locationProbe;
+	
+	private BigDecimal startTime;
+	private JsonObject bestLocation;
+	
+	private Runnable sendLocationRunnable = new Runnable() {
+		@Override
+		public void run() {
+			sendCurrentBestLocation();
+		}
+	};
+	
+	private DataListener listener = new DataListener() {
+		
+		@Override
+		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
+			Log.d(TAG, "SimpleLocationProbe received data: " + data.toString());
+			if (startTime == null) {
+				startTime = Utils.getTimestamp();
+				getHandler().postDelayed(sendLocationRunnable, Utils.secondsToMillis(maxWaitTime));
+			}
+			if (isBetterThanCurrent(data)) {
+				Log.d(TAG, "SimpleLocationProbe evaluated better location.");
+				bestLocation = data;
+			}
+			if (goodEnoughAccuracy != null && bestLocation.get(ACCURACY).getAsDouble() < goodEnoughAccuracy.doubleValue()) {
+				Log.d(TAG, "SimpleLocationProbe evaluated good enough location.");
+				if (getState() == State.RUNNING) { // Actively Running
+					stop();
+				} else if (getState() == State.ENABLED) { // Passive listening
+					// TODO: do we want to prematurely end this, or wait for the full duration
+					// Things to consider: 
+					// - the device falling to sleep before we send
+					// - too much unrequested data if we send all values within accuracy limits 
+					// (this will restart immediately if more passive data continues to come in)
+					getHandler().removeCallbacks(sendLocationRunnable);
+					sendCurrentBestLocation();
+				}
+			}
+		}
+		
+		@Override
+		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
+		}
+	};
+	
+	private void sendCurrentBestLocation() {
+		Log.d(TAG, "SimpleLocationProbe sending current best location.");
+		if (bestLocation != null) {
+			bestLocation.remove(PROBE); // Remove probe so that it fills with our probe name
+			sendData(bestLocation);
+		}
+		startTime = null;
+		bestLocation = null;
+	}
+	
+	private boolean isBetterThanCurrent(JsonObject newLocation) {
+		BigDecimal age = startTime.subtract(newLocation.get(TIMESTAMP).getAsBigDecimal());
+		return bestLocation == null || 
+				(age.doubleValue() < maxAge.doubleValue() && 
+						bestLocation.get(ACCURACY).getAsDouble() > newLocation.get(ACCURACY).getAsDouble());
+	}
+	
+	@Override
+	protected void onEnable() {
+		super.onEnable();
+		JsonObject config = new JsonObject();
+		if (!useGps) {
+			config.addProperty("useGps", false);
+		}
+		if (!useNetwork) {
+			config.addProperty("useNetwork", false);
+		}
+		locationProbe = getProbeFactory().getProbe(LocationProbe.class, config);
+		locationProbe.registerPassiveListener(listener);
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		Log.d(TAG, "SimpleLocationProbe starting, registering listener");
+		startTime = Utils.getTimestamp();
+		locationProbe.registerListener(listener);
+		getHandler().sendMessageDelayed(getHandler().obtainMessage(STOP_MESSAGE), Utils.secondsToMillis(maxWaitTime));
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		Log.d(TAG, "SimpleLocationProbe stopping");
+		getHandler().removeMessages(STOP_MESSAGE);
+		locationProbe.unregisterListener(listener);
+		sendCurrentBestLocation();
+	}
+
+	@Override
+	protected void onDisable() {
+		super.onDisable();
+		locationProbe.unregisterPassiveListener(listener);
+	}
+	
+	
+	
+}

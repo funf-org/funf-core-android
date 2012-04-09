@@ -11,9 +11,13 @@ import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
+import edu.mit.media.funf.probe.Probe.RequiredFeatures;
+import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ActivityKeys;
 
 @DefaultSchedule(period=120, duration=15)
+@RequiredFeatures("android.hardware.sensor.accelerometer")
+@RequiredProbes(AccelerometerSensorProbe.class)
 public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe, ActivityKeys {
 
 	@Configurable

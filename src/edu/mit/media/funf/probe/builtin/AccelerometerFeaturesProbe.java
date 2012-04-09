@@ -14,7 +14,9 @@ import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.Window;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
+import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
+import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerFeaturesKeys;
 
 /**
@@ -23,6 +25,8 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerFeaturesKeys;
  *
  */
 @RequiredFeatures("android.hardware.sensor.accelerometer")
+@RequiredProbes(AccelerometerSensorProbe.class)
+@DefaultSchedule(period=120, duration=15)
 public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe, AccelerometerFeaturesKeys {
 	
 	@Configurable

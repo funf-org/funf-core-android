@@ -5,7 +5,6 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -33,11 +32,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 
 import edu.mit.media.funf.DataNormalizer;
 import edu.mit.media.funf.HashUtil;
@@ -229,6 +224,14 @@ public interface Probe {
 		String[] value();
 	}
 	
+	@Documented
+	@Retention(RUNTIME)
+	@Target(TYPE)
+	@Inherited
+	public @interface RequiredProbes {
+		Class<? extends Probe>[] value();
+	}
+	
 	
 	/**
 	 * Interface implemented by Probe data observers.
@@ -264,7 +267,7 @@ public interface Probe {
 		 * Called when the probe emits a status message, which can happen when the probe changes state.
 		 * @param status
 		 */
-		public void onStateChanged(Probe probe);
+		public void onStateChanged(Probe probe, State previousState);
 	}
 	
 	public class Identifier {
@@ -397,7 +400,7 @@ public interface Probe {
 				synchronized (probe) {
 					probe.state = ENABLED;
 					probe.onEnable();
-					probe.notifyStateChange();
+					probe.notifyStateChange(this);
 				}
 			}
 	
@@ -437,7 +440,7 @@ public interface Probe {
 					}
 					probe.state = RUNNING;
 					probe.onStart();
-					probe.notifyStateChange();
+					probe.notifyStateChange(this);
 				}
 			}
 	
@@ -451,7 +454,7 @@ public interface Probe {
 				synchronized (probe) {
 					probe.state = DISABLED;
 					probe.onDisable();
-					probe.notifyStateChange();
+					probe.notifyStateChange(this);
 					probe.passiveDataListeners.clear();
 					probe.dataListeners.clear();
 					// Shutdown handler thread
@@ -478,7 +481,8 @@ public interface Probe {
 				synchronized (probe) {
 					probe.state = ENABLED;
 					probe.onStop();
-					probe.notifyStateChange();
+					probe.notifyStateChange(this);
+					probe.unregisterAllListeners();
 					if (probe.lock != null && probe.lock.isHeld()) {
 						probe.lock.release();
 						probe.lock = null;
@@ -770,6 +774,14 @@ public interface Probe {
 			}
 		}
 		
+		protected void unregisterAllListeners() {
+			synchronized (dataListeners) {
+				DataListener[] listeners = new DataListener[dataListeners.size()];
+				dataListeners.toArray(listeners);
+				unregisterListener(listeners);
+			}
+		}
+		
 		public void registerPassiveListener(DataListener... listeners) {
 			if (listeners != null) {
 				for (DataListener listener : listeners) {
@@ -793,10 +805,18 @@ public interface Probe {
 			}
 		}
 		
-		protected void notifyStateChange() {
+		protected void unregisterAllPassiveListeners() {
+			synchronized (passiveDataListeners) {
+				DataListener[] listeners = new DataListener[passiveDataListeners.size()];
+				passiveDataListeners.toArray(listeners);
+				unregisterPassiveListener(listeners);
+			}
+		}
+		
+		protected void notifyStateChange(State previousState) {
 			synchronized (stateListeners) {
 				for (StateListener listener : stateListeners) {
-					listener.onStateChanged(this);
+					listener.onStateChanged(this, previousState);
 				}
 			}
 		}
