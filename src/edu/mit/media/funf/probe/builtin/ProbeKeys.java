@@ -258,9 +258,8 @@ public class ProbeKeys {
 		SCREEN_ON = "screenOn";
 	}
 	
-	public static interface SMSKeys extends BaseProbeKeys, AndroidInternal.TextBasedSmsColumns {
-		public static final String 
-		MESSAGES = "messages";
+	public static interface SmsKeys extends BaseProbeKeys, AndroidInternal.TextBasedSmsColumns {
+		// public static final String 
 	}
 	
 	public static interface TelephonyKeys extends BaseProbeKeys {

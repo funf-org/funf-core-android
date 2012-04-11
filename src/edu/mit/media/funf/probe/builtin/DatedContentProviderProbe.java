@@ -8,14 +8,18 @@ import java.util.List;
 import android.database.Cursor;
 import android.net.Uri;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.DecimalTimeUnit;
+import edu.mit.media.funf.probe.Probe.ContinuableProbe;
 
-public abstract class DatedContentProviderProbe extends ContentProviderProbe {
+public abstract class DatedContentProviderProbe extends ContentProviderProbe implements ContinuableProbe {
 
 	@Configurable
 	protected BigDecimal afterDate = null;
+	
+	private BigDecimal latestTimestamp = null;
 	
 	@Override
 	protected Cursor getCursor(String[] projection) {
@@ -30,9 +34,11 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 		}
 		String dateFilter = null;
 		String[] dateFilterParams = null;
-		if (afterDate != null) {
+		if (afterDate != null || latestTimestamp != null) {
 			dateFilter = dateColumn + " > ?";
-			dateFilterParams = new String[] {String.valueOf(getDateColumnTimeUnit().convert(afterDate, DecimalTimeUnit.SECONDS))};
+			BigDecimal startingDate = afterDate == null ? latestTimestamp : 
+						afterDate.max(latestTimestamp == null ? BigDecimal.ZERO : latestTimestamp);
+			dateFilterParams = new String[] {String.valueOf(getDateColumnTimeUnit().convert(startingDate, DecimalTimeUnit.SECONDS))};
 		}
 		return getContext().getContentResolver().query(
 				getContentProviderUri(),
@@ -50,9 +56,34 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe {
 		return DecimalTimeUnit.MILLISECONDS;
 	}
 	
+	
+	@Override
+	protected void sendData(JsonObject data) {
+		super.sendData(data);
+		latestTimestamp = getTimestamp(data);
+	}
+	
+	@Override
+	public synchronized void setConfig(JsonObject config) {
+		super.setConfig(config);
+		setCheckpoint(null);
+	}
+
 	@Override
 	protected BigDecimal getTimestamp(JsonObject data) {
 		return getDateColumnTimeUnit().toSeconds(data.get(getDateColumnName()).getAsLong());
 	}
+
+	@Override
+	public JsonElement getCheckpoint() {
+		return getGson().toJsonTree(latestTimestamp);
+	}
+
+	@Override
+	public void setCheckpoint(JsonElement checkpoint) {
+		latestTimestamp = checkpoint == null ? null : checkpoint.getAsBigDecimal();
+	}
+	
+	
 	
 }
