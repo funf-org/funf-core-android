@@ -306,8 +306,7 @@ public class ProbeKeys {
 	}
 	
 	public static interface ServicesKeys extends BaseProbeKeys {
-		public static final String 
-		RUNNING_SERVICES = "runningServices";
+		//public static final String 
 	}
 	
 	public static interface AccountsKeys extends BaseProbeKeys {

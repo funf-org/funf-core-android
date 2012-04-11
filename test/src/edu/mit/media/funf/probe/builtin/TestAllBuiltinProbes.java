@@ -80,6 +80,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		ProximitySensorProbe.class,
 		RotationVectorSensorProbe.class,
 		RunningApplicationsProbe.class,
+		ServicesProbe.class,
 		SimpleLocationProbe.class,
 		ScreenProbe.class,
 		TemperatureSensorProbe.class
