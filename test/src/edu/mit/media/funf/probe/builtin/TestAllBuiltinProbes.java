@@ -85,7 +85,8 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 		ScreenProbe.class,
 		SmsProbe.class,
 		TelephonyProbe.class,
-		TemperatureSensorProbe.class
+		TemperatureSensorProbe.class,
+		VideoMediaProbe.class
 	};
 	
 	
