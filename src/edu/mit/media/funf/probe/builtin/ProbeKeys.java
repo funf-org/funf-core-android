@@ -291,7 +291,8 @@ public class ProbeKeys {
 	
 	public static interface TimeOffsetKeys extends BaseProbeKeys {
 		public static final String 
-		TIME_OFFSET = "timeOffset";
+		LOCAL_TIME_OFFSET = "localTimeOffset",
+		ROUND_TRIP_DELAY = "roundTripDelay";
 	}
 	
 	public static interface VideosKeys extends BaseProbeKeys, android.provider.MediaStore.Video.VideoColumns {

@@ -362,10 +362,24 @@ public final class Utils {
 
 	public static final int
 		NANO = 9,
+		MICRO = 6,
 		MILLI = 3;
 	
+	/**
+	 * Returns a BigDecimal timestamp in seconds with millisecond precision, using System.currentTimeMillis()
+	 * @return
+	 */
 	public static BigDecimal getTimestamp() {
 		return DecimalTimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+	}
+	
+	/**
+	 * Returns a BigDecimal timestamp in seconds with microsecond precision,
+	 * using System.nanoTime() and uptimeNanosToTimestamp()
+	 * @return
+	 */
+	public static BigDecimal getTimestampWithMicroPrecision() {
+		return uptimeNanosToTimestamp(System.nanoTime());
 	}
 	
 	public static long secondsToMillis(Number seconds) {
@@ -391,6 +405,14 @@ public final class Utils {
 		secondsOffset = BigDecimal.valueOf(referenceMillis, MILLI).subtract(BigDecimal.valueOf(referenceNanos, NANO));
 	}
 	
+	public static BigDecimal roundToMilliPrecision(BigDecimal timestamp) {
+		return timestamp.setScale(Utils.MILLI, RoundingMode.HALF_EVEN);
+	}
+	
+	public static BigDecimal roundToMicroPrecision(BigDecimal timestamp) {
+		return timestamp.setScale(Utils.MICRO, RoundingMode.HALF_EVEN);
+	}
+	
 	
 	private static final double CLOCK_OFFSET_TOLERANCE = 0.001;
 	/**
@@ -401,7 +423,7 @@ public final class Utils {
 	public static BigDecimal uptimeNanosToTimestamp(long nanos) {
 		if (secondsOffset == null) {
 			calibrateNanosConversion();
-		}	else {
+		} else {
 			BigDecimal currentTimeStamp = getTimestamp();
 			long currentNanos = System.nanoTime();
 			if (_uptimeNanosToTimestamp(currentNanos).subtract(currentTimeStamp).abs().doubleValue() > CLOCK_OFFSET_TOLERANCE) {
@@ -412,8 +434,7 @@ public final class Utils {
 	}
 	
 	// Round to microseconds, because of the inaccuracy associated with our method of syncing the clocks
-	public static final MathContext NANO_PRECISION_CONTEXT = new MathContext(16, RoundingMode.HALF_EVEN);
 	private static BigDecimal _uptimeNanosToTimestamp(long nanos) {
-		return BigDecimal.valueOf(nanos, NANO).add(secondsOffset).round(NANO_PRECISION_CONTEXT);
+		return roundToMicroPrecision(BigDecimal.valueOf(nanos, NANO).add(secondsOffset));
 	}
 }

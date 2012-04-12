@@ -1,6 +1,7 @@
 package edu.mit.media.funf.probe.builtin;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 
 import android.net.Uri;
@@ -91,7 +92,7 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
         		double diffFrameSecs = currentSecs - prevFrameSecs;
                 prevFrameSecs = currentSecs;
                 data.addProperty(TIMESTAMP, currentSecs);
-                data.addProperty(DIFF_FRAME_SECS, new BigDecimal(diffFrameSecs).round(Utils.NANO_PRECISION_CONTEXT));
+                data.addProperty(DIFF_FRAME_SECS, new BigDecimal(diffFrameSecs).setScale(Utils.MICRO, RoundingMode.HALF_EVEN));
                 data.addProperty(NUM_FRAME_SAMPLES, frameSamples);
                 
                 data.add(X, getFeatures(0, fN));
