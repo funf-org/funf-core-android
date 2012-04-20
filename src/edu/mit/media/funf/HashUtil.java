@@ -121,13 +121,8 @@ public class HashUtil {
 		}
 	}
 
-	// by Wei Pan
 	public static String formatPhoneNumber(String numberString) {
-		numberString = numberString.replaceAll("\\(", "");
-		numberString = numberString.replaceAll("\\)", "");
-		numberString = numberString.replaceAll("-", "");
-		numberString = numberString.replaceAll("\\+", "");
-		numberString = numberString.replaceAll("\\*", "");
+		numberString = numberString.replaceAll("[^0-9]+", "");
 		int i = numberString.length();
 		if (i <= 10)
 			return numberString;
