@@ -13,17 +13,16 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Log;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import edu.mit.media.funf.JsonUtils;
-import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
+import edu.mit.media.funf.time.TimeUtil;
 
 /**
  * This service coordinates satisfying data requests by scheduling and running probes.
@@ -309,7 +308,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 			DataListener listener = listenerSatisfied.getKey();
 			Double lastSatisfied = listenerSatisfied.getValue();
 			if (lastSatisfied == null) {
-				nextRunTime = Utils.getTimestamp().doubleValue();
+				nextRunTime = TimeUtil.getTimestamp().doubleValue();
 				break;
 			} else {
 				for (ProbeDataRequest request : requests.get(listener)) {
@@ -333,11 +332,11 @@ public class ProbeManager extends Service implements ProbeFactory {
 			manager.cancel(pi);
 		} else {
 			// Set alarm
-			long triggerAtTimeMillis = Utils.secondsToMillis(nextRunTime);
+			long triggerAtTimeMillis = TimeUtil.secondsToMillis(nextRunTime);
 			if (minPeriod == null) {
 				manager.set(AlarmManager.RTC_WAKEUP, triggerAtTimeMillis, pi);
 			} else {
-				long minPeriodMillis = Utils.secondsToMillis(minPeriod);
+				long minPeriodMillis = TimeUtil.secondsToMillis(minPeriod);
 				if (strict) {
 					manager.setRepeating(AlarmManager.RTC_WAKEUP, triggerAtTimeMillis, minPeriodMillis, pi);
 				} else {
@@ -374,7 +373,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 				Intent i = new Intent(ACTION_STOP_PROBE, probeUri);
 				i.setClass(this, getClass());
 				PendingIntent pi = PendingIntent.getService(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-				long triggerAtTimeMillis = Utils.secondsToMillis(maxDuration);
+				long triggerAtTimeMillis = TimeUtil.secondsToMillis(maxDuration);
 				manager.set(AlarmManager.RTC_WAKEUP, triggerAtTimeMillis, pi);
 			}
 		}

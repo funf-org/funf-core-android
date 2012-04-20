@@ -21,7 +21,7 @@
  */
 package edu.mit.media.funf.storage;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,7 +37,8 @@ import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
 
 import android.util.Log;
-import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.util.IOUtil;
+import edu.mit.media.funf.util.LogUtil;
 
 public interface FileCopier {
 
@@ -69,23 +70,23 @@ public interface FileCopier {
 					try {
 						dst.transferFrom(src, 0, src.size());
 					} catch (IOException e) {
-						Log.e(TAG, "Error backing up file. " + e.getLocalizedMessage());
+						Log.e(LogUtil.TAG, "Error backing up file. " + e.getLocalizedMessage());
 						return false;
 					} finally {
 						try {
 							if (src != null) {src.close();}
 							if (dst != null) {dst.close();}
 						} catch (IOException e) {
-							Log.e(TAG, "Error closing db files. " + e.getLocalizedMessage());
+							Log.e(LogUtil.TAG, "Error closing db files. " + e.getLocalizedMessage());
 							return false;
 						}
 					}
 				} else {
-					Log.e(TAG, "File does not exist " + srcFile.getAbsolutePath());
+					Log.e(LogUtil.TAG, "File does not exist " + srcFile.getAbsolutePath());
 					return false;
 				}
 			} catch (FileNotFoundException e) {
-				Log.e(TAG, "Unable to create backup. " + e.getLocalizedMessage());
+				Log.e(LogUtil.TAG, "Unable to create backup. " + e.getLocalizedMessage());
 				return false;
 			}
 			return true;
@@ -153,9 +154,9 @@ public interface FileCopier {
 				Log.e(TAG, "IOException", e);
 				return false;
 			} finally {
-				Utils.close(in);
-				Utils.close(co);
-				Utils.close(out);
+				IOUtil.close(in);
+				IOUtil.close(co);
+				IOUtil.close(out);
 			}
 			Log.i(TAG, "done copy");
 			return true;

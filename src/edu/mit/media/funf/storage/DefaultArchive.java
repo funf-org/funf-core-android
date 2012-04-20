@@ -21,6 +21,8 @@
  */
 package edu.mit.media.funf.storage;
 
+import static edu.mit.media.funf.util.AsyncSharedPrefs.async;
+
 import java.io.File;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
@@ -33,12 +35,11 @@ import javax.crypto.spec.PBEKeySpec;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import edu.mit.media.funf.Base64Coder;
-import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.security.Base64Coder;
 import edu.mit.media.funf.storage.NameGenerator.CompositeNameGenerator;
 import edu.mit.media.funf.storage.NameGenerator.RequiredSuffixNameGenerator;
 import edu.mit.media.funf.storage.NameGenerator.SystemUniqueTimestampNameGenerator;
-import static edu.mit.media.funf.AsyncSharedPrefs.async;
+import edu.mit.media.funf.util.FileUtil;
 
 /**
  * A default implementation of a file archive, which should be good enough for most cases.
@@ -145,7 +146,7 @@ public class DefaultArchive implements Archive<File> {
 	// Delegate
 	
 	public String getPathOnSDCard() {
-		return Utils.getSdCardPath(context) + databaseName + "/";
+		return FileUtil.getSdCardPath(context) + databaseName + "/";
 	}
 	
 	private Archive<File> delegateArchive; // Cache

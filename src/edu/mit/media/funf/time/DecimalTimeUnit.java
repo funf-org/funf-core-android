@@ -1,4 +1,4 @@
-package edu.mit.media.funf;
+package edu.mit.media.funf.time;
 
 import java.math.BigDecimal;
 

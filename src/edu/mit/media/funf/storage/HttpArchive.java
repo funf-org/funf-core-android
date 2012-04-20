@@ -32,7 +32,8 @@ import java.net.URL;
 
 import android.net.Uri;
 import android.util.Log;
-import static edu.mit.media.funf.Utils.TAG;
+import edu.mit.media.funf.util.LogUtil;
+
 /**
  * Archives a file to the url specified using POST HTTP method.
  * 
@@ -93,7 +94,7 @@ public class HttpArchive implements RemoteArchive {
 	}
 	
 	public static boolean isValidUrl(String url) {
-		Log.d(TAG, "Validating url");
+		Log.d(LogUtil.TAG, "Validating url");
 		boolean isValidUrl = false;
 		if (url != null &&  !url.trim().equals("")) {
 			try {
@@ -103,10 +104,10 @@ public class HttpArchive implements RemoteArchive {
 				&& test.getHost() != null 
 				&& !test.getHost().trim().equals("");
 			} catch (Exception e) {
-				Log.d(TAG, "Not valid", e);
+				Log.d(LogUtil.TAG, "Not valid", e);
 			}
 		}
-		Log.d(TAG, "Valid url? " + isValidUrl);
+		Log.d(LogUtil.TAG, "Valid url? " + isValidUrl);
 		return isValidUrl;
 	}
 	
@@ -140,7 +141,7 @@ public class HttpArchive implements RemoteArchive {
 				fileInputStream = new FileInputStream(file); 
 			}catch (FileNotFoundException e) {
 				e.printStackTrace();
-				Log.e(TAG, "file not found");
+				Log.e(LogUtil.TAG, "file not found");
 			}
 			// open a URL connection to the Servlet 
 			URL url = new URL(uploadurl); 

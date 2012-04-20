@@ -1,6 +1,6 @@
 package edu.mit.media.funf.probe.builtin;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.util.List;
 
@@ -21,6 +21,7 @@ import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
+import edu.mit.media.funf.util.LogUtil;
 
 @DefaultSchedule(period=300)
 @RequiredPermissions({Manifest.permission.ACCESS_WIFI_STATE, Manifest.permission.CHANGE_WIFI_STATE})
@@ -60,7 +61,7 @@ public class WifiProbe extends Base {
 					getContext().unregisterReceiver(this);  // TODO: sometimes this throws an IllegalArgumentException
 					saveWifiStateAndRunScan();
 				} catch (IllegalArgumentException e) {
-					Log.e(TAG, "Unregistered WIFIE_STATE_CHANGED receiver more than once.");
+					Log.e(LogUtil.TAG, "Unregistered WIFIE_STATE_CHANGED receiver more than once.");
 				}
 			}
 		}
@@ -148,9 +149,9 @@ public class WifiProbe extends Base {
 		if (state == WifiManager.WIFI_STATE_ENABLED) {
 			boolean successfulStart = wifiManager.startScan();
 			if (successfulStart) {
-				Log.i(TAG, "WIFI scan started succesfully");
+				Log.i(LogUtil.TAG, "WIFI scan started succesfully");
 			} else {
-				Log.e(TAG, "WIFI scan failed.");
+				Log.e(LogUtil.TAG, "WIFI scan failed.");
 			}
 			numberOfAttempts = 0;
 		} else if (numberOfAttempts <= 3) { 

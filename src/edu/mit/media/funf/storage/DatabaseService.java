@@ -21,7 +21,7 @@
  */
 package edu.mit.media.funf.storage;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.io.File;
 import java.util.HashMap;
@@ -35,6 +35,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import edu.mit.media.funf.util.LogUtil;
 
 /**
  * Simple database service that is able to write timestamp, name, value tuples.
@@ -70,15 +71,15 @@ public abstract class DatabaseService extends IntentService {
 				dbHelper.close();
 			}
 		}
-		Log.i(TAG, "Destroyed");
+		Log.i(LogUtil.TAG, "Destroyed");
 	}
 
 	@Override
 	public void onHandleIntent(Intent intent) {
-		Log.i(TAG, "Started");
+		Log.i(LogUtil.TAG, "Started");
 		final String databaseName = intent.getStringExtra(DATABASE_NAME_KEY);
 		if (databaseName == null) {
-			Log.e(TAG, "Database name not specified.");
+			Log.e(LogUtil.TAG, "Database name not specified.");
 			return;
 		}
 		String action = intent.getAction();
@@ -117,7 +118,7 @@ public abstract class DatabaseService extends IntentService {
 	private void runArchive(String databaseName) {
 		SQLiteOpenHelper dbHelper = getOrCreateDatabaseHelper(databaseName);
 		File dbFile = new File(dbHelper.getReadableDatabase().getPath());
-		Log.i(TAG, "Running archive: " + dbFile.getAbsolutePath());
+		Log.i(LogUtil.TAG, "Running archive: " + dbFile.getAbsolutePath());
 		dbHelper.close();
 		Archive<File> archive = getArchive(databaseName);
 		if (archive.add(dbFile)) {
@@ -131,7 +132,7 @@ public abstract class DatabaseService extends IntentService {
 		}
 		SQLiteOpenHelper dbHelper = databaseHelpers.get(databaseName);
 		if (dbHelper == null) {
-			Log.i(TAG, "DataBaseService: Creating database '" + databaseName + "'");
+			Log.i(LogUtil.TAG, "DataBaseService: Creating database '" + databaseName + "'");
 			dbHelper = getDatabaseHelper(databaseName);
 			databaseHelpers.put(databaseName, dbHelper);
 		}
@@ -145,16 +146,16 @@ public abstract class DatabaseService extends IntentService {
 	 * @param datum
 	 */
 	private void writeToDatabase(String databaseName, Intent intent) {
-		Log.i(TAG, "Writing to database");
+		Log.i(LogUtil.TAG, "Writing to database");
 		SQLiteOpenHelper dbHelper = getOrCreateDatabaseHelper(databaseName);
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
 		try {
 			db.beginTransaction();
 			updateDatabase(db, intent);
 			db.setTransactionSuccessful();
-			Log.i(TAG, "Writing successful");
+			Log.i(LogUtil.TAG, "Writing successful");
 		} catch (Exception e) {
-			Log.e(TAG, "DataBaseService: save error",e);
+			Log.e(LogUtil.TAG, "DataBaseService: save error",e);
 		} finally {
 			db.endTransaction();
 		}

@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf;
+package edu.mit.media.funf.security;
 
 /**
  * 
@@ -41,7 +41,8 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.util.Log;
-import static edu.mit.media.funf.Utils.TAG;
+import edu.mit.media.funf.util.LogUtil;
+
 
 public class HashUtil {
 
@@ -55,7 +56,7 @@ public class HashUtil {
 			try {
 				instance = MessageDigest.getInstance("SHA-1");
 			} catch (NoSuchAlgorithmException e) {
-				Log.e(TAG, "HashUtil no SHA alghrithom", e);
+				Log.e(LogUtil.TAG, "HashUtil no SHA alghrithom", e);
 				return null;
 			}
 		}
@@ -93,7 +94,7 @@ public class HashUtil {
 			// Log.v(TAG, "oneWayHashAndRSA, jsonEncMsg: " + jsonEncMsg);
 			return jsonEncMsg.toString();
 		} catch (JSONException e) {
-			Log.e(TAG, "oneWayHashAndRSA: json error:", e);
+			Log.e(LogUtil.TAG, "oneWayHashAndRSA: json error:", e);
 			return "JSON ERROR!";
 		}
 	}
@@ -110,13 +111,13 @@ public class HashUtil {
 				return (new JSONObject()).put(HashingType.ONE_WAY_HASH.name(),
 						oneWayHashString(msg)).toString();
 			} catch (JSONException e) {
-				Log.e(TAG, "hashString: json error:", e);
+				Log.e(LogUtil.TAG, "hashString: json error:", e);
 				return "JSON ERROR!";
 			}
 		} else if (hashingType == HashingType.INTERMEDIATE_HASH_ENC) {
 			return oneWayHashAndRSA(context, msg);
 		} else {
-			Log.e(TAG, "hashString: unknown hashingMode!!!");
+			Log.e(LogUtil.TAG, "hashString: unknown hashingMode!!!");
 			return "unknown hashing mode!";
 		}
 	}

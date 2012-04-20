@@ -11,8 +11,8 @@ import android.net.Uri;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.DecimalTimeUnit;
 import edu.mit.media.funf.probe.Probe.ContinuableProbe;
+import edu.mit.media.funf.time.DecimalTimeUnit;
 
 public abstract class DatedContentProviderProbe extends ContentProviderProbe implements ContinuableProbe {
 

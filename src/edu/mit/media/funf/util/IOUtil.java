@@ -19,8 +19,11 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf;
+package edu.mit.media.funf.util;
 
+import static edu.mit.media.funf.util.LogUtil.TAG;
+
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,9 +38,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpParams;
 
 import android.util.Log;
-import static edu.mit.media.funf.Utils.TAG;
 
-public class IOUtils {
+public class IOUtil {
 	
 	public static String inputStreamToString(InputStream is, String encoding) throws IOException {
 		final char[] buffer = new char[0x10000];
@@ -74,5 +76,21 @@ public class IOUtils {
 	        httpclient.getConnectionManager().shutdown();  
 		}
         return responseBody;
+	}
+
+	/**
+	 * Closes a stream, and swallows null cases our IOExceptions.
+	 * @param stream
+	 */
+	public static boolean close(Closeable stream) {
+		if(stream != null) {
+			try {
+				stream.close();
+				return true;
+			} catch (IOException e) {
+				Log.e(LogUtil.TAG, "Error closing stream", e);
+			}
+		}
+		return false;
 	}
 }

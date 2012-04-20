@@ -1,6 +1,6 @@
 package edu.mit.media.funf.probe;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -34,13 +34,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.TypeAdapterFactory;
 
-import edu.mit.media.funf.DataNormalizer;
-import edu.mit.media.funf.HashUtil;
-import edu.mit.media.funf.HashUtil.HashingType;
-import edu.mit.media.funf.JsonUtils;
-import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.data.DataNormalizer;
 import edu.mit.media.funf.json.BundleTypeAdapter;
+import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
+import edu.mit.media.funf.security.HashUtil;
+import edu.mit.media.funf.security.HashUtil.HashingType;
+import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.AnnotationUtil;
+import edu.mit.media.funf.util.LockUtil;
+import edu.mit.media.funf.util.LogUtil;
 
 public interface Probe {
 	
@@ -436,7 +439,7 @@ public interface Probe {
 				synchronized (probe) {
 					if (probe.isWakeLockedWhileRunning()) {
 						Uri probeUri = Probe.Identifier.getProbeUri(probe);
-						probe.lock = Utils.getWakeLock(probe.getContext(), probeUri.toString());
+						probe.lock = LockUtil.getWakeLock(probe.getContext(), probeUri.toString());
 					}
 					probe.state = RUNNING;
 					probe.onStart();
@@ -597,7 +600,7 @@ public interface Probe {
 		private List<Field> getConfigurableFields() {
 			if (configurableFields == null) {
 				List<Field> newConfigurableFields = new ArrayList<Field>();
-				Utils.getAllFieldsWithAnnotation(newConfigurableFields, getClass(), Configurable.class);
+				AnnotationUtil.getAllFieldsWithAnnotation(newConfigurableFields, getClass(), Configurable.class);
 				configurableFields = newConfigurableFields;
 			}
 			return configurableFields;
@@ -629,9 +632,9 @@ public interface Probe {
 							field.set(this, value);
 						}
 					} catch (IllegalArgumentException e) {
-						Log.e(TAG, "Bad access of probe fields!!", e);
+						Log.e(LogUtil.TAG, "Bad access of probe fields!!", e);
 					} catch (IllegalAccessException e) {
-						Log.e(TAG, "Bad access of probe fields!!", e);
+						Log.e(LogUtil.TAG, "Bad access of probe fields!!", e);
 					}
 					field.setAccessible(currentAccessibility);
 				}
@@ -687,9 +690,9 @@ public interface Probe {
 								JsonElement value = getGson().toJsonTree(field.get(this), type);
 								completeConfig.add(name, value);
 							} catch (IllegalArgumentException e) {
-								Log.e(TAG, "Bad access of probe fields!!", e);
+								Log.e(LogUtil.TAG, "Bad access of probe fields!!", e);
 							} catch (IllegalAccessException e) {
-								Log.e(TAG, "Bad access of probe fields!!", e);
+								Log.e(LogUtil.TAG, "Bad access of probe fields!!", e);
 							}
 							field.setAccessible(currentAccessibility);
 						}
@@ -830,7 +833,7 @@ public interface Probe {
 				handler.sendMessage(dataMessage);
 			} else {
 				if (!data.has(TIMESTAMP)) {
-					data.addProperty(TIMESTAMP, Utils.getTimestamp());
+					data.addProperty(TIMESTAMP, TimeUtil.getTimestamp());
 				}
 				synchronized (dataListeners) {
 					for (DataListener listener : dataListeners) {
@@ -1043,7 +1046,7 @@ public interface Probe {
 				}
 			} 
 			catch (ClassNotFoundException e) {
-				Log.e(TAG, "Probe does not exist: '" + probeDescriptor + "'", e);
+				Log.e(LogUtil.TAG, "Probe does not exist: '" + probeDescriptor + "'", e);
 			}
 			return null;
 		}

@@ -1,6 +1,6 @@
 package edu.mit.media.funf.probe.builtin;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -11,11 +11,12 @@ import android.util.Log;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.SensorKeys;
+import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.LogUtil;
 
 @DefaultSchedule(period=SensorProbe.DEFAULT_PERIOD, duration=SensorProbe.DEFAULT_DURATION)
 public abstract class SensorProbe extends Base implements ContinuousProbe, SensorKeys {
@@ -47,7 +48,7 @@ public abstract class SensorProbe extends Base implements ContinuousProbe, Senso
 			@Override
 			public void onSensorChanged(SensorEvent event) {
 				JsonObject data = new JsonObject();
-				data.addProperty(TIMESTAMP, Utils.uptimeNanosToTimestamp(event.timestamp));
+				data.addProperty(TIMESTAMP, TimeUtil.uptimeNanosToTimestamp(event.timestamp));
 				data.addProperty(ACCURACY, event.accuracy);
 				int valuesLength = Math.min(event.values.length, valueNames.length);
 				for (int i = 0; i < valuesLength; i++) {
@@ -112,7 +113,7 @@ public abstract class SensorProbe extends Base implements ContinuousProbe, Senso
 					sensorDelay = SensorManager.SENSOR_DELAY_NORMAL;
 				}
 			} catch (ClassCastException cce) {
-				Log.w(TAG, "Unknown sensor delay value: " + specifiedSensorDelay);
+				Log.w(LogUtil.TAG, "Unknown sensor delay value: " + specifiedSensorDelay);
 			}
 		}
 		

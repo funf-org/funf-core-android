@@ -21,7 +21,7 @@
  */
 package edu.mit.media.funf.storage;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.io.File;
 import java.util.HashMap;
@@ -39,9 +39,10 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
-import edu.mit.media.funf.EqualsUtil;
-import edu.mit.media.funf.HashCodeUtil;
-import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.util.EqualsUtil;
+import edu.mit.media.funf.util.HashCodeUtil;
+import edu.mit.media.funf.util.LockUtil;
+import edu.mit.media.funf.util.LogUtil;
 
 public abstract class UploadService extends Service {
 
@@ -68,9 +69,9 @@ public abstract class UploadService extends Service {
 
 	@Override
 	public void onCreate() {
-		Log.i(TAG, "Creating...");
+		Log.i(LogUtil.TAG, "Creating...");
 		connectivityManager =(ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		lock = Utils.getWakeLock(this);
+		lock = LockUtil.getWakeLock(this);
 		fileFailures = new HashMap<String, Integer>();
 		remoteArchiveFailures = new HashMap<String, Integer>();
 		filesToUpload = new ConcurrentLinkedQueue<ArchiveFile>();
@@ -100,7 +101,7 @@ public abstract class UploadService extends Service {
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		Log.i(TAG, "Starting...");
+		Log.i(LogUtil.TAG, "Starting...");
 		int network = intent.getIntExtra(NETWORK, NETWORK_ANY);
 		if (isOnline(network)) {
 			String archiveName = intent.getStringExtra(ARCHIVE_ID);
@@ -144,7 +145,7 @@ public abstract class UploadService extends Service {
 	public void archive(Archive<File> archive, RemoteArchive remoteArchive, File file, int network) {
 		ArchiveFile archiveFile = new ArchiveFile(archive, remoteArchive, file, network);
 		if (!filesToUpload.contains(archiveFile)) {
-			Log.i(TAG, "Queuing " + file.getName());
+			Log.i(LogUtil.TAG, "Queuing " + file.getName());
 			filesToUpload.offer(archiveFile);
 		}
 	}
@@ -153,7 +154,7 @@ public abstract class UploadService extends Service {
 		Integer numRemoteFailures = remoteArchiveFailures.get(remoteArchive.getId());
 		numRemoteFailures = (numRemoteFailures == null) ? 0 : numRemoteFailures;
 		if (numRemoteFailures < MAX_REMOTE_ARCHIVE_RETRIES && isOnline(network)) {
-			Log.i(TAG, "Archiving..." + file.getName());
+			Log.i(LogUtil.TAG, "Archiving..." + file.getName());
 			if(remoteArchive.add(file)) {
 				archive.remove(file);
 			} else {
@@ -166,11 +167,11 @@ public abstract class UploadService extends Service {
 				if (numFileFailures < MAX_FILE_RETRIES) {
 					filesToUpload.offer(new ArchiveFile(archive, remoteArchive, file, network));
 				} else {
-					Log.i(TAG, "Failed to upload '" + file.getAbsolutePath() + "' after 3 attempts.");
+					Log.i(LogUtil.TAG, "Failed to upload '" + file.getAbsolutePath() + "' after 3 attempts.");
 				}
 			}
 		} else {
-			Log.i(TAG, "Canceling upload.  Remote archive '" + remoteArchive.getId() + "' is not currently available.");
+			Log.i(LogUtil.TAG, "Canceling upload.  Remote archive '" + remoteArchive.getId() + "' is not currently available.");
 		}
 	}
 	

@@ -1,6 +1,6 @@
 package edu.mit.media.funf.probe;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
+
+import edu.mit.media.funf.util.LogUtil;
 
 /**
  * Responsible for initializing a probe, including setting Context, configuration, and a factory
@@ -89,9 +91,9 @@ public interface ProbeFactory {
 				probe.setConfig(config);
 				return probe;
 			} catch (IllegalAccessException e) {
-				Log.e(TAG, "Probe constructor not visible for '" + probeClass.getName() + "'", e);
+				Log.e(LogUtil.TAG, "Probe constructor not visible for '" + probeClass.getName() + "'", e);
 			} catch (InstantiationException e) {
-				Log.e(TAG, "Probe constructor not visible for '" + probeClass.getName() + "'", e);
+				Log.e(LogUtil.TAG, "Probe constructor not visible for '" + probeClass.getName() + "'", e);
 			}
 			return null;
 		}

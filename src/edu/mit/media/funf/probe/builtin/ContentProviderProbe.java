@@ -1,6 +1,6 @@
 package edu.mit.media.funf.probe.builtin;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.math.BigDecimal;
 import java.util.Iterator;
@@ -15,7 +15,6 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.HashUtil;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.AnyCell;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.BooleanCell;
@@ -24,6 +23,8 @@ import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.HashedCe
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.IntCell;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.LongCell;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.StringCell;
+import edu.mit.media.funf.security.HashUtil;
+import edu.mit.media.funf.util.LogUtil;
 
 @DefaultSchedule(period=3600)
 public abstract class ContentProviderProbe extends ImpulseProbe {
@@ -71,7 +72,7 @@ public abstract class ContentProviderProbe extends ImpulseProbe {
 			this.c = getCursor(projection);
 			int count = c.getCount();
 			this.brandNew = true;
-			Log.v(TAG, "cursor returned " + count +" result");
+			Log.v(LogUtil.TAG, "cursor returned " + count +" result");
 		}
 		
 		@Override

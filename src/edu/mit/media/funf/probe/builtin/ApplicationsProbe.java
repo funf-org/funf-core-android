@@ -1,6 +1,6 @@
 package edu.mit.media.funf.probe.builtin;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -19,9 +19,10 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ApplicationsKeys;
+import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.LogUtil;
 
 public class ApplicationsProbe extends ImpulseProbe implements PassiveProbe, ApplicationsKeys{
 	
@@ -35,13 +36,13 @@ public class ApplicationsProbe extends ImpulseProbe implements PassiveProbe, App
 			try {
 				if (Intent.ACTION_PACKAGE_ADDED.equals(action) || Intent.ACTION_PACKAGE_REPLACED.equals(action)) {
 					ApplicationInfo info = pm.getApplicationInfo(intent.getDataString(), 0);
-					sendData(info, true, Utils.getTimestamp());
+					sendData(info, true, TimeUtil.getTimestamp());
 				} else if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
 					ApplicationInfo info = pm.getApplicationInfo(intent.getDataString(), PackageManager.GET_UNINSTALLED_PACKAGES);
-					sendData(info, false, Utils.getTimestamp());
+					sendData(info, false, TimeUtil.getTimestamp());
 				}
 			} catch (NameNotFoundException e) {
-				Log.w(TAG, "ApplicationsProbe: Package not found '" + intent.getDataString() + "'");
+				Log.w(LogUtil.TAG, "ApplicationsProbe: Package not found '" + intent.getDataString() + "'");
 			}
 		}
 	};

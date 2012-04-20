@@ -1,4 +1,4 @@
-package edu.mit.media.funf;
+package edu.mit.media.funf.data;
 
 public interface DataNormalizer<T> {
 

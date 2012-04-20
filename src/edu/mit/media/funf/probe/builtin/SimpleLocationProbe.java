@@ -1,6 +1,6 @@
 package edu.mit.media.funf.probe.builtin;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.math.BigDecimal;
 
@@ -10,7 +10,6 @@ import android.util.Log;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
@@ -18,6 +17,8 @@ import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.LocationKeys;
+import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.LogUtil;
 
 /**
  * Filters the verbose location set for the most accurate location within a max wait time,
@@ -64,17 +65,17 @@ public class SimpleLocationProbe extends Base implements PassiveProbe, LocationK
 		
 		@Override
 		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
-			Log.d(TAG, "SimpleLocationProbe received data: " + data.toString());
+			Log.d(LogUtil.TAG, "SimpleLocationProbe received data: " + data.toString());
 			if (startTime == null) {
-				startTime = Utils.getTimestamp();
-				getHandler().postDelayed(sendLocationRunnable, Utils.secondsToMillis(maxWaitTime));
+				startTime = TimeUtil.getTimestamp();
+				getHandler().postDelayed(sendLocationRunnable, TimeUtil.secondsToMillis(maxWaitTime));
 			}
 			if (isBetterThanCurrent(data)) {
-				Log.d(TAG, "SimpleLocationProbe evaluated better location.");
+				Log.d(LogUtil.TAG, "SimpleLocationProbe evaluated better location.");
 				bestLocation = data;
 			}
 			if (goodEnoughAccuracy != null && bestLocation.get(ACCURACY).getAsDouble() < goodEnoughAccuracy.doubleValue()) {
-				Log.d(TAG, "SimpleLocationProbe evaluated good enough location.");
+				Log.d(LogUtil.TAG, "SimpleLocationProbe evaluated good enough location.");
 				if (getState() == State.RUNNING) { // Actively Running
 					stop();
 				} else if (getState() == State.ENABLED) { // Passive listening
@@ -95,7 +96,7 @@ public class SimpleLocationProbe extends Base implements PassiveProbe, LocationK
 	};
 	
 	private void sendCurrentBestLocation() {
-		Log.d(TAG, "SimpleLocationProbe sending current best location.");
+		Log.d(LogUtil.TAG, "SimpleLocationProbe sending current best location.");
 		if (bestLocation != null) {
 			bestLocation.remove(PROBE); // Remove probe so that it fills with our probe name
 			sendData(bestLocation);
@@ -128,16 +129,16 @@ public class SimpleLocationProbe extends Base implements PassiveProbe, LocationK
 	@Override
 	protected void onStart() {
 		super.onStart();
-		Log.d(TAG, "SimpleLocationProbe starting, registering listener");
-		startTime = Utils.getTimestamp();
+		Log.d(LogUtil.TAG, "SimpleLocationProbe starting, registering listener");
+		startTime = TimeUtil.getTimestamp();
 		locationProbe.registerListener(listener);
-		getHandler().sendMessageDelayed(getHandler().obtainMessage(STOP_MESSAGE), Utils.secondsToMillis(maxWaitTime));
+		getHandler().sendMessageDelayed(getHandler().obtainMessage(STOP_MESSAGE), TimeUtil.secondsToMillis(maxWaitTime));
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		Log.d(TAG, "SimpleLocationProbe stopping");
+		Log.d(LogUtil.TAG, "SimpleLocationProbe stopping");
 		getHandler().removeMessages(STOP_MESSAGE);
 		locationProbe.unregisterListener(listener);
 		sendCurrentBestLocation();

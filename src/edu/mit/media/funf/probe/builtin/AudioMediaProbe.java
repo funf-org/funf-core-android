@@ -5,9 +5,9 @@ import java.util.Map;
 
 import android.net.Uri;
 import android.provider.MediaStore.Audio;
-import edu.mit.media.funf.DecimalTimeUnit;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
+import edu.mit.media.funf.time.DecimalTimeUnit;
 
 @DisplayName("Audio Media File Stats Probe")
 @DefaultSchedule(period=36000)

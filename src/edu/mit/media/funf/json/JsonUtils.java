@@ -1,4 +1,4 @@
-package edu.mit.media.funf;
+package edu.mit.media.funf.json;
 
 
 import java.util.ArrayList;

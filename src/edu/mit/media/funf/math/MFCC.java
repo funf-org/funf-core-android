@@ -1,4 +1,5 @@
-package edu.mit.media.funf;
+package edu.mit.media.funf.math;
+
 
 public class MFCC
 {

@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf;
+package edu.mit.media.funf.util;
 
 import java.lang.reflect.Array;
 

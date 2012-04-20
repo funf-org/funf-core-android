@@ -22,7 +22,7 @@
 package edu.mit.media.funf.configured;
 
 import static edu.mit.media.funf.AsyncSharedPrefs.async;
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.io.File;
 import java.net.MalformedURLException;

@@ -20,7 +20,7 @@
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
 // using /res/raw/pub.enc as the RSA Public Key
-package edu.mit.media.funf;
+package edu.mit.media.funf.security;
 /**
  * 
  * This file is part of the FunF Software System
@@ -41,14 +41,15 @@ import javax.crypto.Cipher;
 
 import android.content.Context;
 import android.util.Log;
-import static edu.mit.media.funf.Utils.TAG;
+import edu.mit.media.funf.util.LogUtil;
+
 
 
 public class RSAEncode {
 	
 	private static Cipher cipher = null;
 	private static void genCipher(Context context, int publicKey) {
-		Log.i(TAG, "generate new cipher");
+		Log.i(LogUtil.TAG, "generate new cipher");
 		byte[] data = null;
 		X509EncodedKeySpec key = new X509EncodedKeySpec(data);
 		KeyFactory kee = null;
@@ -59,7 +60,7 @@ public class RSAEncode {
 			cipher = Cipher.getInstance("RSA", "BC");
 			cipher.init(Cipher.ENCRYPT_MODE, key1);
 		} catch (Exception e) {
-			Log.e(TAG, "fatal! cannot initialize RSA cipher");
+			Log.e(LogUtil.TAG, "fatal! cannot initialize RSA cipher");
 			e.printStackTrace();
 		}
 	}

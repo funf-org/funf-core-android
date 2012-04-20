@@ -9,9 +9,9 @@ import android.media.MediaRecorder;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.FFT;
-import edu.mit.media.funf.MFCC;
-import edu.mit.media.funf.Window;
+import edu.mit.media.funf.math.FFT;
+import edu.mit.media.funf.math.MFCC;
+import edu.mit.media.funf.math.Window;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;

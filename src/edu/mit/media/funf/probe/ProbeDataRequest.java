@@ -7,9 +7,9 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import edu.mit.media.funf.EqualsUtil;
-import edu.mit.media.funf.HashCodeUtil;
-import edu.mit.media.funf.JsonUtils;
+import edu.mit.media.funf.json.JsonUtils;
+import edu.mit.media.funf.util.EqualsUtil;
+import edu.mit.media.funf.util.HashCodeUtil;
 
 /**
  * Immutable class for describing a data request from a probe.

@@ -1,6 +1,6 @@
 package edu.mit.media.funf.probe.builtin;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -19,6 +19,7 @@ import android.os.Debug.MemoryInfo;
 import android.util.Log;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.util.LogUtil;
 
 /**
  * Reads various information from the /proc file system. 
@@ -97,7 +98,7 @@ public class ProcessStatisticsProbe extends Base {
         catch (Exception e)
         {
 
-            Log.e(TAG, "Exception parsing the file", e);
+            Log.e(LogUtil.TAG, "Exception parsing the file", e);
         }
 
 
@@ -139,7 +140,7 @@ public class ProcessStatisticsProbe extends Base {
 		}
 		catch( IOException ex )
 		{
-			Log.e(TAG, "Could not read /proc file", ex);
+			Log.e(LogUtil.TAG, "Could not read /proc file", ex);
 		}
         return res;
 
@@ -179,7 +180,7 @@ public class ProcessStatisticsProbe extends Base {
         }
         catch (IOException ioe)
         {
-            Log.e(TAG, "Exception parsing /proc/cpuinfo", ioe);
+            Log.e(LogUtil.TAG, "Exception parsing /proc/cpuinfo", ioe);
         }
     	
 		try
@@ -260,7 +261,7 @@ public class ProcessStatisticsProbe extends Base {
 		}
 		catch( IOException ex )
 		{
-			Log.e(TAG, "Could not read /proc file", ex);
+			Log.e(LogUtil.TAG, "Could not read /proc file", ex);
 		}
 
 		return result;
@@ -341,7 +342,7 @@ public class ProcessStatisticsProbe extends Base {
         catch (Exception e)
         {
 
-            Log.e(TAG, "Exception", e);
+            Log.e(LogUtil.TAG, "Exception", e);
         }
 
 

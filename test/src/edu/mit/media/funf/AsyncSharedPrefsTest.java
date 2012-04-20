@@ -21,11 +21,12 @@
  */
 package edu.mit.media.funf;
 
-import static edu.mit.media.funf.AsyncSharedPrefs.async;
+import edu.mit.media.funf.util.StringUtil;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.test.AndroidTestCase;
+import static edu.mit.media.funf.util.AsyncSharedPrefs.async;
 
 public class AsyncSharedPrefsTest extends AndroidTestCase {
 
@@ -61,7 +62,7 @@ public class AsyncSharedPrefsTest extends AndroidTestCase {
 		prefs.edit().putString("test5", "test").commit();
 		assertEquals("test", prefs.getString("test5", ""));
 		
-		System.out.println("Entries: " + Utils.join(prefs.getAll().keySet(), ", "));
+		System.out.println("Entries: " + StringUtil.join(prefs.getAll().keySet(), ", "));
 		
 		assertEquals(5, prefs.getAll().size());
 	}

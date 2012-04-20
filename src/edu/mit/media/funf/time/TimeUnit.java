@@ -1,4 +1,4 @@
-package edu.mit.media.funf;
+package edu.mit.media.funf.time;
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
  * Expert Group and released to the public domain, as explained at
@@ -7,6 +7,7 @@ package edu.mit.media.funf;
 
 import java.io.InvalidObjectException;
 import java.io.ObjectStreamException;
+import java.util.concurrent.BlockingQueue;
 
 /**
   * A <tt>TimeUnit</tt> represents time durations at a given unit of

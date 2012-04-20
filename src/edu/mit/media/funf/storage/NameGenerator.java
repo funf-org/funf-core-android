@@ -24,7 +24,8 @@ package edu.mit.media.funf.storage;
 import java.util.Date;
 
 import android.content.Context;
-import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.UuidUtil;
 
 public interface NameGenerator {
 	
@@ -45,7 +46,7 @@ public interface NameGenerator {
 	public static class TimestampNameGenerator implements NameGenerator {
 		@Override
 		public String generateName(final String name) {
-			return name == null ? null : Utils.getTimestamp() + "_" + name;
+			return name == null ? null : TimeUtil.getTimestamp() + "_" + name;
 		}
 	}
 	
@@ -104,7 +105,7 @@ public interface NameGenerator {
 		private final NameGenerator delegate;
 		
 		public SystemUniqueTimestampNameGenerator(Context context) {
-			delegate = new CompositeNameGenerator(new TimestampNameGenerator(), new ConstantNameGenerator(Utils.getInstallationId(context) + "_", ""));		
+			delegate = new CompositeNameGenerator(new TimestampNameGenerator(), new ConstantNameGenerator(UuidUtil.getInstallationId(context) + "_", ""));		
 		}
 		
 		

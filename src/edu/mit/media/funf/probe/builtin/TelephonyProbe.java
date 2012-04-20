@@ -5,7 +5,7 @@ import android.telephony.TelephonyManager;
 
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.DataNormalizer.PhoneNumberNormalizer;
+import edu.mit.media.funf.data.DataNormalizer.PhoneNumberNormalizer;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;

@@ -11,7 +11,6 @@ import android.os.Bundle;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.DecimalTimeUnit;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
@@ -19,6 +18,7 @@ import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.LocationKeys;
+import edu.mit.media.funf.time.DecimalTimeUnit;
 
 /**
  * Sends all location points gathered by system.

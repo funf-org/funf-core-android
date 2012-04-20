@@ -19,9 +19,9 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf;
+package edu.mit.media.funf.util;
 
-import static edu.mit.media.funf.Utils.TAG;
+import static edu.mit.media.funf.util.LogUtil.TAG;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -51,7 +51,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
-public class FileUtils {
+public class FileUtil {
 
 	
 	public static boolean isSDCardReady() {
@@ -181,7 +181,11 @@ public class FileUtils {
 		if (file.length() > byteLimit) {
 			throw new IllegalArgumentException("File too large.");
 		}
-		return FileUtils.getStringFromFile(file);
+		return FileUtil.getStringFromFile(file);
+	}
+
+	public static String getSdCardPath(Context context) {
+		return new File(Environment.getExternalStorageDirectory(), context.getPackageName()) + "/";
 	}
 
 }

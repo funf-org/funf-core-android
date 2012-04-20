@@ -29,7 +29,9 @@ import java.util.UUID;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import edu.mit.media.funf.Utils;
+import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.StringUtil;
+import edu.mit.media.funf.util.UuidUtil;
 
 public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 
@@ -67,9 +69,9 @@ public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 		db.execSQL(DATA_TABLE.getCreateTableSQL());
 		db.execSQL(FILE_INFO_TABLE.getCreateTableSQL());
 		// Insert file identifier information
-		String installationUuid = Utils.getInstallationId(context);
+		String installationUuid = UuidUtil.getInstallationId(context);
 		String fileUuid = UUID.randomUUID().toString();
-		double createdTime = Utils.getTimestamp().doubleValue();
+		double createdTime = TimeUtil.getTimestamp().doubleValue();
 		db.execSQL(String.format("insert into %s (%s, %s, %s, %s) values ('%s', '%s', '%s', %d)", 
 				FILE_INFO_TABLE.name, 
 				COLUMN_DATABASE_NAME, COLUMN_INSTALLATION, COLUMN_UUID, COLUMN_CREATED,
@@ -96,7 +98,7 @@ public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 		}
 		public List<Column> getColumns() { return new ArrayList<Column>(columns); }
 		public String getCreateTableSQL() {
-			return String.format(CREATE_TABLE_FORMAT, name, Utils.join(columns, ", "));
+			return String.format(CREATE_TABLE_FORMAT, name, StringUtil.join(columns, ", "));
 		}
 	}
 

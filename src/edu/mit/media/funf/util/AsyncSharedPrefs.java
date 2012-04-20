@@ -19,21 +19,22 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf;
+package edu.mit.media.funf.util;
+
+import static edu.mit.media.funf.util.LogUtil.TAG;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.Map.Entry;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.util.Log;
-import static edu.mit.media.funf.Utils.TAG;
 
 /**
  * A convenience class to make sure that writes happen in a separate thread,
@@ -266,7 +267,7 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 		try {
 			return SharedPreferences.Editor.class.getMethod("apply");
 		} catch (NoSuchMethodException e) {
-			Log.i(Utils.TAG, "Apply method does not exist, using async commit.");
+			Log.i(TAG, "Apply method does not exist, using async commit.");
 		}
 		return null;
 	}
@@ -288,6 +289,7 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 		}
 		// Commit if for some reason using apply does not work
 		// No apply method, spin up thread to commit
+		// TODO: we should have only one thread committing, and the ability to retry if the commit fails.
 		new Thread(new Runnable() {
 			@Override
 			public void run() {

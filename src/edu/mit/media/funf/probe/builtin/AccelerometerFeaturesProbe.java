@@ -10,15 +10,15 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.FFT;
-import edu.mit.media.funf.Utils;
-import edu.mit.media.funf.Window;
+import edu.mit.media.funf.math.FFT;
+import edu.mit.media.funf.math.Window;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerFeaturesKeys;
+import edu.mit.media.funf.time.TimeUtil;
 
 /**
  * 
@@ -92,7 +92,7 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
         		double diffFrameSecs = currentSecs - prevFrameSecs;
                 prevFrameSecs = currentSecs;
                 data.addProperty(TIMESTAMP, currentSecs);
-                data.addProperty(DIFF_FRAME_SECS, new BigDecimal(diffFrameSecs).setScale(Utils.MICRO, RoundingMode.HALF_EVEN));
+                data.addProperty(DIFF_FRAME_SECS, new BigDecimal(diffFrameSecs).setScale(TimeUtil.MICRO, RoundingMode.HALF_EVEN));
                 data.addProperty(NUM_FRAME_SAMPLES, frameSamples);
                 
                 data.add(X, getFeatures(0, fN));

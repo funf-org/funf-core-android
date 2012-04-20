@@ -1,6 +1,6 @@
 package edu.mit.media.funf.probe.builtin;
 
-import static edu.mit.media.funf.Utils.TAG;
+
 import android.net.Uri;
 import android.util.Log;
 
@@ -14,6 +14,7 @@ import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ActivityKeys;
+import edu.mit.media.funf.util.LogUtil;
 
 @DefaultSchedule(period=120, duration=15)
 @RequiredFeatures("android.hardware.sensor.accelerometer")
@@ -68,7 +69,7 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 		}
 		
 		private void intervalReset() {
-			Log.d(TAG, "interval RESET");
+			Log.d(LogUtil.TAG, "interval RESET");
 			// Calculate activity and reset
 			JsonObject data = new JsonObject();
 			if (varianceSum >= 10.0f) {
@@ -101,13 +102,13 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 		@Override
 		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
 			double timestamp = data.get(TIMESTAMP).getAsDouble();
-			Log.d(TAG, "Starttime: " + startTime + " intervalStartTime: " + intervalStartTime);
-			Log.d(TAG, "RECEIVED:" + timestamp);
+			Log.d(LogUtil.TAG, "Starttime: " + startTime + " intervalStartTime: " + intervalStartTime);
+			Log.d(LogUtil.TAG, "RECEIVED:" + timestamp);
 			if (timestamp >= intervalStartTime + 2 * interval) {
-				Log.d(TAG, "RESET:" + timestamp);
+				Log.d(LogUtil.TAG, "RESET:" + timestamp);
 				reset();
 			} else if (timestamp >= intervalStartTime + interval) {
-				Log.d(TAG, "interval Reset:" + timestamp);
+				Log.d(LogUtil.TAG, "interval Reset:" + timestamp);
 				intervalReset();
 			}
 			float x = data.get(AccelerometerSensorProbe.X).getAsFloat();

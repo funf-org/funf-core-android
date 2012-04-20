@@ -8,13 +8,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import edu.mit.media.funf.Utils;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
+import edu.mit.media.funf.time.TimeUtil;
 
 @DisplayName("Nearby Bluetooth Devices Probe")
 @DefaultSchedule(period=300)
@@ -78,7 +78,7 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 		super.onStart();
 		startDiscovery();
 		if (maxScanTime != null) {
-			getHandler().sendMessageDelayed(getHandler().obtainMessage(STOP_MESSAGE), Utils.secondsToMillis(maxScanTime));
+			getHandler().sendMessageDelayed(getHandler().obtainMessage(STOP_MESSAGE), TimeUtil.secondsToMillis(maxScanTime));
 		}
 	}
 

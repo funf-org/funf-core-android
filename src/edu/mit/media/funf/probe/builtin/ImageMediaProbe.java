@@ -5,8 +5,8 @@ import java.util.Map;
 
 import android.net.Uri;
 import android.provider.MediaStore.Images;
-import edu.mit.media.funf.DecimalTimeUnit;
 import edu.mit.media.funf.probe.Probe.DisplayName;
+import edu.mit.media.funf.time.DecimalTimeUnit;
 
 @DisplayName("Image File Stats Probe")
 public class ImageMediaProbe extends DatedContentProviderProbe {

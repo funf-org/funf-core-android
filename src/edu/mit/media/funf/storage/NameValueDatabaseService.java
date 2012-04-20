@@ -27,7 +27,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-import static edu.mit.media.funf.Utils.TAG;
+import edu.mit.media.funf.util.LogUtil;
+
 
 public class NameValueDatabaseService extends DatabaseService {
 	public static final String NAME_KEY = "NAME";
@@ -54,7 +55,7 @@ public class NameValueDatabaseService extends DatabaseService {
 		final String name = intent.getStringExtra(NAME_KEY);
 		final String value = intent.getStringExtra(VALUE_KEY);
 		if (timestamp == 0L || name == null || value == null) {
-			Log.e(TAG, "Unable to save data.  Not all required values specified. " + timestamp + " " + name + " - " + value);
+			Log.e(LogUtil.TAG, "Unable to save data.  Not all required values specified. " + timestamp + " " + name + " - " + value);
 			throw new SQLException("Not all required fields specified.");
 		}
 		ContentValues cv = new ContentValues();
