@@ -689,7 +689,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		if (periodParameter == null) {
 			return true;
 		} else {
-			long period = dataRequest.getLong(periodParameter.getName(), (Long)periodParameter.getValue());
+			long period = Utils.getLong(dataRequest, periodParameter.getName(), (Long)periodParameter.getValue());
 			return dataTime >= (lastDataSentTime + period);
 		}
 	}
