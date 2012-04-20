@@ -96,7 +96,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	PROBE_STATE_ENABLED = "ENABLED",
 	PROBE_STATE_DISABLED = "DISABLED";
 	
-	private static final long FAR_IN_FUTURE_MILLIS = 365 * 24 * 60 * 60 * 1000; // One year
+	private static final long FAR_IN_FUTURE_MILLIS = 365L * 24 * 60 * 60 * 1000; // One year
 	
 	private PowerManager.WakeLock lock;
 	private Intent requestsIntent;
