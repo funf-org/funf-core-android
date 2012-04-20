@@ -261,7 +261,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 			try {period = schedule.get("period").getAsDouble(); } catch (ClassCastException e) {} catch (IllegalStateException e) {} catch (NullPointerException e) {}
 			try {duration = schedule.get("duration").getAsDouble(); } catch (ClassCastException e) {} catch (IllegalStateException e) {} catch (NullPointerException e) {}
 			try {opportunistic = schedule.get("opportunistic").getAsBoolean(); } catch (ClassCastException e) {} catch (IllegalStateException e) {} catch (NullPointerException e) {}
-			try {opportunistic = schedule.get("strict").getAsBoolean(); } catch (ClassCastException e) {} catch (IllegalStateException e) {} catch (NullPointerException e) {}
+			try {strict = schedule.get("strict").getAsBoolean(); } catch (ClassCastException e) {} catch (IllegalStateException e) {} catch (NullPointerException e) {}
 		}
 
 		public Double getPeriod() {
