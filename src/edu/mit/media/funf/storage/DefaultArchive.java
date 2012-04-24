@@ -51,8 +51,6 @@ public class DefaultArchive implements Archive<File> {
 
 	private static final String ENCRYPTION_PREFS = "edu.mit.media.funf.configured.ConfiguredEncryption";
 	private static final String ENCRYPTION_KEY = "ENCRYPTION_KEY";
-	private static final String ENCRYPTION_ALGORITHM = "ENCRYTION_ALGORITHM";
-	private static final String ENCRYPTION_FORMAT = "ENCRYPTION_FORMAT";
 	private static final String DES_ENCRYPTION = "DES";
 	
 	private static final char[] DEFAULT_PASSWORD = "changeme".toCharArray();
@@ -134,8 +132,6 @@ public class DefaultArchive implements Archive<File> {
 	private void saveKey(SecretKey secretKey) {
 		SharedPreferences.Editor edit = preferences.edit();
 		edit.putString(ENCRYPTION_KEY, new String(Base64Coder.encode(secretKey.getEncoded())));
-		edit.putString(ENCRYPTION_FORMAT, secretKey.getFormat()); // Stored just for reference
-		edit.putString(ENCRYPTION_ALGORITHM, secretKey.getAlgorithm()); // Stored just for reference
 		edit.commit();
 		// Reset delegate archive, to reinitialize key
 		delegateArchive = null;
@@ -171,7 +167,7 @@ public class DefaultArchive implements Archive<File> {
 	
 	static FileDirectoryArchive getTimestampedDbFileArchive(File archiveDir, Context context, SecretKey encryptionKey) {
 		NameGenerator nameGenerator = new CompositeNameGenerator(new SystemUniqueTimestampNameGenerator(context), new RequiredSuffixNameGenerator(".db"));
-		FileCopier copier = (encryptionKey == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(encryptionKey);
+		FileCopier copier = (encryptionKey == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(encryptionKey, DES_ENCRYPTION);
 		return new FileDirectoryArchive(archiveDir, nameGenerator, copier, new DirectoryCleaner.KeepAll());
 	}
 	
