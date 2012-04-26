@@ -19,7 +19,6 @@ import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerFeaturesKeys;
 import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.util.Configurable;
 
 /**
  * 
@@ -31,13 +30,13 @@ import edu.mit.media.funf.util.Configurable;
 @DefaultSchedule(period=120, duration=15)
 public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe, AccelerometerFeaturesKeys {
 	
-	@Configurable
+	@ConfigurableField
 	private double frameDuration = 1.0;
 	
-	@Configurable
+	@ConfigurableField
 	private int fftSize = 128;
 	
-	@Configurable
+	@ConfigurableField
 	private double[] freqBandEdges = {0,1,3,6,10};
 
 	// Assumed maximum accelerometer sampling rate

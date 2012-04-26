@@ -17,7 +17,6 @@ import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.TimeOffsetKeys;
 import edu.mit.media.funf.time.NtpMessage;
 import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 /**
@@ -30,13 +29,13 @@ public class TimeOffsetProbe extends Base implements TimeOffsetKeys {
 	
 	private static final BigDecimal SECONDS_1900_TO_1970 = new BigDecimal(2208988800L);
 	
-	@Configurable
+	@ConfigurableField
 	private String host = "2.north-america.pool.ntp.org";
 	
-	@Configurable
+	@ConfigurableField
 	private int port = 123;
 	
-	@Configurable
+	@ConfigurableField
 	private BigDecimal timeout = BigDecimal.TEN;
 	
 	@Override

@@ -16,7 +16,6 @@ import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.SensorKeys;
 import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 @DefaultSchedule(period=SensorProbe.DEFAULT_PERIOD, duration=SensorProbe.DEFAULT_DURATION)
@@ -25,7 +24,7 @@ public abstract class SensorProbe extends Base implements ContinuousProbe, Senso
 	public static final double DEFAULT_PERIOD = 3600;
 	public static final double DEFAULT_DURATION = 60;
 	
-	@Configurable
+	@ConfigurableField
 	private String sensorDelay = SENSOR_DELAY_FASTEST;
 	
 	public static final String 

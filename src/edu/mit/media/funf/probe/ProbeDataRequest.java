@@ -90,7 +90,7 @@ public class ProbeDataRequest {
 	 * @return
 	 */
 	public Uri getProbeUri() {
-		return Probe.Identifier.getProbeUri(probeClass == null ? probeName : probeClass.getName(), config);
+		return Probe.PROBE_URI.getUri(probeClass == null ? probeName : probeClass.getName(), config);
 	}
 	
 	public JsonObject getAsJsonObject() {

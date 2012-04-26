@@ -14,7 +14,6 @@ import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ActivityKeys;
-import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 @DefaultSchedule(period=120, duration=15)
@@ -22,7 +21,7 @@ import edu.mit.media.funf.util.LogUtil;
 @RequiredProbes(AccelerometerSensorProbe.class)
 public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe, ActivityKeys {
 
-	@Configurable
+	@ConfigurableField
 	private double interval = 1.0;
 	
 	private long startTime;

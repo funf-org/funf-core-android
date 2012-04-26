@@ -19,7 +19,6 @@ import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.LocationKeys;
 import edu.mit.media.funf.time.DecimalTimeUnit;
-import edu.mit.media.funf.util.Configurable;
 
 /**
  * Sends all location points gathered by system.
@@ -31,13 +30,13 @@ import edu.mit.media.funf.util.Configurable;
 @DefaultSchedule(period=1800)
 public class LocationProbe extends Base implements ContinuousProbe, PassiveProbe, LocationKeys {
 
-	@Configurable
+	@ConfigurableField
 	private boolean useGps = true;
 	
-	@Configurable
+	@ConfigurableField
 	private boolean useNetwork = true;
 	
-	@Configurable
+	@ConfigurableField
 	private boolean useCache = true;
 	
 	private Gson gson;

@@ -110,7 +110,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 						 Set<ProbeDataRequest> dataRequests = requests.get(listener);
 						 boolean opportunistic = false;
 						 for (ProbeDataRequest dataRequest : dataRequests) {
-							 BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.Identifier.getProbeName(intent.getData())), dataRequest.getSchedule());
+							 BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.PROBE_URI.getName(intent.getData())), dataRequest.getSchedule());
 							 opportunistic = opportunistic || schedule.isOpportunistic();
 						 }
 						 if (opportunistic) {
@@ -298,7 +298,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 	}
 	
 	private void schedule(Uri probeUri) {
-		Class<? extends Probe> probeClass = Probe.Base.getProbeClass(Probe.Identifier.getProbeName(probeUri));
+		Class<? extends Probe> probeClass = Probe.Base.getProbeClass(Probe.PROBE_URI.getName(probeUri));
 		
 		// Figure out when the next time this probe needs to be run is
 		Double nextRunTime = null;
@@ -312,7 +312,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 				break;
 			} else {
 				for (ProbeDataRequest request : requests.get(listener)) {
-					BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.Identifier.getProbeName(probeUri)), request.getSchedule());
+					BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.PROBE_URI.getName(probeUri)), request.getSchedule());
 					Double period = schedule.getPeriod();
 					if (period != null && period != 0) {
 						double requestNextRunTime = lastSatisfied + period;
@@ -348,7 +348,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 	}
 	
 	private void scheduleStop(Uri probeUri) {
-		Class<? extends Probe> probeClass = Probe.Base.getProbeClass(Probe.Identifier.getProbeName(probeUri));
+		Class<? extends Probe> probeClass = Probe.Base.getProbeClass(Probe.PROBE_URI.getName(probeUri));
 		// Only continuous probes can be stopped
 		if (ContinuousProbe.class.isAssignableFrom(probeClass)) {
 			Double maxDuration = null;

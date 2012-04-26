@@ -18,7 +18,6 @@ import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.LocationKeys;
 import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 /**
@@ -34,19 +33,19 @@ import edu.mit.media.funf.util.LogUtil;
 @RequiredProbes(LocationProbe.class)
 public class SimpleLocationProbe extends Base implements PassiveProbe, LocationKeys {
 
-	@Configurable
+	@ConfigurableField
 	private BigDecimal maxWaitTime = BigDecimal.valueOf(120);
 	
-	@Configurable
+	@ConfigurableField
 	private BigDecimal maxAge =  BigDecimal.valueOf(120); 
 	
-	@Configurable
+	@ConfigurableField
 	private BigDecimal goodEnoughAccuracy = BigDecimal.valueOf(80);
 
-	@Configurable
+	@ConfigurableField
 	private boolean useGps = true;
 	
-	@Configurable
+	@ConfigurableField
 	private boolean useNetwork = true;
 
 

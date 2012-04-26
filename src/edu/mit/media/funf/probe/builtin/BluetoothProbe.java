@@ -15,7 +15,6 @@ import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.util.Configurable;
 
 @DisplayName("Nearby Bluetooth Devices Probe")
 @DefaultSchedule(period=300)
@@ -23,7 +22,7 @@ import edu.mit.media.funf.util.Configurable;
 @RequiredPermissions({android.Manifest.permission.BLUETOOTH, android.Manifest.permission.BLUETOOTH_ADMIN})
 public class BluetoothProbe extends Base implements PassiveProbe {
 	
-	@Configurable
+	@ConfigurableField
 	private BigDecimal maxScanTime = BigDecimal.valueOf(30.0);
 	
 	private BluetoothAdapter adapter;

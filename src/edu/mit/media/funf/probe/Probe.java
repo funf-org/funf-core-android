@@ -8,11 +8,8 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,9 +27,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.TypeAdapterFactory;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.data.DataNormalizer;
 import edu.mit.media.funf.json.BundleTypeAdapter;
 import edu.mit.media.funf.json.JsonUtils;
@@ -40,49 +37,20 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 import edu.mit.media.funf.security.HashUtil;
 import edu.mit.media.funf.security.HashUtil.HashingType;
 import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.util.AnnotationUtil;
-import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LockUtil;
 import edu.mit.media.funf.util.LogUtil;
 
-public interface Probe {
+public interface Probe extends Configurable {
 	
 	public static final boolean DEFAULT_OPPORTUNISTIC = true;
 	public static final boolean DEFAULT_STRICT = false;
 	
-	
 	/**
-	 * Set a Context to give this probe access to system resources.
+	 * Sets the context that this probe will use.  This should be called 
+	 * by the ProbeFactory before the probe is used.
 	 * @param context
 	 */
 	public void setContext(Context context);
-	
-	
-	/**
-	 * Changes the configuration for this probe.  Setting the configuration will disable the probe.
-	 * @param config
-	 */
-	public void setConfig(JsonObject config);
-	
-	/**
-	 * @return A copy of the current specified configuration for this probe.
-	 */
-	public JsonObject getConfig();
-	
-	/**
-	 * @return A copy of all configuration parameters, including default ones.
-	 */
-	public JsonObject getCompleteConfig();
-	
-	/**
-	 * @return
-	 */
-	public Uri getProbeUri();
-	
-	/**
-	 * @return
-	 */
-	public Uri getCompleteProbeUri();
 	
 	/**
 	 * Sets the ProbeFactory this probe should use for accessing other probes.
@@ -255,120 +223,8 @@ public interface Probe {
 		public void onStateChanged(Probe probe, State previousState);
 	}
 	
-	public class Identifier {
-		public static final String PROBE_SCHEME = "probe";
-		
-		/**
-		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for a probe with a specific config.
-		 * Need to ensure that your config string is consistently sorted.
-		 * @return
-		 */
-		public static Uri getProbeUri(String probeName, String config) {
-			String path = config == null ? "" : "/" + config;
-			return new Uri.Builder()
-					.scheme(PROBE_SCHEME)
-					.authority(probeName)
-					.path(path)
-					.build();
-		}
-		
-		/**
-		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for a probe with a specific config.
-		 * Will sort the JsonObject before serializing to the Uri, to ensure a consistent Uri.
-		 * @param probeName
-		 * @param config
-		 * @return
-		 */
-		public static Uri getProbeUri(String probeName, JsonObject config) {
-			return getProbeUri(probeName, 
-					(config == null) ? null : JsonUtils.deepSort(config).toString());
-		}
-
-		/**
-		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for a probe with a specific config.
-		 * Will sort the JsonObject before serializing to the Uri, to ensure a consistent Uri.
-		 * @param probeClass
-		 * @param config
-		 * @return
-		 */
-		public static Uri getProbeUri(Class<? extends Probe> probeClass, JsonObject config) {
-			return getProbeUri(probeClass.getName(), config);
-		}
-		
-		/**
-		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for a probe with a specific config.
-		 * @param probeClass
-		 * @param config
-		 * @return
-		 */
-		public static Uri getProbeUri(Class<? extends Probe> probeClass, String config) {
-			return getProbeUri(probeClass.getName(), config);
-		}
-		
-		/**
-		 * A consistent Uri for the probe class and config pair.  This can be used as an identifier for the probe instance.
-		 * Will sort the JsonObject before serializing to the Uri, to ensure a consistent Uri.
-		 * @param probe
-		 * @return
-		 */
-		public static Uri getProbeUri(Probe probe) {
-			return getProbeUri(probe.getClass(), probe.getConfig());
-		}
-		
-		public static Uri getCompleteProbeUri(Probe probe) {
-			return getProbeUri(probe.getClass(), probe.getCompleteConfig());
-		}
-		
-		/**
-		 * Returns true if Uri is a probe Uri.
-		 * @param probeUri
-		 * @return
-		 */
-		public static boolean isProbeUri(Uri probeUri) {
-			return PROBE_SCHEME.equalsIgnoreCase(probeUri.getScheme());
-		}
-		
-		private static void verifyProbeUri(Uri probeUri) {
-			if (!isProbeUri(probeUri)) {
-				throw new RuntimeException("Uri is not a probe Uri: " + probeUri.toString());
-			}
-		}
-		
-		/**
-		 * Returns the name of the probe in the Uri.
-		 * @param probeUri
-		 * @return
-		 */
-		public static String getProbeName(Uri probeUri) {
-			verifyProbeUri(probeUri);
-			return probeUri.getAuthority();
-		}
-		
-		/**
-		 * Returns the config in the probe Uri as a String.
-		 * @param probeUri
-		 * @return
-		 */
-		public static String getConfigString(Uri probeUri) {
-			verifyProbeUri(probeUri);
-			String path = probeUri.getPath();
-			return path == null || !path.startsWith("/") ? null : path.substring(1);
-		}
-		
-		/**
-		 * Returns the config in the probe Uri as a JsonObject.
-		 * @param probeUri
-		 * @return
-		 */
-		public static JsonObject getConfig(Uri probeUri) {
-			String configString = getConfigString(probeUri);
-			if (configString == null || configString.length() == 0) {
-				return null;
-			} else {
-				return (JsonObject)new JsonParser().parse(configString);
-			}
-		}
-	}
+	public static final String PROBE_SCHEME = "probe";
+	public static final ConfigurableUri<Probe> PROBE_URI = new ConfigurableUri<Probe>(PROBE_SCHEME);
 	
 	/**
 	 * Types to represent the current state of the probe.
@@ -420,7 +276,7 @@ public interface Probe {
 			protected void start(Base probe) {
 				synchronized (probe) {
 					if (probe.isWakeLockedWhileRunning()) {
-						Uri probeUri = Probe.Identifier.getProbeUri(probe);
+						Uri probeUri = probe.getUri();
 						probe.lock = LockUtil.getWakeLock(probe.getContext(), probeUri.toString());
 					}
 					probe.state = RUNNING;
@@ -494,7 +350,7 @@ public interface Probe {
 	}
 
 	@DefaultSchedule
-	public abstract class Base implements Probe, BaseProbeKeys {
+	public abstract class Base extends ConfigurableBase implements Probe, BaseProbeKeys {
 		
 		/**
 		 * No argument constructor requires that setContext be called manually.
@@ -522,8 +378,8 @@ public interface Probe {
 		}
 		
 		protected GsonBuilder getGsonBuilder() {
+			GsonBuilder builder = super.getGsonBuilder();
 			TypeAdapterFactory adapterFactory = getSerializationFactory();
-			GsonBuilder builder = new GsonBuilder();
 			if (adapterFactory != null) {
 				builder.registerTypeAdapterFactory(adapterFactory);
 			}
@@ -569,69 +425,11 @@ public interface Probe {
 			}
 			return context;
 		}
-		
-		/*****************************************
-		 * Probe Configuration
-		 *****************************************/
-		private JsonObject specifiedConfig;
-		private JsonObject completeConfig;
-		private Uri probeUri;
-		private Uri completeProbeUri;
-
-		private List<Field> configurableFields;
-		private List<Field> getConfigurableFields() {
-			if (configurableFields == null) {
-				List<Field> newConfigurableFields = new ArrayList<Field>();
-				AnnotationUtil.getAllFieldsWithAnnotation(newConfigurableFields, getClass(), Configurable.class);
-				configurableFields = newConfigurableFields;
-			}
-			return configurableFields;
-		}
 
 		@Override
 		public synchronized void setConfig(JsonObject config) {
 			disable();
-			this.specifiedConfig = (config == null) ? null : new JsonObject();
-			this.completeConfig = null;
-			this.probeUri = null;
-			this.completeProbeUri = null;
-			if (this.specifiedConfig != null) {
-				for (Field field : getConfigurableFields()) {
-					// Only allow config that was declared
-					Configurable configParamAnnotation = field.getAnnotation(Configurable.class);
-					Class<?> type = field.getType();
-					String name = configParamAnnotation.name();
-					if (name.length() == 0) {
-						name = field.getName();
-					}
-					boolean currentAccessibility = field.isAccessible();
-					field.setAccessible(true);
-					try {
-						if (config.has(name)) {
-							JsonElement el = config.get(name);
-							specifiedConfig.add(name, el);
-							Object value = getGson().fromJson(el, type);
-							field.set(this, value);
-						}
-					} catch (IllegalArgumentException e) {
-						Log.e(LogUtil.TAG, "Bad access of probe fields!!", e);
-					} catch (IllegalAccessException e) {
-						Log.e(LogUtil.TAG, "Bad access of probe fields!!", e);
-					}
-					field.setAccessible(currentAccessibility);
-				}
-			}
-		}
-		
-		public JsonObject getConfig() {
-			if (specifiedConfig == null) {
-				synchronized (this) {
-					if (specifiedConfig == null) {
-						this.specifiedConfig = new JsonObject();
-					}
-				}
-			}
-			return JsonUtils.deepCopy(specifiedConfig);
+			super.setConfig(config);
 		}
 		
 		
@@ -648,52 +446,19 @@ public interface Probe {
 			return defaultProbe.getCompleteConfig();
 		}
 		
-
+		private Uri probeUri;
+		private Uri completeProbeUri;
 		
-		/**
-		 * Returns a copy of the current configuration for this probe in json format.
-		 * @return
-		 */
-		public JsonObject getCompleteConfig() {
-			if (completeConfig == null) {
-				synchronized (this) {
-					if (completeConfig == null) {
-						completeConfig = new JsonObject();
-						for (Field field : getConfigurableFields()) {
-							Configurable configParamAnnotation = field.getAnnotation(Configurable.class);
-							Class<?> type = field.getType();
-							String name = configParamAnnotation.name();
-							if (name.length() == 0) {
-								name = field.getName();
-							}
-							boolean currentAccessibility = field.isAccessible();
-							field.setAccessible(true);
-							try {
-								JsonElement value = getGson().toJsonTree(field.get(this), type);
-								completeConfig.add(name, value);
-							} catch (IllegalArgumentException e) {
-								Log.e(LogUtil.TAG, "Bad access of probe fields!!", e);
-							} catch (IllegalAccessException e) {
-								Log.e(LogUtil.TAG, "Bad access of probe fields!!", e);
-							}
-							field.setAccessible(currentAccessibility);
-						}
-					}
-				}
-			}
-			return JsonUtils.deepCopy(completeConfig);
-		}
-		
-		public Uri getProbeUri() {
+		public Uri getUri() {
 			if (probeUri == null) {
-				probeUri = Identifier.getProbeUri(this);
+				probeUri = PROBE_URI.getUri(this);
 			}
 			return probeUri;
 		}
 		
-		public Uri getCompleteProbeUri() {
+		public Uri getCompleteUri() {
 			if (completeProbeUri == null) {
-				completeProbeUri = Identifier.getCompleteProbeUri(this);
+				completeProbeUri = PROBE_URI.getCompleteUri(this);
 			}
 			return completeProbeUri;
 		}
@@ -702,9 +467,6 @@ public interface Probe {
 		/*****************************************
 		 * Probe Data Listeners
 		 *****************************************/
-		
-	
-		
 		private Set<DataListener> dataListeners = Collections.synchronizedSet(new HashSet<DataListener>());
 		private Set<DataListener> passiveDataListeners = Collections.synchronizedSet(new HashSet<DataListener>());
 		
@@ -747,7 +509,7 @@ public interface Probe {
 				JsonElement checkpoint = getCheckpointIfContinuable();
 				for (DataListener listener : listeners) {
 					dataListeners.remove(listener);
-					listener.onDataCompleted(getCompleteProbeUri(), checkpoint);
+					listener.onDataCompleted(getCompleteUri(), checkpoint);
 				}
 				// If no one is listening, stop using device resources
 				if (dataListeners.isEmpty()) {
@@ -781,7 +543,7 @@ public interface Probe {
 				JsonElement checkpoint = getCheckpointIfContinuable();
 				for (DataListener listener : listeners) {
 					dataListeners.remove(listener);
-					listener.onDataCompleted(getCompleteProbeUri(), checkpoint);
+					listener.onDataCompleted(getCompleteUri(), checkpoint);
 				}
 				// If no one is listening, stop using device resources
 				if (dataListeners.isEmpty() && passiveDataListeners.isEmpty()) {
@@ -819,13 +581,13 @@ public interface Probe {
 				}
 				synchronized (dataListeners) {
 					for (DataListener listener : dataListeners) {
-						listener.onDataReceived(getCompleteProbeUri(), JsonUtils.deepCopy(data));
+						listener.onDataReceived(getCompleteUri(), JsonUtils.deepCopy(data));
 					}
 				}
 				synchronized (passiveDataListeners) {
 					for (DataListener listener : passiveDataListeners) {
 						if (!dataListeners.contains(listener)) { // Don't send data twice to passive listeners
-							listener.onDataReceived(getCompleteProbeUri(), JsonUtils.deepCopy(data));
+							listener.onDataReceived(getCompleteUri(), JsonUtils.deepCopy(data));
 						}
 					}
 				}
@@ -1038,7 +800,7 @@ public interface Probe {
 		 * Sensitive Data
 		 ********************************/
 		
-		@Configurable
+		@ConfigurableField
 		private boolean hideSensitiveData = true;
 		
 		protected String sensitiveData(String data) {

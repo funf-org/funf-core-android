@@ -26,7 +26,6 @@ import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.RunningApplicationsKeys;
 import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 @DisplayName("Running Applications")
@@ -35,7 +34,7 @@ import edu.mit.media.funf.util.LogUtil;
 @DefaultSchedule(period=0, duration=Double.MAX_VALUE, opportunistic=true)
 public class RunningApplicationsProbe extends Base implements ContinuousProbe, PassiveProbe, RunningApplicationsKeys {
 
-	@Configurable
+	@ConfigurableField
 	private double pollInterval = 1.0;
 	
 	
@@ -90,7 +89,7 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 		@Override
 		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
 			Log.d(LogUtil.TAG, "RunningApplications: " + data);
-			if (ScreenProbe.class.getName().equals(Probe.Identifier.getProbeName(completeProbeUri))) {
+			if (ScreenProbe.class.getName().equals(Probe.PROBE_URI.getName(completeProbeUri))) {
 				boolean screenOn = data.get(ScreenProbe.SCREEN_ON).getAsBoolean();
 				if (screenOn) {
 					if (!getDataListeners().isEmpty()) { // Start only if we have listeners

@@ -73,7 +73,7 @@ public interface ProbeFactory {
 		
 		@Override
 		public Probe getProbe(Uri probeUri) {
-			return getProbe(Probe.Identifier.getProbeName(probeUri), Probe.Identifier.getConfig(probeUri));
+			return getProbe(Probe.PROBE_URI.getName(probeUri), Probe.PROBE_URI.getConfig(probeUri));
 		}
 		
 		@Override
@@ -158,7 +158,7 @@ public interface ProbeFactory {
 		
 		@Override
 		public Probe getProbe(Uri probeUri) {
-			return getProbe(Probe.Identifier.getProbeName(probeUri), Probe.Identifier.getConfig(probeUri));
+			return getProbe(Probe.PROBE_URI.getName(probeUri), Probe.PROBE_URI.getConfig(probeUri));
 		}
 		
 		@Override

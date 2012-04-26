@@ -11,7 +11,6 @@ import com.google.gson.Gson;
 
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ServicesKeys;
-import edu.mit.media.funf.util.Configurable;
 
 public class ServicesProbe extends Base implements ServicesKeys {
 
@@ -19,7 +18,7 @@ public class ServicesProbe extends Base implements ServicesKeys {
 	 * The array of packages from which service info will be emitted. 
 	 * If this parameter is null, will return every service.
 	 */
-	@Configurable
+	@ConfigurableField
 	private String[] packages = null;  
 	
 	@Override
