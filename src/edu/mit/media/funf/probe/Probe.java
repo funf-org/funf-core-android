@@ -21,7 +21,6 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,6 +29,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.TypeAdapterFactory;
 
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.config.ConfigurableObjectFactory;
 import edu.mit.media.funf.data.DataNormalizer;
 import edu.mit.media.funf.json.BundleTypeAdapter;
 import edu.mit.media.funf.json.JsonUtils;
@@ -38,7 +38,6 @@ import edu.mit.media.funf.security.HashUtil;
 import edu.mit.media.funf.security.HashUtil.HashingType;
 import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LockUtil;
-import edu.mit.media.funf.util.LogUtil;
 
 public interface Probe extends Configurable {
 	
@@ -352,7 +351,7 @@ public interface Probe extends Configurable {
 			setContext(context);
 		}
 		
-		public Base(Context context, ProbeFactory factory) {
+		public Base(Context context, ConfigurableObjectFactory factory) {
 			this(context);
 			setFactory(factory);
 		}

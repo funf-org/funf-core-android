@@ -18,12 +18,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.config.ConfigurableObjectFactory;
 import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
-import edu.mit.media.funf.probe.ProbeFactory.CachingProbeFactory;
 import edu.mit.media.funf.time.TimeUtil;
 
 /**
@@ -32,7 +32,7 @@ import edu.mit.media.funf.time.TimeUtil;
  * @author alangardner
  *
  */
-public class ProbeManager extends Service implements ProbeFactory {
+public class ProbeManager extends Service implements ConfigurableObjectFactory {
 	
 	public static final String PREFIX = "edu.mit.media.funf.probe";
 	public static final String
@@ -42,7 +42,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 		ACTION_STOP_PROBE = PREFIX + ".STOP",
 		ACTION_DISABLE_PASSIVE_PROBE = PREFIX + ".DISABLE";
 	
-	private ProbeFactory cacheFactory;
+	private ConfigurableObjectFactory cacheFactory;
 	private Map<Probe.DataListener, Set<ProbeDataRequest>> requests;
 	private Map<Uri,Map<Probe.DataListener,Double>> requestSatisfiedTimestamps; // Map used in place of set only for WeakRefs
 	private AlarmManager manager;
@@ -84,7 +84,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 		for (Uri probeUri : activeProbeUris) {
 			cancelAlarm(probeUri);
 			// TODO: need to resolve scheduling differences between probes and non-probes
-			((Probe)getProbe(probeUri)).destroy();
+			((Probe)get(probeUri)).destroy();
 		}
 	}
 	
@@ -100,7 +100,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 				|| ACTION_START_PROBE.equals(action)
 				|| ACTION_STOP_PROBE.equals(action)) {
 			// TODO: need to resolve scheduling differences between probes and non-probes
-			Probe probe = (Probe)getProbe(intent.getData());
+			Probe probe = (Probe)get(intent.getData());
 			if (probe != null) {
 				Map<Probe.DataListener,Double> timestamps = requestSatisfiedTimestamps.get(intent.getData());
 				
@@ -210,21 +210,21 @@ public class ProbeManager extends Service implements ProbeFactory {
 	}
 
 	@Override
-	public Configurable getProbe(Uri probeUri) {
+	public Configurable get(Uri probeUri) {
 		if (probeUri == null) {
 			return null;
 		}
-		return cacheFactory.getProbe(probeUri);
+		return cacheFactory.get(probeUri);
 	}
 
 	@Override
-	public Configurable getProbe(String name, JsonObject config) {
-		return cacheFactory.getProbe(name, config);
+	public Configurable get(String name, JsonObject config) {
+		return cacheFactory.get(name, config);
 	}
 
 	@Override
-	public <T extends Configurable> T getProbe(Class<T> probeClass, JsonObject config) {
-		return cacheFactory.getProbe(probeClass, config);
+	public <T extends Configurable> T get(Class<T> probeClass, JsonObject config) {
+		return cacheFactory.get(probeClass, config);
 	}
 
 

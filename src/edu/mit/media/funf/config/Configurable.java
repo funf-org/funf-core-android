@@ -23,7 +23,6 @@ import com.google.gson.JsonParser;
 
 import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.Probe;
-import edu.mit.media.funf.probe.ProbeFactory;
 import edu.mit.media.funf.util.AnnotationUtil;
 import edu.mit.media.funf.util.LogUtil;
 
@@ -31,16 +30,16 @@ public interface Configurable {
 
 	/**
 	 * Sets the context that this probe will use.  This should be called 
-	 * by the ProbeFactory before the probe is used.
+	 * by the ConfigurableObjectFactory before the probe is used.
 	 * @param context
 	 */
 	public void setContext(Context context);
 	
 	/**
-	 * Sets the ProbeFactory this probe should use for accessing other probes.
+	 * Sets the ConfigurableObjectFactory this probe should use for accessing other probes.
 	 * @param factory
 	 */
-	public void setFactory(ProbeFactory factory);
+	public void setFactory(ConfigurableObjectFactory factory);
 	
 	/**
 	 * Changes the configuration for this probe.  Setting the configuration will disable the probe.
@@ -244,21 +243,21 @@ public interface Configurable {
 			return context;
 		}
 
-		private ProbeFactory probeFactory;
+		private ConfigurableObjectFactory configurableObjectFactory;
 		
 		@Override
-		public void setFactory(ProbeFactory factory) {
-			this.probeFactory = factory;
+		public void setFactory(ConfigurableObjectFactory factory) {
+			this.configurableObjectFactory = factory;
 		}
-		protected ProbeFactory getFactory() {
-			if (probeFactory == null) {
+		protected ConfigurableObjectFactory getFactory() {
+			if (configurableObjectFactory == null) {
 				synchronized (this) {
-					if (probeFactory == null) {
-						probeFactory = ProbeFactory.BasicProbeFactory.getInstance(getContext());
+					if (configurableObjectFactory == null) {
+						configurableObjectFactory = ConfigurableObjectFactory.BasicProbeFactory.getInstance(getContext());
 					}
 				}
 			}
-			return probeFactory;
+			return configurableObjectFactory;
 		}
 
 		private List<Field> configurableFields;
@@ -389,7 +388,7 @@ public interface Configurable {
 		 * @return
 		 */
 		public static JsonObject getDefaultConfig(Class<? extends Probe> probeClass, Context context) {
-			Probe defaultProbe = ProbeFactory.BasicProbeFactory.getInstance(context).getProbe(probeClass, null);
+			Probe defaultProbe = ConfigurableObjectFactory.BasicProbeFactory.getInstance(context).get(probeClass, null);
 			return defaultProbe.getCompleteConfig();
 		}
 		

@@ -7,8 +7,8 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import edu.mit.media.funf.config.ConfigurableObjectFactory.FactoryUtils;
 import edu.mit.media.funf.json.JsonUtils;
-import edu.mit.media.funf.probe.ProbeFactory.FactoryUtils;
 import edu.mit.media.funf.util.EqualsUtil;
 import edu.mit.media.funf.util.HashCodeUtil;
 

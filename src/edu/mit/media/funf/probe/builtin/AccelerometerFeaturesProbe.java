@@ -203,7 +203,7 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
 	    	freqBandIdx[i] = Math.round((float)freqBandEdges[i]*((float)fftSize/(float)SENSOR_MAX_RATE));
 	    }
 	    listener = new AccelerometerListener();
-	    getFactory().getProbe(AccelerometerSensorProbe.class, null).registerPassiveListener(listener);
+	    getFactory().get(AccelerometerSensorProbe.class, null).registerPassiveListener(listener);
 		// TODO: Register listener for accelerometer probe
 	}
 
@@ -211,13 +211,13 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
 	protected void onStart() {
 		super.onStart();
 		reset();
-	    getFactory().getProbe(AccelerometerSensorProbe.class, null).registerListener(listener);
+	    getFactory().get(AccelerometerSensorProbe.class, null).registerListener(listener);
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		getFactory().getProbe(AccelerometerSensorProbe.class, null).unregisterListener(listener);
+		getFactory().get(AccelerometerSensorProbe.class, null).unregisterListener(listener);
 		reset();
 	}
 

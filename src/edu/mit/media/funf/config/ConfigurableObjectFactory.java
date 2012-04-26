@@ -1,4 +1,4 @@
-package edu.mit.media.funf.probe;
+package edu.mit.media.funf.config;
 
 
 
@@ -12,7 +12,7 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.util.LogUtil;
 
 /**
@@ -20,7 +20,7 @@ import edu.mit.media.funf.util.LogUtil;
  * for creating more probes.
  *
  */
-public interface ProbeFactory {
+public interface ConfigurableObjectFactory {
 
 	/**
 	 * Returns the probe specified by the given name and configuration.  Name should be the fully qualified java class
@@ -29,16 +29,16 @@ public interface ProbeFactory {
 	 * @param config
 	 * @return
 	 */
-	public Configurable getProbe(String name, JsonObject config);
+	public Configurable get(String name, JsonObject config);
 	
 	/**
-	 * Returns the probe specified by the uri.  (e.g. "probe://edu.mit.media.funf.builtin.LocationProbe")
+	 * Returns the probe specified by the uri.  (e.g. "funf://edu.mit.media.funf.builtin.LocationProbe")
 	 * 
 	 * @param probeClass
 	 * @param config
 	 * @return
 	 */
-	public Configurable getProbe(Uri probeUri);
+	public Configurable get(Uri probeUri);
 	
 	/**
 	 * Returns the probe specified by the class and configuration.
@@ -47,7 +47,7 @@ public interface ProbeFactory {
 	 * @param config
 	 * @return
 	 */
-	public <T extends Configurable> T getProbe(Class<T> probeClass, JsonObject config);
+	public <T extends Configurable> T get(Class<T> probeClass, JsonObject config);
 	
 	
 	public static class FactoryUtils {
@@ -68,7 +68,7 @@ public interface ProbeFactory {
 		}
 	}
 	
-	public class BasicProbeFactory implements ProbeFactory {
+	public class BasicProbeFactory implements ConfigurableObjectFactory {
 
 		private Context context;
 		private BasicProbeFactory(Context context) {
@@ -91,18 +91,18 @@ public interface ProbeFactory {
 		}
 		
 		@Override
-		public Configurable getProbe(Uri probeUri) {
-			return getProbe(Probe.PROBE_URI.getName(probeUri), Probe.PROBE_URI.getConfig(probeUri));
+		public Configurable get(Uri probeUri) {
+			return get(Probe.PROBE_URI.getName(probeUri), Probe.PROBE_URI.getConfig(probeUri));
 		}
 		
 		@Override
-		public Configurable getProbe(String name, JsonObject config) {
+		public Configurable get(String name, JsonObject config) {
 			Class<? extends Configurable> probeClass = getClass(name);
-			return probeClass == null ? null : getProbe(probeClass, config);
+			return probeClass == null ? null : get(probeClass, config);
 		}
 
 		@Override
-		public <T extends Configurable> T getProbe(Class<T> probeClass, JsonObject config) {
+		public <T extends Configurable> T get(Class<T> probeClass, JsonObject config) {
 			try {
 				T probe = probeClass.newInstance();
 				probe.setContext(context);
@@ -127,7 +127,7 @@ public interface ProbeFactory {
 	/****************************************
 	 * Caching Probe Factory
 	 *****************************************/
-	public class CachingProbeFactory implements ProbeFactory {
+	public class CachingProbeFactory implements ConfigurableObjectFactory {
 		private BasicProbeFactory basicFactory;
 		private Map<Class<? extends Configurable>,Map<JsonObject,Configurable>> cache;  // (ProbeClass,Config) -> Probe
 		
@@ -181,24 +181,24 @@ public interface ProbeFactory {
 		}
 		
 		@Override
-		public Configurable getProbe(Uri probeUri) {
-			return getProbe(Probe.PROBE_URI.getName(probeUri), Probe.PROBE_URI.getConfig(probeUri));
+		public Configurable get(Uri probeUri) {
+			return get(Probe.PROBE_URI.getName(probeUri), Probe.PROBE_URI.getConfig(probeUri));
 		}
 		
 		@Override
-		public Configurable getProbe(String name, JsonObject config) {
+		public Configurable get(String name, JsonObject config) {
 			Class<? extends Configurable> probeClass = basicFactory.getClass(name);
-			return getProbe(probeClass, config);
+			return get(probeClass, config);
 		}
 	
 		@Override
-		public <T extends Configurable> T getProbe(Class<T> probeClass, JsonObject config) {
+		public <T extends Configurable> T get(Class<T> probeClass, JsonObject config) {
 			T probe = getCachedProbe(probeClass, config);
 			if (probe == null) { // Avoid synchronized block on every call
 				synchronized (cache) {
 					probe = getCachedProbe(probeClass, config);
 					if (probe == null) {
-						probe = basicFactory.getProbe(probeClass, config);
+						probe = basicFactory.get(probeClass, config);
 						if (probe != null) {
 							cacheProbe(probe, config);
 						}
