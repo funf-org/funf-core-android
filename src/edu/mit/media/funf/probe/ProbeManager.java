@@ -17,11 +17,13 @@ import android.os.IBinder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
+import edu.mit.media.funf.probe.ProbeFactory.CachingProbeFactory;
 import edu.mit.media.funf.time.TimeUtil;
 
 /**
@@ -65,7 +67,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 	public void onCreate() {
 		super.onCreate();
 		manager = (AlarmManager)getSystemService(ALARM_SERVICE);
-		cacheFactory = ProbeFactory.CachingProbeFactory.getInstance(this);
+		cacheFactory = CachingProbeFactory.getInstance(this);
 		requests = new WeakHashMap<Probe.DataListener, Set<ProbeDataRequest>>();
 		requestSatisfiedTimestamps = new HashMap<Uri, Map<DataListener,Double>>();
 	}
@@ -81,7 +83,8 @@ public class ProbeManager extends Service implements ProbeFactory {
 		}
 		for (Uri probeUri : activeProbeUris) {
 			cancelAlarm(probeUri);
-			getProbe(probeUri).destroy();
+			// TODO: need to resolve scheduling differences between probes and non-probes
+			((Probe)getProbe(probeUri)).destroy();
 		}
 	}
 	
@@ -96,7 +99,8 @@ public class ProbeManager extends Service implements ProbeFactory {
 				|| ACTION_DISABLE_PASSIVE_PROBE.equals(action)
 				|| ACTION_START_PROBE.equals(action)
 				|| ACTION_STOP_PROBE.equals(action)) {
-			Probe probe = getProbe(intent.getData());
+			// TODO: need to resolve scheduling differences between probes and non-probes
+			Probe probe = (Probe)getProbe(intent.getData());
 			if (probe != null) {
 				Map<Probe.DataListener,Double> timestamps = requestSatisfiedTimestamps.get(intent.getData());
 				
@@ -110,7 +114,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 						 Set<ProbeDataRequest> dataRequests = requests.get(listener);
 						 boolean opportunistic = false;
 						 for (ProbeDataRequest dataRequest : dataRequests) {
-							 BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.PROBE_URI.getName(intent.getData())), dataRequest.getSchedule());
+							 BasicSchedule schedule = new BasicSchedule(FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(intent.getData())), dataRequest.getSchedule());
 							 opportunistic = opportunistic || schedule.isOpportunistic();
 						 }
 						 if (opportunistic) {
@@ -206,7 +210,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 	}
 
 	@Override
-	public Probe getProbe(Uri probeUri) {
+	public Configurable getProbe(Uri probeUri) {
 		if (probeUri == null) {
 			return null;
 		}
@@ -214,12 +218,12 @@ public class ProbeManager extends Service implements ProbeFactory {
 	}
 
 	@Override
-	public Probe getProbe(String name, JsonObject config) {
+	public Configurable getProbe(String name, JsonObject config) {
 		return cacheFactory.getProbe(name, config);
 	}
 
 	@Override
-	public <T extends Probe> T getProbe(Class<? extends T> probeClass, JsonObject config) {
+	public <T extends Configurable> T getProbe(Class<T> probeClass, JsonObject config) {
 		return cacheFactory.getProbe(probeClass, config);
 	}
 
@@ -298,7 +302,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 	}
 	
 	private void schedule(Uri probeUri) {
-		Class<? extends Probe> probeClass = Probe.Base.getProbeClass(Probe.PROBE_URI.getName(probeUri));
+		Class<? extends Probe> probeClass = FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(probeUri));
 		
 		// Figure out when the next time this probe needs to be run is
 		Double nextRunTime = null;
@@ -312,7 +316,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 				break;
 			} else {
 				for (ProbeDataRequest request : requests.get(listener)) {
-					BasicSchedule schedule = new BasicSchedule(Probe.Base.getProbeClass(Probe.PROBE_URI.getName(probeUri)), request.getSchedule());
+					BasicSchedule schedule = new BasicSchedule(FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(probeUri)), request.getSchedule());
 					Double period = schedule.getPeriod();
 					if (period != null && period != 0) {
 						double requestNextRunTime = lastSatisfied + period;
@@ -348,7 +352,7 @@ public class ProbeManager extends Service implements ProbeFactory {
 	}
 	
 	private void scheduleStop(Uri probeUri) {
-		Class<? extends Probe> probeClass = Probe.Base.getProbeClass(Probe.PROBE_URI.getName(probeUri));
+		Class<? extends Probe> probeClass = FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(probeUri));
 		// Only continuous probes can be stopped
 		if (ContinuousProbe.class.isAssignableFrom(probeClass)) {
 			Double maxDuration = null;

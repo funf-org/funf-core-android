@@ -52,7 +52,7 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 	}
 
 	private AccelerometerSensorProbe getAccelerometerProbe() {
-		return (AccelerometerSensorProbe)getProbeFactory().getProbe(AccelerometerSensorProbe.class, null);
+		return (AccelerometerSensorProbe)getFactory().getProbe(AccelerometerSensorProbe.class, null);
 	}
 
 	

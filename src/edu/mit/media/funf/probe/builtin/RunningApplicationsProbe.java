@@ -112,7 +112,7 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 	protected synchronized void onEnable() {
 		super.onEnable();
 		Log.d(LogUtil.TAG, "RunningApplicationsProbe: onEnable");
-		getProbeFactory().getProbe(ScreenProbe.class, null).registerListener(screenListener);
+		getFactory().getProbe(ScreenProbe.class, null).registerListener(screenListener);
 
 		// Set for current state
 		PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
@@ -149,7 +149,7 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 		super.onDisable();
 		Log.d(LogUtil.TAG, "RunningApplicationsProbe: onDisable");
 		runningAppsPoller.reset();
-		getProbeFactory().getProbe(ScreenProbe.class, null).unregisterListener(screenListener);
+		getFactory().getProbe(ScreenProbe.class, null).unregisterListener(screenListener);
 	}
 	
 	

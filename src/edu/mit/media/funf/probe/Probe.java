@@ -45,18 +45,6 @@ public interface Probe extends Configurable {
 	public static final boolean DEFAULT_OPPORTUNISTIC = true;
 	public static final boolean DEFAULT_STRICT = false;
 	
-	/**
-	 * Sets the context that this probe will use.  This should be called 
-	 * by the ProbeFactory before the probe is used.
-	 * @param context
-	 */
-	public void setContext(Context context);
-	
-	/**
-	 * Sets the ProbeFactory this probe should use for accessing other probes.
-	 * @param factory
-	 */
-	public void setProbeFactory(ProbeFactory factory);
 
 	/**
 	 * Listeners added to this probe will receive data callbacks from this probe,
@@ -366,7 +354,7 @@ public interface Probe extends Configurable {
 		
 		public Base(Context context, ProbeFactory factory) {
 			this(context);
-			setProbeFactory(factory);
+			setFactory(factory);
 		}
 		
 		private Gson gson;
@@ -396,35 +384,7 @@ public interface Probe extends Configurable {
 		public JsonObject getDiffConfig(Bundle existingConfig, JsonObject... data) {
 			return null;
 		}
-		
-		private ProbeFactory probeFactory;
-		public void setProbeFactory(ProbeFactory factory) {
-			this.probeFactory = factory;
-		}
-		protected ProbeFactory getProbeFactory() {
-			if (probeFactory == null) {
-				synchronized (this) {
-					if (probeFactory == null) {
-						probeFactory = ProbeFactory.BasicProbeFactory.getInstance(getContext());
-					}
-				}
-			}
-			return probeFactory;
-		}
-	
-		private Context context;
-		public void setContext(Context context) {
-			if (context == null) {
-				throw new RuntimeException("Attempted to set a null context in probe '" + getClass().getName() + "'");
-			}
-			this.context = context.getApplicationContext();
-		}
-		protected Context getContext() {
-			if (context == null) {
-				throw new RuntimeException("Context was never set for probe '" + getClass().getName() + "'");
-			}
-			return context;
-		}
+
 
 		@Override
 		public synchronized void setConfig(JsonObject config) {
@@ -432,37 +392,11 @@ public interface Probe extends Configurable {
 			super.setConfig(config);
 		}
 		
-		
-		/**
-		 * Returns a copy of the default configuration that is used by the probe if no 
-		 * configuration is specified.  This is also used to enumerate the 
-		 * configuration options that are available.
-		 * 
-		 * The object returned by this function is a copy and can be modified.
-		 * @return
-		 */
-		public static JsonObject getDefaultConfig(Class<? extends Probe> probeClass, Context context) {
-			Probe defaultProbe = ProbeFactory.BasicProbeFactory.getInstance(context).getProbe(probeClass, null);
-			return defaultProbe.getCompleteConfig();
+		@Override
+		protected Context getContext() {
+			// Overridden to give the state machine access, without making public
+			return super.getContext();
 		}
-		
-		private Uri probeUri;
-		private Uri completeProbeUri;
-		
-		public Uri getUri() {
-			if (probeUri == null) {
-				probeUri = PROBE_URI.getUri(this);
-			}
-			return probeUri;
-		}
-		
-		public Uri getCompleteUri() {
-			if (completeProbeUri == null) {
-				completeProbeUri = PROBE_URI.getCompleteUri(this);
-			}
-			return completeProbeUri;
-		}
-		
 	
 		/*****************************************
 		 * Probe Data Listeners
@@ -778,22 +712,6 @@ public interface Probe extends Configurable {
 		}
 		
 		
-
-		public static Class<? extends Probe> getProbeClass(String probeDescriptor) {
-			// TODO: Implement uri signatures, and find best available class
-			try {
-			 	Class<?> theClass = Class.forName(probeDescriptor);
-				if (Probe.class.isAssignableFrom(theClass)) {
-					@SuppressWarnings("unchecked")
-					Class<? extends Probe> probeClass = (Class<? extends Probe>)theClass;
-					return probeClass;
-				}
-			} 
-			catch (ClassNotFoundException e) {
-				Log.e(LogUtil.TAG, "Probe does not exist: '" + probeDescriptor + "'", e);
-			}
-			return null;
-		}
 		
 		
 		/**********************************

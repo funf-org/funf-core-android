@@ -12,6 +12,7 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 /**
@@ -28,16 +29,7 @@ public interface ProbeFactory {
 	 * @param config
 	 * @return
 	 */
-	public Probe getProbe(String name, JsonObject config);
-	
-	/**
-	 * Returns the probe specified by the class and configuration.
-	 * 
-	 * @param probeClass
-	 * @param config
-	 * @return
-	 */
-	public <T extends Probe> T getProbe(Class<? extends T> probeClass, JsonObject config);
+	public Configurable getProbe(String name, JsonObject config);
 	
 	/**
 	 * Returns the probe specified by the uri.  (e.g. "probe://edu.mit.media.funf.builtin.LocationProbe")
@@ -46,8 +38,35 @@ public interface ProbeFactory {
 	 * @param config
 	 * @return
 	 */
-	public Probe getProbe(Uri probeUri);
+	public Configurable getProbe(Uri probeUri);
 	
+	/**
+	 * Returns the probe specified by the class and configuration.
+	 * 
+	 * @param probeClass
+	 * @param config
+	 * @return
+	 */
+	public <T extends Configurable> T getProbe(Class<T> probeClass, JsonObject config);
+	
+	
+	public static class FactoryUtils {
+
+		public static <T extends Configurable> Class<? extends T> getClass(String className, Class<T> parentClass) {
+			try {
+				return (Class<? extends T>)Class.forName(className);
+			} catch (ClassNotFoundException e) {
+				Log.e(LogUtil.TAG, "Configurable class does not exist: '" + className + "'", e);
+			} catch (ClassCastException e) {
+				Log.e(LogUtil.TAG, "Class does not extend configurable: '" + className + "'", e);
+			}
+			return null;
+		}
+		
+		public static Class<? extends Probe> getProbeClass(String className) {
+			return getClass(className, Probe.class);
+		}
+	}
 	
 	public class BasicProbeFactory implements ProbeFactory {
 
@@ -72,22 +91,22 @@ public interface ProbeFactory {
 		}
 		
 		@Override
-		public Probe getProbe(Uri probeUri) {
+		public Configurable getProbe(Uri probeUri) {
 			return getProbe(Probe.PROBE_URI.getName(probeUri), Probe.PROBE_URI.getConfig(probeUri));
 		}
 		
 		@Override
-		public Probe getProbe(String name, JsonObject config) {
-			Class<? extends Probe> probeClass = Probe.Base.getProbeClass(name);
+		public Configurable getProbe(String name, JsonObject config) {
+			Class<? extends Configurable> probeClass = getClass(name);
 			return probeClass == null ? null : getProbe(probeClass, config);
 		}
 
 		@Override
-		public <T extends Probe> T getProbe(Class<? extends T> probeClass, JsonObject config) {
+		public <T extends Configurable> T getProbe(Class<T> probeClass, JsonObject config) {
 			try {
 				T probe = probeClass.newInstance();
 				probe.setContext(context);
-				probe.setProbeFactory(this);
+				probe.setFactory(this);
 				probe.setConfig(config);
 				return probe;
 			} catch (IllegalAccessException e) {
@@ -97,7 +116,12 @@ public interface ProbeFactory {
 			}
 			return null;
 		}
-		
+
+		public Class<? extends Configurable> getClass(String className) {
+			return FactoryUtils.getClass(className, Configurable.class);
+		}
+
+
 	}
 	
 	/****************************************
@@ -105,14 +129,14 @@ public interface ProbeFactory {
 	 *****************************************/
 	public class CachingProbeFactory implements ProbeFactory {
 		private BasicProbeFactory basicFactory;
-		private Map<Class<? extends Probe>,Map<JsonObject,Probe>> cache;  // (ProbeClass,Config) -> Probe
+		private Map<Class<? extends Configurable>,Map<JsonObject,Configurable>> cache;  // (ProbeClass,Config) -> Probe
 		
 		private CachingProbeFactory(Context context) {
 			if (context == null) {
 				throw new RuntimeException("Context is required for BasicProbeFactory");
 			}
-			this.basicFactory =BasicProbeFactory.getInstance(context);
-			this.cache = new HashMap<Class<? extends Probe>, Map<JsonObject,Probe>>();
+			this.basicFactory = new BasicProbeFactory(context);
+			this.cache = new HashMap<Class<? extends Configurable>, Map<JsonObject,Configurable>>();
 		}
 		
 		private static CachingProbeFactory instance;
@@ -134,8 +158,8 @@ public interface ProbeFactory {
 		 * @return
 		 */
 		@SuppressWarnings("unchecked")
-		private <T extends Probe> T getCachedProbe(Class<? extends T> probeClass, JsonObject config) {
-			Map<JsonObject,Probe> cacheByConfig = cache.get(probeClass);
+		private <T extends Configurable> T getCachedProbe(Class<T> probeClass, JsonObject config) {
+			Map<JsonObject, Configurable> cacheByConfig = cache.get(probeClass);
 			return (cacheByConfig == null) ? null : (T)cacheByConfig.get(config);
 		}
 		
@@ -144,12 +168,12 @@ public interface ProbeFactory {
 		 * @param probe
 		 * @param config
 		 */
-		private void cacheProbe(Probe probe, JsonObject config) {
+		private void cacheProbe(Configurable probe, JsonObject config) {
 			synchronized (cache) {
-				Class<? extends Probe> probeClass = probe.getClass();
-				Map<JsonObject,Probe> cacheByConfig = cache.get(probeClass);
+				Class<? extends Configurable> probeClass = (Class<? extends Configurable>)probe.getClass();
+				Map<JsonObject, Configurable> cacheByConfig = cache.get(probeClass);
 				if (cacheByConfig == null) {
-					cacheByConfig = new WeakHashMap<JsonObject, Probe>();
+					cacheByConfig = new WeakHashMap<JsonObject, Configurable>();
 					cache.put(probeClass, cacheByConfig);
 				}
 				cacheByConfig.put(config, probe);
@@ -157,18 +181,18 @@ public interface ProbeFactory {
 		}
 		
 		@Override
-		public Probe getProbe(Uri probeUri) {
+		public Configurable getProbe(Uri probeUri) {
 			return getProbe(Probe.PROBE_URI.getName(probeUri), Probe.PROBE_URI.getConfig(probeUri));
 		}
 		
 		@Override
-		public Probe getProbe(String name, JsonObject config) {
-			Class<? extends Probe> probeClass = Probe.Base.getProbeClass(name);
+		public Configurable getProbe(String name, JsonObject config) {
+			Class<? extends Configurable> probeClass = basicFactory.getClass(name);
 			return getProbe(probeClass, config);
 		}
 	
 		@Override
-		public <T extends Probe> T getProbe(Class<? extends T> probeClass, JsonObject config) {
+		public <T extends Configurable> T getProbe(Class<T> probeClass, JsonObject config) {
 			T probe = getCachedProbe(probeClass, config);
 			if (probe == null) { // Avoid synchronized block on every call
 				synchronized (cache) {

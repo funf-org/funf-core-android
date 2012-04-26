@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import edu.mit.media.funf.json.JsonUtils;
+import edu.mit.media.funf.probe.ProbeFactory.FactoryUtils;
 import edu.mit.media.funf.util.EqualsUtil;
 import edu.mit.media.funf.util.HashCodeUtil;
 
@@ -31,7 +32,7 @@ public class ProbeDataRequest {
 			throw new RuntimeException("Probe data request must specify a probe name or class.");
 		}
 		this.probeName = probeName;
-		this.probeClass = Probe.Base.getProbeClass(probeName);
+		this.probeClass = FactoryUtils.getProbeClass(probeName);
 		this.config = config == null ? null : JsonUtils.deepSort(config).toString();
 		this.schedule = schedule == null ? null : JsonUtils.deepSort(schedule).toString();
 	}
@@ -52,7 +53,7 @@ public class ProbeDataRequest {
 			throw new RuntimeException("Probe data request json structure must specify a 'probeName'.");
 		}
 		this.probeName = nameEl.getAsString();
-		this.probeClass = Probe.Base.getProbeClass(probeName);
+		this.probeClass = FactoryUtils.getProbeClass(probeName);
 		JsonElement configEl = requestJsonObject.get(CONFIG);
 		if (JsonNull.INSTANCE == configEl) {
 			this.config = null;

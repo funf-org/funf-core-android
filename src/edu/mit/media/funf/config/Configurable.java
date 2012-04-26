@@ -30,6 +30,19 @@ import edu.mit.media.funf.util.LogUtil;
 public interface Configurable {
 
 	/**
+	 * Sets the context that this probe will use.  This should be called 
+	 * by the ProbeFactory before the probe is used.
+	 * @param context
+	 */
+	public void setContext(Context context);
+	
+	/**
+	 * Sets the ProbeFactory this probe should use for accessing other probes.
+	 * @param factory
+	 */
+	public void setFactory(ProbeFactory factory);
+	
+	/**
 	 * Changes the configuration for this probe.  Setting the configuration will disable the probe.
 	 * @param config
 	 */
@@ -215,6 +228,38 @@ public interface Configurable {
 		private JsonObject completeConfig;
 		private Uri uri;
 		private Uri completeUri;
+		private Context context;
+		
+		@Override
+		public void setContext(Context context) {
+			if (context == null) {
+				throw new RuntimeException("Attempted to set a null context in probe '" + getClass().getName() + "'");
+			}
+			this.context = context.getApplicationContext();
+		}
+		protected Context getContext() {
+			if (context == null) {
+				throw new RuntimeException("Context was never set for probe '" + getClass().getName() + "'");
+			}
+			return context;
+		}
+
+		private ProbeFactory probeFactory;
+		
+		@Override
+		public void setFactory(ProbeFactory factory) {
+			this.probeFactory = factory;
+		}
+		protected ProbeFactory getFactory() {
+			if (probeFactory == null) {
+				synchronized (this) {
+					if (probeFactory == null) {
+						probeFactory = ProbeFactory.BasicProbeFactory.getInstance(getContext());
+					}
+				}
+			}
+			return probeFactory;
+		}
 
 		private List<Field> configurableFields;
 		private List<Field> getConfigurableFields() {
@@ -270,21 +315,6 @@ public interface Configurable {
 			}
 			return JsonUtils.deepCopy(specifiedConfig);
 		}
-		
-		
-		/**
-		 * Returns a copy of the default configuration that is used by the probe if no 
-		 * configuration is specified.  This is also used to enumerate the 
-		 * configuration options that are available.
-		 * 
-		 * The object returned by this function is a copy and can be modified.
-		 * @return
-		 */
-		public static JsonObject getDefaultConfig(Class<? extends Probe> probeClass, Context context) {
-			Probe defaultProbe = ProbeFactory.BasicProbeFactory.getInstance(context).getProbe(probeClass, null);
-			return defaultProbe.getCompleteConfig();
-		}
-		
 
 		
 		/**
@@ -347,6 +377,24 @@ public interface Configurable {
 		protected GsonBuilder getGsonBuilder() {
 			return new GsonBuilder();
 		}
+		
+
+		
+		/**
+		 * Returns a copy of the default configuration that is used by the probe if no 
+		 * configuration is specified.  This is also used to enumerate the 
+		 * configuration options that are available.
+		 * 
+		 * The object returned by this function is a copy and can be modified.
+		 * @return
+		 */
+		public static JsonObject getDefaultConfig(Class<? extends Probe> probeClass, Context context) {
+			Probe defaultProbe = ProbeFactory.BasicProbeFactory.getInstance(context).getProbe(probeClass, null);
+			return defaultProbe.getCompleteConfig();
+		}
+		
+
+
 	}
 	
 }

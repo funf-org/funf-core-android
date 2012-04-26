@@ -122,7 +122,7 @@ public class SimpleLocationProbe extends Base implements PassiveProbe, LocationK
 		if (!useNetwork) {
 			config.addProperty("useNetwork", false);
 		}
-		locationProbe = getProbeFactory().getProbe(LocationProbe.class, config);
+		locationProbe = getFactory().getProbe(LocationProbe.class, config);
 		locationProbe.registerPassiveListener(listener);
 	}
 
