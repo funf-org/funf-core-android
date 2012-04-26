@@ -1,7 +1,6 @@
 package edu.mit.media.funf.probe;
 
 
-import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -42,6 +41,7 @@ import edu.mit.media.funf.security.HashUtil;
 import edu.mit.media.funf.security.HashUtil.HashingType;
 import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.AnnotationUtil;
+import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LockUtil;
 import edu.mit.media.funf.util.LogUtil;
 
@@ -175,24 +175,6 @@ public interface Probe {
 		double duration() default ContinuousProbe.DEFAULT_DURATION;
 		boolean opportunistic() default DEFAULT_OPPORTUNISTIC;
 		boolean strict() default DEFAULT_STRICT;
-	}
-	
-	/**
-	 * Used to indicate that a particular field is configurable for the probe.
-	 * The name of the field will be used as the configuration name, and the 
-	 * default value will be calculated by creating an instance with no config
-	 * and inspecting what value gets created.
-	 *
-	 */
-	@Documented
-	@Retention(RUNTIME)
-	@Target(FIELD)
-	@Inherited
-	public @interface Configurable {
-		/**
-		 * @return Overrides the field name, if specified.
-		 */
-		String name() default "";
 	}
 
 	@Documented

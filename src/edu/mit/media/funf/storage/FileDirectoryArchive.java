@@ -24,12 +24,14 @@ package edu.mit.media.funf.storage;
 import java.io.File;
 import java.io.FilenameFilter;
 
+import edu.mit.media.funf.util.NameGenerator;
+
 /**
  * A simple directory based archive for files.  
  * A file may be able to be archived more than once depending on the nameGenerator strategy that is used.
  *
  */
-public class FileDirectoryArchive implements Archive<File> {
+public class FileDirectoryArchive implements FileArchive {
 	public static final String TAG = FileDirectoryArchive.class.getName();
 	
 	private final File archiveDir;

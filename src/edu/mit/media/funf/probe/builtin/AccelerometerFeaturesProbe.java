@@ -19,6 +19,7 @@ import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerFeaturesKeys;
 import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.Configurable;
 
 /**
  * 

@@ -19,13 +19,12 @@
  * You should have received a copy of the GNU Lesser General Public 
  * License along with Funf. If not, see <http://www.gnu.org/licenses/>.
  */
-package edu.mit.media.funf.storage;
+package edu.mit.media.funf.util;
 
 import java.util.Date;
 
 import android.content.Context;
 import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.util.UuidUtil;
 
 public interface NameGenerator {
 	

@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ServicesKeys;
+import edu.mit.media.funf.util.Configurable;
 
 public class ServicesProbe extends Base implements ServicesKeys {
 

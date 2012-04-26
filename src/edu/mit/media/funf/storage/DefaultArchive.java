@@ -36,10 +36,11 @@ import javax.crypto.spec.PBEKeySpec;
 import android.content.Context;
 import android.content.SharedPreferences;
 import edu.mit.media.funf.security.Base64Coder;
-import edu.mit.media.funf.storage.NameGenerator.CompositeNameGenerator;
-import edu.mit.media.funf.storage.NameGenerator.RequiredSuffixNameGenerator;
-import edu.mit.media.funf.storage.NameGenerator.SystemUniqueTimestampNameGenerator;
 import edu.mit.media.funf.util.FileUtil;
+import edu.mit.media.funf.util.NameGenerator;
+import edu.mit.media.funf.util.NameGenerator.CompositeNameGenerator;
+import edu.mit.media.funf.util.NameGenerator.RequiredSuffixNameGenerator;
+import edu.mit.media.funf.util.NameGenerator.SystemUniqueTimestampNameGenerator;
 
 /**
  * A default implementation of a file archive, which should be good enough for most cases.
@@ -47,7 +48,7 @@ import edu.mit.media.funf.util.FileUtil;
  * This archive provides internal memory and SD card redundancy, managed backups, as well as file encryption.
  * Archives are singletons by database name.
  */
-public class DefaultArchive implements Archive<File> {
+public class DefaultArchive implements FileArchive {
 
 	private static final String ENCRYPTION_PREFS = "edu.mit.media.funf.configured.ConfiguredEncryption";
 	private static final String ENCRYPTION_KEY = "ENCRYPTION_KEY";
@@ -145,16 +146,15 @@ public class DefaultArchive implements Archive<File> {
 		return FileUtil.getSdCardPath(context) + databaseName + "/";
 	}
 	
-	private Archive<File> delegateArchive; // Cache
-	@SuppressWarnings("unchecked")
-	protected Archive<File> getDelegateArchive() {
+	private FileArchive delegateArchive; // Cache
+	protected FileArchive getDelegateArchive() {
 		if (delegateArchive == null) {
 			synchronized (this) {
 				if (delegateArchive == null) {
 					SecretKey key = getKey();
 					String rootSdCardPath = getPathOnSDCard();
-					Archive<File> backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
-					Archive<File> mainArchive = new CompositeFileArchive(
+					FileArchive backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
+					FileArchive mainArchive = new CompositeFileArchive(
 							getTimestampedDbFileArchive(new File(rootSdCardPath + "archive"), context, key),
 							getTimestampedDbFileArchive(context.getDir("funf_" + databaseName + "_archive", Context.MODE_PRIVATE), context, key)
 							);

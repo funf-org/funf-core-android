@@ -107,8 +107,8 @@ public abstract class UploadService extends Service {
 			String archiveName = intent.getStringExtra(ARCHIVE_ID);
 			String remoteArchiveName = intent.getStringExtra(REMOTE_ARCHIVE_ID);
 			if (archiveName != null && remoteArchiveName != null) {
-				Archive<File> archive = getArchive(archiveName);
-				RemoteArchive remoteArchive = getRemoteArchive(remoteArchiveName);
+				FileArchive archive = getArchive(archiveName);
+				RemoteFileArchive remoteArchive = getRemoteArchive(remoteArchiveName);
 				if (archive != null && remoteArchive != null) {
 					for (File file : archive.getAll()) {
 						archive(archive, remoteArchive, file, network);
@@ -130,7 +130,7 @@ public abstract class UploadService extends Service {
 	 * @param databaseName
 	 * @return
 	 */
-	public Archive<File> getArchive(String name) {
+	public FileArchive getArchive(String name) {
 		return DefaultArchive.getArchive(this, name);
 	}
 
@@ -139,10 +139,10 @@ public abstract class UploadService extends Service {
 	 * @param name
 	 * @return
 	 */
-	protected abstract RemoteArchive getRemoteArchive(final String name);
+	protected abstract RemoteFileArchive getRemoteArchive(final String name);
 	
 	
-	public void archive(Archive<File> archive, RemoteArchive remoteArchive, File file, int network) {
+	public void archive(FileArchive archive, RemoteFileArchive remoteArchive, File file, int network) {
 		ArchiveFile archiveFile = new ArchiveFile(archive, remoteArchive, file, network);
 		if (!filesToUpload.contains(archiveFile)) {
 			Log.i(LogUtil.TAG, "Queuing " + file.getName());
@@ -150,7 +150,7 @@ public abstract class UploadService extends Service {
 		}
 	}
 	
-	protected void runArchive(Archive<File> archive, RemoteArchive remoteArchive, File file, int network) {
+	protected void runArchive(FileArchive archive, RemoteFileArchive remoteArchive, File file, int network) {
 		Integer numRemoteFailures = remoteArchiveFailures.get(remoteArchive.getId());
 		numRemoteFailures = (numRemoteFailures == null) ? 0 : numRemoteFailures;
 		if (numRemoteFailures < MAX_REMOTE_ARCHIVE_RETRIES && isOnline(network)) {
@@ -179,11 +179,11 @@ public abstract class UploadService extends Service {
 	 * Convenience class for pairing the database name with the db file
 	 */
 	protected class ArchiveFile {
-		public final Archive<File> archive;
-		public final RemoteArchive remoteArchive;
+		public final FileArchive archive;
+		public final RemoteFileArchive remoteArchive;
 		public final File file;
 		public final int network;
-		public ArchiveFile(Archive<File> archive, RemoteArchive remoteArchive, File file, int network) {
+		public ArchiveFile(FileArchive archive, RemoteFileArchive remoteArchive, File file, int network) {
 			this.archive = archive;
 			this.remoteArchive = remoteArchive;
 			this.file = file;

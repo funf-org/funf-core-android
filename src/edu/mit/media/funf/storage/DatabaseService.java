@@ -95,7 +95,7 @@ public abstract class DatabaseService extends IntentService {
 	 * @param databaseName
 	 * @return
 	 */
-	public Archive<File> getArchive(String databaseName) {
+	public FileArchive getArchive(String databaseName) {
 		return DefaultArchive.getArchive(this, databaseName);
 	}
 	
@@ -120,7 +120,7 @@ public abstract class DatabaseService extends IntentService {
 		File dbFile = new File(dbHelper.getReadableDatabase().getPath());
 		Log.i(LogUtil.TAG, "Running archive: " + dbFile.getAbsolutePath());
 		dbHelper.close();
-		Archive<File> archive = getArchive(databaseName);
+		FileArchive archive = getArchive(databaseName);
 		if (archive.add(dbFile)) {
 			dbFile.delete();
 		}

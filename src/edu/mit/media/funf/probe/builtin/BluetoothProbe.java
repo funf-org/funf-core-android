@@ -15,6 +15,7 @@ import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.Configurable;
 
 @DisplayName("Nearby Bluetooth Devices Probe")
 @DefaultSchedule(period=300)

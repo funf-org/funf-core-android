@@ -23,8 +23,24 @@ package edu.mit.media.funf.storage;
 
 import java.io.File;
 
-public interface RemoteArchive {
+/**
+ * Interface for representing file archives that are not on the device.
+ *
+ */
+public interface RemoteFileArchive {
 
+	/**
+	 * Synchronously add the file to the remote archive
+	 * @param file the File to upload
+	 * @return true if successfully added, false otherwise
+	 */
 	public boolean add(File file);
+	
+	
+	/**
+	 * A unique string that represents this remote archive.  These will mostly be URIs,
+	 * but implementation is dependent on implementation.
+	 * @return
+	 */
 	public String getId();
 }

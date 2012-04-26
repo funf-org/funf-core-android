@@ -16,6 +16,7 @@ import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.SensorKeys;
 import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 @DefaultSchedule(period=SensorProbe.DEFAULT_PERIOD, duration=SensorProbe.DEFAULT_DURATION)

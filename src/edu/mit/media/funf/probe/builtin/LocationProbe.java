@@ -19,6 +19,7 @@ import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.LocationKeys;
 import edu.mit.media.funf.time.DecimalTimeUnit;
+import edu.mit.media.funf.util.Configurable;
 
 /**
  * Sends all location points gathered by system.

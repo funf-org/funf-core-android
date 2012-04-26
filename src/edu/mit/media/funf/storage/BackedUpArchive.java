@@ -28,11 +28,11 @@ import java.io.File;
  * It is up to the backup archive to determine when those items will remove themselves.
  *
  */
-public class BackedUpArchive implements Archive<File> {
+public class BackedUpArchive implements FileArchive {
 
-	private final Archive<File> archive, backupArchive;
+	private final FileArchive archive, backupArchive;
 	
-	public BackedUpArchive(Archive<File> archive, Archive<File> backupArchive) {
+	public BackedUpArchive(FileArchive archive, FileArchive backupArchive) {
 		this.archive = archive;
 		this.backupArchive = backupArchive;
 	}

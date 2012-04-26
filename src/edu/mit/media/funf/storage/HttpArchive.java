@@ -21,7 +21,6 @@
  */
 package edu.mit.media.funf.storage;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,9 +39,10 @@ import edu.mit.media.funf.util.LogUtil;
  * NOTE: not complete or tested
  *
  */
-public class HttpArchive implements RemoteArchive {
+public class HttpArchive implements RemoteFileArchive {
 	
 	private String uploadUrl;
+	@SuppressWarnings("unused")
 	private String mimeType;
 	
 	public HttpArchive(final String uploadUrl) {
@@ -120,7 +120,7 @@ public class HttpArchive implements RemoteArchive {
 	public static boolean uploadFile(File file,String uploadurl) {
 		HttpURLConnection conn = null; 
 		DataOutputStream dos = null; 
-		DataInputStream inStream = null; 
+		//DataInputStream inStream = null; 
 
 		String lineEnd = "\r\n"; 
 		String twoHyphens = "--"; 

@@ -13,6 +13,7 @@ import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.probe.Probe.ContinuableProbe;
 import edu.mit.media.funf.time.DecimalTimeUnit;
+import edu.mit.media.funf.util.Configurable;
 
 public abstract class DatedContentProviderProbe extends ContentProviderProbe implements ContinuableProbe {
 

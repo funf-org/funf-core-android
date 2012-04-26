@@ -30,18 +30,18 @@ import java.util.Set;
  * Attempts to use the first archive. If that fails, continues down the list until a successful archive is reached.
  *
  */
-public class CompositeFileArchive implements Archive<File> {
+public class CompositeFileArchive implements FileArchive {
 
-	private final Archive<File>[] archives;
+	private final FileArchive[] archives;
 	
-	public CompositeFileArchive(Archive<File>... archives) {
+	public CompositeFileArchive(FileArchive... archives) {
 		this.archives = archives;
 	}
 	
 	@Override
 	public boolean add(File item) {
 		// Add to archive one by one, until one is successful or archives are exhausted.
-		for (Archive<File> archive : archives) {
+		for (FileArchive archive : archives) {
 			if(archive.add(item)) {
 				return true;
 			}
@@ -53,7 +53,7 @@ public class CompositeFileArchive implements Archive<File> {
 	public File[] getAll() {
 		// Merge files from all archives, ignoring duplicates
 		Set<File> fileSet = new HashSet<File>();
-		for (Archive<File> archive : archives) {
+		for (FileArchive archive : archives) {
 			fileSet.addAll(Arrays.asList(archive.getAll()));
 		}
 		File[] files = new File[fileSet.size()];
@@ -65,7 +65,7 @@ public class CompositeFileArchive implements Archive<File> {
 	public boolean remove(File item) {
 		// Remove on every archive, returning true if at least one was successful
 		boolean success = false;
-		for (Archive<File> archive : archives) {
+		for (FileArchive archive : archives) {
 			if(archive.remove(item)) {
 				success = true;
 			}
@@ -75,7 +75,7 @@ public class CompositeFileArchive implements Archive<File> {
 
 	@Override
 	public boolean contains(File item) {
-		for (Archive<File> archive : archives) {
+		for (FileArchive archive : archives) {
 			if (archive.contains(item)) {
 				return true;
 			}

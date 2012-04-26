@@ -17,6 +17,7 @@ import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.TimeOffsetKeys;
 import edu.mit.media.funf.time.NtpMessage;
 import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 /**

@@ -26,6 +26,7 @@ import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.RunningApplicationsKeys;
 import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 @DisplayName("Running Applications")
