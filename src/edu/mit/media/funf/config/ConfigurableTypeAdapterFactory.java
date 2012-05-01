@@ -169,30 +169,7 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 
 				@SuppressWarnings("unchecked")
 				private Class<? extends T> getRuntimeType(JsonElement el) {
-					Class<? extends T> type = canUseDefaultClass ? (Class<? extends T>)defaultClass : null;
-					String typeString = null;
-					try {
-						if (el.isJsonObject()) {
-							typeString = el.getAsJsonObject().remove(TYPE).getAsString();
-						} else if (el.isJsonPrimitive()){
-							typeString = el.getAsString();
-						}
-					} catch (ClassCastException e) {
-					}
-					// TODO: expand string to allow for builtin to be specified as ".SampleProbe"
-					if (typeString != null) {
-						try {
-							Class<?> runtimeClass = Class.forName(typeString);
-							if (baseClass.isAssignableFrom(runtimeClass)) {
-								type = (Class<? extends T>)runtimeClass;
-							} else {
-								Log.w(TAG, "RuntimeTypeAdapter: Runtime class '" + typeString + "' is not assignable from default class '" + defaultClass.getName() + "'.");
-							}
-						} catch (ClassNotFoundException e) {
-							Log.w(TAG, "RuntimeTypeAdapter: Runtime class '" + typeString + "' not found.");
-						}
-					}
-					return type;
+					return ConfigurableTypeAdapterFactory.getRuntimeType(el, (Class<T>)type.getRawType(), canUseDefaultClass ? (Class<? extends T>)defaultClass : null);
 				}
 			};
 		}
@@ -200,4 +177,30 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 	}
 	
 
+	public static <T> Class<? extends T> getRuntimeType(JsonElement el, Class<T> baseClass, Class<? extends T> defaultClass) {
+		Class<? extends T> type = defaultClass;
+		String typeString = null;
+		try {
+			if (el.isJsonObject()) {
+				typeString = el.getAsJsonObject().remove(TYPE).getAsString();
+			} else if (el.isJsonPrimitive()){
+				typeString = el.getAsString();
+			}
+		} catch (ClassCastException e) {
+		}
+		// TODO: expand string to allow for builtin to be specified as ".SampleProbe"
+		if (typeString != null) {
+			try {
+				Class<?> runtimeClass = Class.forName(typeString);
+				if (baseClass.isAssignableFrom(runtimeClass)) {
+					type = (Class<? extends T>)runtimeClass;
+				} else {
+					Log.w(TAG, "RuntimeTypeAdapter: Runtime class '" + typeString + "' is not assignable from default class '" + defaultClass.getName() + "'.");
+				}
+			} catch (ClassNotFoundException e) {
+				Log.w(TAG, "RuntimeTypeAdapter: Runtime class '" + typeString + "' not found.");
+			}
+		}
+		return type;
+	}
 }
