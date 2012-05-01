@@ -7,6 +7,7 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.config.ConfigurableObjectFactory.FactoryUtils;
 import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.util.EqualsUtil;
@@ -16,18 +17,18 @@ import edu.mit.media.funf.util.HashCodeUtil;
  * Immutable class for describing a data request from a probe.
  *
  */
-public class ProbeDataRequest {
+public class ScheduledRequest {
 	public static final String 
 		PROBE_NAME = "probeName",
 		CONFIG = "config",
 		SCHEDULE = "schedule";
 	
 	private final String probeName;
-	private final Class<? extends Probe> probeClass;
+	private final Class<? extends Configurable> probeClass;
 	private final String config;
 	private final String schedule;
 	
-	public ProbeDataRequest(String probeName, JsonObject config,  JsonObject schedule) {
+	public ScheduledRequest(String probeName, JsonObject config,  JsonObject schedule) {
 		if (probeName == null) {
 			throw new RuntimeException("Probe data request must specify a probe name or class.");
 		}
@@ -37,7 +38,7 @@ public class ProbeDataRequest {
 		this.schedule = schedule == null ? null : JsonUtils.deepSort(schedule).toString();
 	}
 	
-	public ProbeDataRequest(Class<? extends Probe> probeClass, JsonObject config, JsonObject schedule) {
+	public ScheduledRequest(Class<? extends Configurable> probeClass, JsonObject config, JsonObject schedule) {
 		if (probeClass == null) {
 			throw new RuntimeException("Probe data request must specify a probe name or class.");
 		}
@@ -47,7 +48,7 @@ public class ProbeDataRequest {
 		this.schedule = schedule == null ? null : JsonUtils.deepSort(schedule).toString();
 	}
 	
-	public ProbeDataRequest(JsonObject requestJsonObject) {
+	public ScheduledRequest(JsonObject requestJsonObject) {
 		JsonElement nameEl = requestJsonObject.get(PROBE_NAME);
 		if (JsonNull.INSTANCE == nameEl) {
 			throw new RuntimeException("Probe data request json structure must specify a 'probeName'.");
@@ -72,7 +73,7 @@ public class ProbeDataRequest {
 		return probeName;
 	}
 
-	public Class<? extends Probe> getProbeClass() {
+	public Class<? extends Configurable> getProbeClass() {
 		return probeClass;
 	}
 
@@ -107,8 +108,8 @@ public class ProbeDataRequest {
 		if (o == this) {
 			return true;
 		}
-		if (o instanceof ProbeDataRequest) {
-			ProbeDataRequest oRequest = (ProbeDataRequest) o;
+		if (o instanceof ScheduledRequest) {
+			ScheduledRequest oRequest = (ScheduledRequest) o;
 			return EqualsUtil.areEqual(this.probeName, oRequest.probeName) 
 					&& EqualsUtil.areEqual(this.config, oRequest.config)
 					&& EqualsUtil.areEqual(this.schedule, oRequest.schedule);

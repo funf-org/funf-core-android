@@ -43,7 +43,7 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 		ACTION_DISABLE_PASSIVE_PROBE = PREFIX + ".DISABLE";
 	
 	private ConfigurableObjectFactory cacheFactory;
-	private Map<Probe.DataListener, Set<ProbeDataRequest>> requests;
+	private Map<Probe.DataListener, Set<ScheduledRequest>> requests;
 	private Map<Uri,Map<Probe.DataListener,Double>> requestSatisfiedTimestamps; // Map used in place of set only for WeakRefs
 	private AlarmManager manager;
 
@@ -68,7 +68,7 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 		super.onCreate();
 		manager = (AlarmManager)getSystemService(ALARM_SERVICE);
 		cacheFactory = CachingProbeFactory.getInstance(this);
-		requests = new WeakHashMap<Probe.DataListener, Set<ProbeDataRequest>>();
+		requests = new WeakHashMap<Probe.DataListener, Set<ScheduledRequest>>();
 		requestSatisfiedTimestamps = new HashMap<Uri, Map<DataListener,Double>>();
 	}
 
@@ -76,8 +76,8 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 	public void onDestroy() {
 		super.onDestroy();
 		Set<Uri> activeProbeUris = new HashSet<Uri>();
-		for (Set<ProbeDataRequest> requestEntries : requests.values()) {
-			for (ProbeDataRequest request : requestEntries) {
+		for (Set<ScheduledRequest> requestEntries : requests.values()) {
+			for (ScheduledRequest request : requestEntries) {
 				activeProbeUris.add(request.getProbeUri());
 			}
 		}
@@ -111,9 +111,9 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 					// TODO: clean this up, it is way to complicated
 					Set<DataListener> opportunisticListeners = new HashSet<DataListener>();
 					for (DataListener listener : listeners) {
-						 Set<ProbeDataRequest> dataRequests = requests.get(listener);
+						 Set<ScheduledRequest> dataRequests = requests.get(listener);
 						 boolean opportunistic = false;
-						 for (ProbeDataRequest dataRequest : dataRequests) {
+						 for (ScheduledRequest dataRequest : dataRequests) {
 							 BasicSchedule schedule = new BasicSchedule(FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(intent.getData())), dataRequest.getSchedule());
 							 opportunistic = opportunistic || schedule.isOpportunistic();
 						 }
@@ -152,18 +152,18 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 		return START_REDELIVER_INTENT;
 	}
 
-	public Set<ProbeDataRequest> getDataRequests(Probe.DataListener listener) {
-		Set<ProbeDataRequest> requestSet = new HashSet<ProbeDataRequest>();
+	public Set<ScheduledRequest> getDataRequests(Probe.DataListener listener) {
+		Set<ScheduledRequest> requestSet = new HashSet<ScheduledRequest>();
 		if (requests.containsKey(listener)) {
 			requestSet.addAll(requests.get(listener));
 		}
 		return requestSet;
 	}
 
-	public synchronized void requestData(Probe.DataListener listener, ProbeDataRequest request) {
-		Set<ProbeDataRequest> dataRequests = requests.get(listener);
+	public synchronized void requestData(Probe.DataListener listener, ScheduledRequest request) {
+		Set<ScheduledRequest> dataRequests = requests.get(listener);
 		if (dataRequests == null) {
-			dataRequests = new HashSet<ProbeDataRequest>();
+			dataRequests = new HashSet<ScheduledRequest>();
 			requests.put(listener, dataRequests);
 		}
 		dataRequests.add(request);
@@ -178,8 +178,8 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 		schedule(request.getProbeUri());
 	}
 	
-	public synchronized void unrequestData(Probe.DataListener listener, ProbeDataRequest request) {
-		Set<ProbeDataRequest> dataRequests = requests.get(listener);
+	public synchronized void unrequestData(Probe.DataListener listener, ScheduledRequest request) {
+		Set<ScheduledRequest> dataRequests = requests.get(listener);
 		if (dataRequests != null) {
 			dataRequests.remove(request);
 			if (dataRequests.isEmpty()) {
@@ -199,9 +199,9 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 	}
 	
 	public synchronized void unrequestAllData(Probe.DataListener listener) {
-		Set<ProbeDataRequest> dataRequests = requests.get(listener);
+		Set<ScheduledRequest> dataRequests = requests.get(listener);
 		if (dataRequests != null) {
-			for (ProbeDataRequest dataRequest : dataRequests) {
+			for (ScheduledRequest dataRequest : dataRequests) {
 				unrequestData(listener, dataRequest);
 			}
 		}
@@ -315,7 +315,7 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 				nextRunTime = TimeUtil.getTimestamp().doubleValue();
 				break;
 			} else {
-				for (ProbeDataRequest request : requests.get(listener)) {
+				for (ScheduledRequest request : requests.get(listener)) {
 					BasicSchedule schedule = new BasicSchedule(FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(probeUri)), request.getSchedule());
 					Double period = schedule.getPeriod();
 					if (period != null && period != 0) {
@@ -364,7 +364,7 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 			if (listenerSatisfieds != null) {
 				for (Map.Entry<DataListener,Double> listenerSatisfied : listenerSatisfieds.entrySet()) {
 					DataListener listener = listenerSatisfied.getKey();
-					for (ProbeDataRequest request : requests.get(listener)) {
+					for (ScheduledRequest request : requests.get(listener)) {
 						BasicSchedule schedule = new BasicSchedule(probeClass, request.getSchedule());
 						Double duration = schedule.getDuration();
 						if (duration != null) {

@@ -8,11 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import android.net.Uri;
+
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
 
 public class JsonUtils {
 
@@ -78,6 +83,19 @@ public class JsonUtils {
 		}
 	}
 
+	/**
+	 * Return an immutable JsonElement.  Either IJsonObject, IJsonArray, or other immutable JsonPrimitive.
+	 * @param el
+	 * @return
+	 */
+	public static JsonElement immutable(JsonElement el) {
+		if (el instanceof JsonObject) {
+			return new IJsonObject(el.getAsJsonObject());
+		} else if (el instanceof JsonArray) {
+			return new IJsonArray(el.getAsJsonArray());
+		}
+		return el;
+	}
 	
 	/**
 	 * In place copy of one objects values onto another, with option to replace existing values in copy.
@@ -105,5 +123,30 @@ public class JsonUtils {
 				}
 			}
 		}
+	}
+	
+	public static final String JSON_SCHEME = "json";
+	
+	/**
+	 * Transform json into an immutable Uri
+	 * @param el
+	 * @return
+	 */
+	public Uri toUri(JsonElement el) {
+		return new Uri.Builder()
+		.scheme(JSON_SCHEME)
+		.appendPath(immutable(el).toString())
+		.build();
+	}
+	
+	/**
+	 * Parse json data from a json:// uri
+	 * @param uri
+	 * @return
+	 */
+	public JsonElement fromUri(Uri uri) {
+		return JSON_SCHEME.equals(uri.getScheme()) ?
+				new JsonParser().parse(uri.getPath()) :
+					null;
 	}
 }

@@ -52,6 +52,7 @@ public interface ConfigurableObjectFactory {
 	
 	public static class FactoryUtils {
 
+		@SuppressWarnings("unchecked")
 		public static <T extends Configurable> Class<? extends T> getClass(String className, Class<T> parentClass) {
 			try {
 				return (Class<? extends T>)Class.forName(className);
