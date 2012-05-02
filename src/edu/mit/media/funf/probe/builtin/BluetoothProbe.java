@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
@@ -22,7 +23,7 @@ import edu.mit.media.funf.time.TimeUtil;
 @RequiredPermissions({android.Manifest.permission.BLUETOOTH, android.Manifest.permission.BLUETOOTH_ADMIN})
 public class BluetoothProbe extends Base implements PassiveProbe {
 	
-	@ConfigurableField
+	@Configurable
 	private BigDecimal maxScanTime = BigDecimal.valueOf(30.0);
 	
 	private BluetoothAdapter adapter;

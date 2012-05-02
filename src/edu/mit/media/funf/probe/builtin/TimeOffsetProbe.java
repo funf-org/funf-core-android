@@ -13,6 +13,7 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.TimeOffsetKeys;
 import edu.mit.media.funf.time.NtpMessage;
@@ -29,13 +30,13 @@ public class TimeOffsetProbe extends Base implements TimeOffsetKeys {
 	
 	private static final BigDecimal SECONDS_1900_TO_1970 = new BigDecimal(2208988800L);
 	
-	@ConfigurableField
+	@Configurable
 	private String host = "2.north-america.pool.ntp.org";
 	
-	@ConfigurableField
+	@Configurable
 	private int port = 123;
 	
-	@ConfigurableField
+	@Configurable
 	private BigDecimal timeout = BigDecimal.TEN;
 	
 	@Override

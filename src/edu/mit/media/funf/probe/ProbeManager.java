@@ -9,16 +9,19 @@ import java.util.WeakHashMap;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import edu.mit.media.funf.config.Configurable;
-import edu.mit.media.funf.config.ConfigurableObjectFactory;
+import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
+import edu.mit.media.funf.config.SingletonTypeAdapterFactory;
 import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DataListener;
@@ -32,7 +35,8 @@ import edu.mit.media.funf.time.TimeUtil;
  * @author alangardner
  *
  */
-public class ProbeManager extends Service implements ConfigurableObjectFactory {
+public class ProbeManager extends Service {
+	
 	
 	public static final String PREFIX = "edu.mit.media.funf.probe";
 	public static final String
@@ -42,10 +46,10 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 		ACTION_STOP_PROBE = PREFIX + ".STOP",
 		ACTION_DISABLE_PASSIVE_PROBE = PREFIX + ".DISABLE";
 	
-	private ConfigurableObjectFactory cacheFactory;
 	private Map<Probe.DataListener, Set<ScheduledRequest>> requests;
 	private Map<Uri,Map<Probe.DataListener,Double>> requestSatisfiedTimestamps; // Map used in place of set only for WeakRefs
 	private AlarmManager manager;
+	private Gson gson;
 
 	/**
 	 * Binder interface to the probe
@@ -67,9 +71,11 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 	public void onCreate() {
 		super.onCreate();
 		manager = (AlarmManager)getSystemService(ALARM_SERVICE);
-		cacheFactory = CachingProbeFactory.getInstance(this);
 		requests = new WeakHashMap<Probe.DataListener, Set<ScheduledRequest>>();
 		requestSatisfiedTimestamps = new HashMap<Uri, Map<DataListener,Double>>();
+
+		// TODO: update this to do more than probes
+		gson = new GsonBuilder().registerTypeAdapterFactory(getProbeFactory(this)).create();
 	}
 
 	@Override
@@ -81,14 +87,29 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 				activeProbeUris.add(request.getProbeUri());
 			}
 		}
+		Gson gson = getGson();
 		for (Uri probeUri : activeProbeUris) {
 			cancelAlarm(probeUri);
 			// TODO: need to resolve scheduling differences between probes and non-probes
-			((Probe)get(probeUri)).destroy();
+			Probe probe = gson.fromJson(JsonUtils.fromUri(probeUri), Probe.class);
+			probe.destroy();
 		}
 	}
 	
+
+	private static SingletonTypeAdapterFactory FACTORY;
 	
+	public static SingletonTypeAdapterFactory getProbeFactory(Context context) {
+		if (FACTORY == null) {
+			FACTORY = new SingletonTypeAdapterFactory(
+					new ConfigurableTypeAdapterFactory<Probe>(context, Probe.class));
+		}
+		return FACTORY;
+	}
+	
+	private Gson getGson() {
+		return gson;
+	}
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -100,7 +121,7 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 				|| ACTION_START_PROBE.equals(action)
 				|| ACTION_STOP_PROBE.equals(action)) {
 			// TODO: need to resolve scheduling differences between probes and non-probes
-			Probe probe = (Probe)get(intent.getData());
+			Probe probe = getGson().fromJson(JsonUtils.fromUri(intent.getData()), Probe.class);
 			if (probe != null) {
 				Map<Probe.DataListener,Double> timestamps = requestSatisfiedTimestamps.get(intent.getData());
 				
@@ -114,7 +135,8 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 						 Set<ScheduledRequest> dataRequests = requests.get(listener);
 						 boolean opportunistic = false;
 						 for (ScheduledRequest dataRequest : dataRequests) {
-							 BasicSchedule schedule = new BasicSchedule(FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(intent.getData())), dataRequest.getSchedule());
+							 Class<? extends Probe> runtimeClass = ConfigurableTypeAdapterFactory.getRuntimeType(JsonUtils.fromUri(intent.getData()), Probe.class, null);
+							 BasicSchedule schedule = new BasicSchedule(runtimeClass, dataRequest.getSchedule());
 							 opportunistic = opportunistic || schedule.isOpportunistic();
 						 }
 						 if (opportunistic) {
@@ -209,24 +231,6 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 		scheduleAll();
 	}
 
-	@Override
-	public Configurable get(Uri probeUri) {
-		if (probeUri == null) {
-			return null;
-		}
-		return cacheFactory.get(probeUri);
-	}
-
-	@Override
-	public Configurable get(String name, JsonObject config) {
-		return cacheFactory.get(name, config);
-	}
-
-	@Override
-	public <T extends Configurable> T get(Class<T> probeClass, JsonObject config) {
-		return cacheFactory.get(probeClass, config);
-	}
-
 
 	/**************************************
 	 * Simple scheduling implementation
@@ -302,7 +306,7 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 	}
 	
 	private void schedule(Uri probeUri) {
-		Class<? extends Probe> probeClass = FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(probeUri));
+		Class<? extends Probe> probeClass = ConfigurableTypeAdapterFactory.getRuntimeType(JsonUtils.fromUri(probeUri), Probe.class, null);
 		
 		// Figure out when the next time this probe needs to be run is
 		Double nextRunTime = null;
@@ -316,7 +320,7 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 				break;
 			} else {
 				for (ScheduledRequest request : requests.get(listener)) {
-					BasicSchedule schedule = new BasicSchedule(FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(probeUri)), request.getSchedule());
+					BasicSchedule schedule = new BasicSchedule(probeClass, request.getSchedule());
 					Double period = schedule.getPeriod();
 					if (period != null && period != 0) {
 						double requestNextRunTime = lastSatisfied + period;
@@ -352,7 +356,8 @@ public class ProbeManager extends Service implements ConfigurableObjectFactory {
 	}
 	
 	private void scheduleStop(Uri probeUri) {
-		Class<? extends Probe> probeClass = FactoryUtils.getProbeClass(Probe.PROBE_URI.getName(probeUri));
+		Class<? extends Probe> probeClass = ConfigurableTypeAdapterFactory.getRuntimeType(JsonUtils.fromUri(probeUri), Probe.class, null);
+		
 		// Only continuous probes can be stopped
 		if (ContinuousProbe.class.isAssignableFrom(probeClass)) {
 			Double maxDuration = null;

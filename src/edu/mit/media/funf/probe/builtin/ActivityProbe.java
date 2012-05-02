@@ -1,12 +1,13 @@
 package edu.mit.media.funf.probe.builtin;
 
 
-import android.net.Uri;
 import android.util.Log;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
@@ -21,7 +22,7 @@ import edu.mit.media.funf.util.LogUtil;
 @RequiredProbes(AccelerometerSensorProbe.class)
 public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe, ActivityKeys {
 
-	@ConfigurableField
+	@Configurable
 	private double interval = 1.0;
 	
 	private long startTime;
@@ -52,7 +53,7 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 	}
 
 	private AccelerometerSensorProbe getAccelerometerProbe() {
-		return (AccelerometerSensorProbe)getFactory().get(AccelerometerSensorProbe.class, null);
+		return getGson().fromJson(DEFAULT_CONFIG, AccelerometerSensorProbe.class);
 	}
 
 	
@@ -100,7 +101,7 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 		
 
 		@Override
-		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
+		public void onDataReceived(IJsonObject completeProbeUri, IJsonObject data) {
 			double timestamp = data.get(TIMESTAMP).getAsDouble();
 			Log.d(LogUtil.TAG, "Starttime: " + startTime + " intervalStartTime: " + intervalStartTime);
 			Log.d(LogUtil.TAG, "RECEIVED:" + timestamp);
@@ -118,7 +119,7 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 		}
 
 		@Override
-		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
+		public void onDataCompleted(IJsonObject completeProbeUri, JsonElement checkpoint) {
 			// Do nothing
 		}
 	}

@@ -16,6 +16,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
+import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
@@ -34,7 +37,7 @@ import edu.mit.media.funf.util.LogUtil;
 @DefaultSchedule(period=0, duration=Double.MAX_VALUE, opportunistic=true)
 public class RunningApplicationsProbe extends Base implements ContinuousProbe, PassiveProbe, RunningApplicationsKeys {
 
-	@ConfigurableField
+	@Configurable
 	private double pollInterval = 1.0;
 	
 	
@@ -87,9 +90,10 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 	private DataListener screenListener = new DataListener() {
 		
 		@Override
-		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
+		public void onDataReceived(IJsonObject completeProbeUri, IJsonObject data) {
 			Log.d(LogUtil.TAG, "RunningApplications: " + data);
-			if (ScreenProbe.class.getName().equals(Probe.PROBE_URI.getName(completeProbeUri))) {
+			String type = completeProbeUri.get(ConfigurableTypeAdapterFactory.TYPE).getAsString();
+			if (ScreenProbe.class.getName().equals(type)) {
 				boolean screenOn = data.get(ScreenProbe.SCREEN_ON).getAsBoolean();
 				if (screenOn) {
 					if (!getDataListeners().isEmpty()) { // Start only if we have listeners
@@ -102,7 +106,7 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 		}
 		
 		@Override
-		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
+		public void onDataCompleted(IJsonObject completeProbeUri, JsonElement checkpoint) {
 			// Shuts this down if something unregisters the listener
 			disable();
 		}
@@ -112,7 +116,7 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 	protected synchronized void onEnable() {
 		super.onEnable();
 		Log.d(LogUtil.TAG, "RunningApplicationsProbe: onEnable");
-		getFactory().get(ScreenProbe.class, null).registerListener(screenListener);
+		getGson().fromJson(DEFAULT_CONFIG, ScreenProbe.class).registerListener(screenListener);
 
 		// Set for current state
 		PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
@@ -149,7 +153,7 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 		super.onDisable();
 		Log.d(LogUtil.TAG, "RunningApplicationsProbe: onDisable");
 		runningAppsPoller.reset();
-		getFactory().get(ScreenProbe.class, null).unregisterListener(screenListener);
+		getGson().fromJson(DEFAULT_CONFIG, ScreenProbe.class).unregisterListener(screenListener);
 	}
 	
 	

@@ -9,6 +9,7 @@ import android.content.Context;
 
 import com.google.gson.Gson;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.ServicesKeys;
 
@@ -18,7 +19,7 @@ public class ServicesProbe extends Base implements ServicesKeys {
 	 * The array of packages from which service info will be emitted. 
 	 * If this parameter is null, will return every service.
 	 */
-	@ConfigurableField
+	@Configurable
 	private String[] packages = null;  
 	
 	@Override

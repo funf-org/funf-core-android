@@ -10,6 +10,8 @@ import android.util.Log;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
@@ -33,26 +35,26 @@ import edu.mit.media.funf.util.LogUtil;
 @RequiredProbes(LocationProbe.class)
 public class SimpleLocationProbe extends Base implements PassiveProbe, LocationKeys {
 
-	@ConfigurableField
+	@Configurable
 	private BigDecimal maxWaitTime = BigDecimal.valueOf(120);
 	
-	@ConfigurableField
+	@Configurable
 	private BigDecimal maxAge =  BigDecimal.valueOf(120); 
 	
-	@ConfigurableField
+	@Configurable
 	private BigDecimal goodEnoughAccuracy = BigDecimal.valueOf(80);
 
-	@ConfigurableField
+	@Configurable
 	private boolean useGps = true;
 	
-	@ConfigurableField
+	@Configurable
 	private boolean useNetwork = true;
 
 
 	private LocationProbe locationProbe;
 	
 	private BigDecimal startTime;
-	private JsonObject bestLocation;
+	private IJsonObject bestLocation;
 	
 	private Runnable sendLocationRunnable = new Runnable() {
 		@Override
@@ -64,7 +66,7 @@ public class SimpleLocationProbe extends Base implements PassiveProbe, LocationK
 	private DataListener listener = new DataListener() {
 		
 		@Override
-		public void onDataReceived(Uri completeProbeUri, JsonObject data) {
+		public void onDataReceived(IJsonObject completeProbeUri, IJsonObject data) {
 			Log.d(LogUtil.TAG, "SimpleLocationProbe received data: " + data.toString());
 			if (startTime == null) {
 				startTime = TimeUtil.getTimestamp();
@@ -91,21 +93,22 @@ public class SimpleLocationProbe extends Base implements PassiveProbe, LocationK
 		}
 		
 		@Override
-		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
+		public void onDataCompleted(IJsonObject completeProbeUri, JsonElement checkpoint) {
 		}
 	};
 	
 	private void sendCurrentBestLocation() {
 		Log.d(LogUtil.TAG, "SimpleLocationProbe sending current best location.");
 		if (bestLocation != null) {
-			bestLocation.remove(PROBE); // Remove probe so that it fills with our probe name
-			sendData(bestLocation);
+			JsonObject data = bestLocation.getAsJsonObject();
+			data.remove(PROBE); // Remove probe so that it fills with our probe name
+			sendData(data);
 		}
 		startTime = null;
 		bestLocation = null;
 	}
 	
-	private boolean isBetterThanCurrent(JsonObject newLocation) {
+	private boolean isBetterThanCurrent(IJsonObject newLocation) {
 		BigDecimal age = startTime.subtract(newLocation.get(TIMESTAMP).getAsBigDecimal());
 		return bestLocation == null || 
 				(age.doubleValue() < maxAge.doubleValue() && 
@@ -122,7 +125,7 @@ public class SimpleLocationProbe extends Base implements PassiveProbe, LocationK
 		if (!useNetwork) {
 			config.addProperty("useNetwork", false);
 		}
-		locationProbe = getFactory().get(LocationProbe.class, config);
+		locationProbe = getGson().fromJson(config, LocationProbe.class);
 		locationProbe.registerPassiveListener(listener);
 	}
 

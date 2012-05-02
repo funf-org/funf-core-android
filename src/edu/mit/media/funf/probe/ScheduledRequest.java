@@ -6,9 +6,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 
-import edu.mit.media.funf.config.Configurable;
-import edu.mit.media.funf.config.ConfigurableObjectFactory.FactoryUtils;
+import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
 import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.util.EqualsUtil;
 import edu.mit.media.funf.util.HashCodeUtil;
@@ -24,7 +24,7 @@ public class ScheduledRequest {
 		SCHEDULE = "schedule";
 	
 	private final String probeName;
-	private final Class<? extends Configurable> probeClass;
+	private final Class<? extends Probe> probeClass;
 	private final String config;
 	private final String schedule;
 	
@@ -33,12 +33,12 @@ public class ScheduledRequest {
 			throw new RuntimeException("Probe data request must specify a probe name or class.");
 		}
 		this.probeName = probeName;
-		this.probeClass = FactoryUtils.getProbeClass(probeName);
+		this.probeClass = ConfigurableTypeAdapterFactory.getRuntimeType(new JsonPrimitive(probeName), Probe.class, null);
 		this.config = config == null ? null : JsonUtils.deepSort(config).toString();
 		this.schedule = schedule == null ? null : JsonUtils.deepSort(schedule).toString();
 	}
 	
-	public ScheduledRequest(Class<? extends Configurable> probeClass, JsonObject config, JsonObject schedule) {
+	public ScheduledRequest(Class<? extends Probe> probeClass, JsonObject config, JsonObject schedule) {
 		if (probeClass == null) {
 			throw new RuntimeException("Probe data request must specify a probe name or class.");
 		}
@@ -54,7 +54,7 @@ public class ScheduledRequest {
 			throw new RuntimeException("Probe data request json structure must specify a 'probeName'.");
 		}
 		this.probeName = nameEl.getAsString();
-		this.probeClass = FactoryUtils.getProbeClass(probeName);
+		this.probeClass = ConfigurableTypeAdapterFactory.getRuntimeType(new JsonPrimitive(probeName), Probe.class, null);
 		JsonElement configEl = requestJsonObject.get(CONFIG);
 		if (JsonNull.INSTANCE == configEl) {
 			this.config = null;
@@ -73,7 +73,7 @@ public class ScheduledRequest {
 		return probeName;
 	}
 
-	public Class<? extends Configurable> getProbeClass() {
+	public Class<? extends Probe> getProbeClass() {
 		return probeClass;
 	}
 
@@ -92,7 +92,7 @@ public class ScheduledRequest {
 	 * @return
 	 */
 	public Uri getProbeUri() {
-		return Probe.PROBE_URI.getUri(probeClass == null ? probeName : probeClass.getName(), config);
+		return JsonUtils.toUri(new JsonParser().parse(config));
 	}
 	
 	public JsonObject getAsJsonObject() {

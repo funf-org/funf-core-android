@@ -22,7 +22,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import edu.mit.media.funf.config.Configurable.ConfigurableField;
 import edu.mit.media.funf.util.AnnotationUtil;
 import edu.mit.media.funf.util.LogUtil;
 
@@ -78,11 +77,12 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 				@SuppressWarnings("unchecked")
 				@Override
 				public void write(JsonWriter out, T value) throws IOException {
+					// TODO: need to handle null
 					JsonObject jsonObject = new JsonObject();
 					List<Field> configurableFields = new ArrayList<Field>();
-					AnnotationUtil.getAllFieldsWithAnnotation(configurableFields, value.getClass(), ConfigurableField.class);
+					AnnotationUtil.getAllFieldsWithAnnotation(configurableFields, value.getClass(), Configurable.class);
 					for (Field field : configurableFields) {
-						String fieldJsonName = field.getAnnotation(ConfigurableField.class).name();
+						String fieldJsonName = field.getAnnotation(Configurable.class).name();
 						if ("".equals(fieldJsonName)) {
 							fieldJsonName = field.getName();
 						}
@@ -103,6 +103,7 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 
 				@Override
 				public T read(JsonReader in) throws IOException {
+					// TODO: need to handle null
 					JsonElement el = Streams.parse(in);
 					Class<? extends T> runtimeType = getRuntimeType(el);
 					if (runtimeType == null) {
@@ -123,10 +124,10 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 						JsonObject jsonObject = el.getAsJsonObject();
 						// Loop over configurable fields for customization
 						List<Field> configurableFields = new ArrayList<Field>();
-						AnnotationUtil.getAllFieldsWithAnnotation(configurableFields, runtimeType, ConfigurableField.class);
+						AnnotationUtil.getAllFieldsWithAnnotation(configurableFields, runtimeType, Configurable.class);
 						for (Field field : configurableFields) {
 							// TODO: check that object doesn't have field of it's own type (to prevent infinite recursion)
-							String fieldJsonName = field.getAnnotation(ConfigurableField.class).name();
+							String fieldJsonName = field.getAnnotation(Configurable.class).name();
 							if ("".equals(fieldJsonName)) {
 								fieldJsonName = field.getName();
 							}

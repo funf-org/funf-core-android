@@ -11,12 +11,13 @@ import android.net.Uri;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.ContinuableProbe;
 import edu.mit.media.funf.time.DecimalTimeUnit;
 
 public abstract class DatedContentProviderProbe extends ContentProviderProbe implements ContinuableProbe {
 
-	@ConfigurableField
+	@Configurable
 	protected BigDecimal afterDate = null;
 	
 	private BigDecimal latestTimestamp = null;
@@ -61,12 +62,6 @@ public abstract class DatedContentProviderProbe extends ContentProviderProbe imp
 	protected void sendData(JsonObject data) {
 		super.sendData(data);
 		latestTimestamp = getTimestamp(data);
-	}
-	
-	@Override
-	public synchronized void setConfig(JsonObject config) {
-		super.setConfig(config);
-		setCheckpoint(null);
 	}
 
 	@Override

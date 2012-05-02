@@ -11,6 +11,7 @@ import android.os.Bundle;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
@@ -30,13 +31,13 @@ import edu.mit.media.funf.time.DecimalTimeUnit;
 @DefaultSchedule(period=1800)
 public class LocationProbe extends Base implements ContinuousProbe, PassiveProbe, LocationKeys {
 
-	@ConfigurableField
+	@Configurable
 	private boolean useGps = true;
 	
-	@ConfigurableField
+	@Configurable
 	private boolean useNetwork = true;
 	
-	@ConfigurableField
+	@Configurable
 	private boolean useCache = true;
 	
 	private Gson gson;

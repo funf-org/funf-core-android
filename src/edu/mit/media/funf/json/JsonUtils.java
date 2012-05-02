@@ -10,17 +10,16 @@ import java.util.Map.Entry;
 
 import android.net.Uri;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
-
 public class JsonUtils {
 
+	private JsonUtils() {}
+	
 	private static final Comparator<Entry<String,JsonElement>> JSON_OBJECT_ENTRY_SET_COMPARATOR = new Comparator<Map.Entry<String,JsonElement>>() {
 		@Override
 		public int compare(Entry<String, JsonElement> lhs, Entry<String, JsonElement> rhs) {
@@ -64,6 +63,7 @@ public class JsonUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T extends JsonElement> T deepCopy(T el) {
+		JsonObject o;
 		if (el == null) {
 			return (T)JsonNull.INSTANCE;
 		} else if (el.isJsonArray()) {
@@ -132,7 +132,7 @@ public class JsonUtils {
 	 * @param el
 	 * @return
 	 */
-	public Uri toUri(JsonElement el) {
+	public static Uri toUri(JsonElement el) {
 		return new Uri.Builder()
 		.scheme(JSON_SCHEME)
 		.appendPath(immutable(el).toString())
@@ -144,7 +144,7 @@ public class JsonUtils {
 	 * @param uri
 	 * @return
 	 */
-	public JsonElement fromUri(Uri uri) {
+	public static JsonElement fromUri(Uri uri) {
 		return JSON_SCHEME.equals(uri.getScheme()) ?
 				new JsonParser().parse(uri.getPath()) :
 					null;

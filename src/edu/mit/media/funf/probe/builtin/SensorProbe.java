@@ -11,6 +11,7 @@ import android.util.Log;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
@@ -24,7 +25,7 @@ public abstract class SensorProbe extends Base implements ContinuousProbe, Senso
 	public static final double DEFAULT_PERIOD = 3600;
 	public static final double DEFAULT_DURATION = 60;
 	
-	@ConfigurableField
+	@Configurable
 	private String sensorDelay = SENSOR_DELAY_FASTEST;
 	
 	public static final String 

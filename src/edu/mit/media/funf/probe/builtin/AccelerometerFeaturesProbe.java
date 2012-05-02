@@ -10,6 +10,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.math.FFT;
 import edu.mit.media.funf.math.Window;
 import edu.mit.media.funf.probe.Probe.Base;
@@ -30,13 +32,13 @@ import edu.mit.media.funf.time.TimeUtil;
 @DefaultSchedule(period=120, duration=15)
 public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe, AccelerometerFeaturesKeys {
 	
-	@ConfigurableField
+	@Configurable
 	private double frameDuration = 1.0;
 	
-	@ConfigurableField
+	@Configurable
 	private int fftSize = 128;
 	
-	@ConfigurableField
+	@Configurable
 	private double[] freqBandEdges = {0,1,3,6,10};
 
 	// Assumed maximum accelerometer sampling rate
@@ -62,7 +64,7 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
     	private Gson gson = getGson();
     	
 		@Override
-		public void onDataReceived(Uri completeProbeUri, JsonObject acclerometerData) {
+		public void onDataReceived(IJsonObject completeProbeUri, IJsonObject acclerometerData) {
 			double currentSecs = acclerometerData.get(AccelerometerSensorProbe.TIMESTAMP).getAsDouble();
 			double x = acclerometerData.get(AccelerometerSensorProbe.X).getAsDouble();
 			double y = acclerometerData.get(AccelerometerSensorProbe.Y).getAsDouble();
@@ -175,7 +177,7 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
 		}
 
 		@Override
-		public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
+		public void onDataCompleted(IJsonObject completeProbeUri, JsonElement checkpoint) {
 			// TODO Auto-generated method stub
 			
 		}
@@ -203,7 +205,7 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
 	    	freqBandIdx[i] = Math.round((float)freqBandEdges[i]*((float)fftSize/(float)SENSOR_MAX_RATE));
 	    }
 	    listener = new AccelerometerListener();
-	    getFactory().get(AccelerometerSensorProbe.class, null).registerPassiveListener(listener);
+	    getGson().fromJson("{}", AccelerometerSensorProbe.class).registerPassiveListener(listener);
 		// TODO: Register listener for accelerometer probe
 	}
 
@@ -211,13 +213,13 @@ public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe,
 	protected void onStart() {
 		super.onStart();
 		reset();
-	    getFactory().get(AccelerometerSensorProbe.class, null).registerListener(listener);
+		getGson().fromJson(DEFAULT_CONFIG, AccelerometerSensorProbe.class).registerListener(listener);
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		getFactory().get(AccelerometerSensorProbe.class, null).unregisterListener(listener);
+		getGson().fromJson(DEFAULT_CONFIG, AccelerometerSensorProbe.class).unregisterListener(listener);
 		reset();
 	}
 

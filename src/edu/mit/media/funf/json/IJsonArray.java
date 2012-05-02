@@ -304,4 +304,15 @@ public class IJsonArray extends JsonElement {
 	public int hashCode() {
 		return elements.hashCode();
 	}
+	
+	private String toStringCache = null;
+	@Override
+	public String toString() {
+		// Since this is immutable, the string result can be cached
+		// Does not need to be synchronized, last one is kept
+		if (toStringCache == null) {
+			toStringCache = super.toString();
+		}
+		return toStringCache;
+	}
 }
