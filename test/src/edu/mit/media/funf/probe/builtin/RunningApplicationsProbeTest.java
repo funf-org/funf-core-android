@@ -1,11 +1,10 @@
 package edu.mit.media.funf.probe.builtin;
 
-import android.net.Uri;
 import android.util.Log;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.ProbeTestCase;
 
@@ -25,12 +24,12 @@ public class RunningApplicationsProbeTest extends ProbeTestCase<RunningApplicati
 	
 
 	@Override
-	public void onDataReceived(Uri completeProbeUri, JsonObject data) {
+	public void onDataReceived(IJsonObject completeProbeUri, IJsonObject data) {
 		Log.i("MyData", data.toString());
 	}
 
 	@Override
-	public void onDataCompleted(Uri completeProbeUri, JsonElement checkpoint) {
+	public void onDataCompleted(IJsonObject completeProbeUri, JsonElement checkpoint) {
 		// TODO Auto-generated method stub
 		
 	}

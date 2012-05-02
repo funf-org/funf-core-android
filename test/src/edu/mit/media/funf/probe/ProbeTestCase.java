@@ -2,27 +2,28 @@ package edu.mit.media.funf.probe;
 
 import android.test.AndroidTestCase;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
 
 public class ProbeTestCase<T extends Probe> extends AndroidTestCase {
 
-	private ProbeFactory factory;
-	private Class<? extends Probe> probeClass;
+	private Gson factory;
+	private Class<T> probeClass;
 	
-	public ProbeTestCase(Class<? extends Probe> probeClass) {
+	public ProbeTestCase(Class<T> probeClass) {
 		this.probeClass = probeClass;
 	}
 	
-	public ProbeFactory getFactory() {
+	public Gson getFactory() {
 		if (factory == null) {
-			factory = ProbeFactory.BasicProbeFactory.getInstance(getContext());
+			factory = new GsonBuilder().registerTypeAdapterFactory(ProbeManager.getProbeFactory(getContext())).create();
 		}
 		return factory;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public T getProbe(JsonObject config) {
-		return (T)getFactory().getProbe(probeClass, config);
+		return getFactory().fromJson(config, probeClass);
 	}
 }

@@ -89,14 +89,6 @@ public class ProbeTest extends AndroidTestCase {
 		assertStateChange(testProbe, Probe.State.DISABLED, TestProbe.DISABLED);
 	}
 	
-	public void testConfigChange() {
-		testProbe.enable();
-		assertStateChange(testProbe, Probe.State.ENABLED, TestProbe.ENABLED);
-		testProbe.start();
-		assertStateChange(testProbe, Probe.State.RUNNING, TestProbe.STARTED);
-		testProbe.setConfig(null);
-		assertStateChange(testProbe, Probe.State.DISABLED, TestProbe.STOPPED, TestProbe.DISABLED);
-	}
 	
 	/**
 	 * Asserts that the current state is as defined at the end of the list of state changes.
