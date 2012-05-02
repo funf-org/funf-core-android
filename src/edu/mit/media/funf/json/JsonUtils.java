@@ -63,7 +63,6 @@ public class JsonUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T extends JsonElement> T deepCopy(T el) {
-		JsonObject o;
 		if (el == null) {
 			return (T)JsonNull.INSTANCE;
 		} else if (el.isJsonArray()) {

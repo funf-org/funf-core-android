@@ -37,6 +37,7 @@ public class BundleUtil {
 		return values;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static <T extends Parcelable> ArrayList<T> getArrayList(Bundle bundle, String key) {
 		if (bundle == null) {
 			return null;

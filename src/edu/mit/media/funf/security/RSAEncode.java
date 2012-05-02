@@ -32,22 +32,21 @@ package edu.mit.media.funf.security;
  * 
  */
 
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 
 import javax.crypto.Cipher;
 
 import android.content.Context;
-import android.util.Log;
-import edu.mit.media.funf.util.LogUtil;
 
 
 
 public class RSAEncode {
 	
 	private static Cipher cipher = null;
+	
+	/*
+	 * // Currently unused
+	 * 
 	private static void genCipher(Context context, int publicKey) {
 		Log.i(LogUtil.TAG, "generate new cipher");
 		byte[] data = null;
@@ -64,6 +63,7 @@ public class RSAEncode {
 			e.printStackTrace();
 		}
 	}
+	*/
 	
 	public static String encodeStringRSA(Context context, String txt) {
 		if (cipher == null)

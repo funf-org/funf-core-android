@@ -4,7 +4,6 @@ package edu.mit.media.funf.probe.builtin;
 
 import java.math.BigDecimal;
 
-import android.net.Uri;
 import android.util.Log;
 
 import com.google.gson.JsonElement;

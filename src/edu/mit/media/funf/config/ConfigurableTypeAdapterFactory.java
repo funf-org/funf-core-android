@@ -74,7 +74,6 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 		if (baseClass.isAssignableFrom(type.getRawType())) {
 			// TODO: create caching data structures
 			return new TypeAdapter<T>() {
-				@SuppressWarnings("unchecked")
 				@Override
 				public void write(JsonWriter out, T value) throws IOException {
 					// TODO: need to handle null
@@ -178,6 +177,7 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 	}
 	
 
+	@SuppressWarnings("unchecked")
 	public static <T> Class<? extends T> getRuntimeType(JsonElement el, Class<T> baseClass, Class<? extends T> defaultClass) {
 		Class<? extends T> type = defaultClass;
 		String typeString = null;

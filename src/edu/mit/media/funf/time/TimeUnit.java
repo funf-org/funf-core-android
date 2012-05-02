@@ -44,7 +44,9 @@ import java.util.concurrent.BlockingQueue;
   */
 public abstract class TimeUnit implements java.io.Serializable {
 
-    public static final TimeUnit NANOSECONDS = new TimeUnit(0, "NANOSECONDS") {
+	private static final long serialVersionUID = 6569964770487457016L;
+	
+	public static final TimeUnit NANOSECONDS = new TimeUnit(0, "NANOSECONDS") {
         private final static long serialVersionUID = 535148490883208361L;
         public long toNanos(long d)   { return d; }
         public long toMicros(long d)  { return d/(C1/C0); }

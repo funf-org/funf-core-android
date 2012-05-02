@@ -287,7 +287,7 @@ public class ProcessStatisticsProbe extends Base {
         Bundle data;
         StringTokenizer linest;
         String devName, recvBytes, recvPackets, 
-               sentBytes, sentPackets, zero;
+               sentBytes, sentPackets;
 
 
         try
@@ -305,8 +305,8 @@ public class ProcessStatisticsProbe extends Base {
                     new String(buffer), "\n", false);
 
             //The first two lines of the file are headers
-            zero = st.nextToken();
-            zero = st.nextToken();
+            st.nextToken();
+            st.nextToken();
 
             for (int j = 0; j < 5; j++)
             {
@@ -318,7 +318,7 @@ public class ProcessStatisticsProbe extends Base {
 
                 // Skip six tokens
                 for (int i = 0; i < 6; i++) 
-                    zero = linest.nextToken();
+                    linest.nextToken();
 
                 sentBytes = linest.nextToken();
                 sentPackets = linest.nextToken();

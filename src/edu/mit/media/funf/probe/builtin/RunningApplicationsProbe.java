@@ -8,7 +8,6 @@ import java.util.List;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RecentTaskInfo;
 import android.content.Context;
-import android.net.Uri;
 import android.os.PowerManager;
 import android.util.Log;
 
@@ -19,7 +18,6 @@ import com.google.gson.JsonObject;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
 import edu.mit.media.funf.json.IJsonObject;
-import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;

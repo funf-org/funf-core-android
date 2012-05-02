@@ -64,9 +64,11 @@ public class SingletonTypeAdapterFactory implements TypeAdapterFactory {
 		@Override
 		public E read(JsonReader in) throws IOException {
 			JsonElement el = Streams.parse(in);
+			@SuppressWarnings("unchecked")
 			Class<? extends E> runtimeType = ConfigurableTypeAdapterFactory.getRuntimeType(el, (Class<E>)type.getRawType(), (Class<E>)type.getRawType());
 			String configString = runtimeType.toString() + immutable(el).toString();
 			// TODO: surround this in a try catch class cast exception
+			@SuppressWarnings("unchecked")
 			E object = (E)cache.get(configString);
 			if (object == null) {
 				object = typeAdapter.read(new JsonTreeReader(el));
