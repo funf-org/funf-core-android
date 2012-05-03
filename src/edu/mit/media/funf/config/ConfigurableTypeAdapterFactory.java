@@ -62,6 +62,8 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 			return true;
 		} catch (IllegalAccessException e) {
 		} catch (InstantiationException e) {
+			System.out.println(e.toString());
+			int i = 0;
 		}
 		return false;
 	}
