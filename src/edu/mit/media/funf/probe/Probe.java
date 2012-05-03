@@ -463,11 +463,12 @@ public interface Probe {
 		}
 
 		protected void unregisterAllListeners() {
+			DataListener[] listeners = null;
 			synchronized (dataListeners) {
-				DataListener[] listeners = new DataListener[dataListeners.size()];
+				listeners = new DataListener[dataListeners.size()];
 				dataListeners.toArray(listeners);
-				unregisterListener(listeners);
 			}
+			unregisterListener(listeners);
 		}
 
 		public void registerPassiveListener(DataListener... listeners) {
@@ -514,8 +515,10 @@ public interface Probe {
 				return;
 			} else if (Thread.currentThread() != looper.getThread()) {
 				// Ensure the data send runs on the probe's thread
-				Message dataMessage = handler.obtainMessage(SEND_DATA_MESSAGE, data);
-				handler.sendMessage(dataMessage);
+				if (handler != null) {
+					Message dataMessage = handler.obtainMessage(SEND_DATA_MESSAGE, data);
+					handler.sendMessage(dataMessage);
+				}
 			} else {
 				if (!data.has(TIMESTAMP)) {
 					data.addProperty(TIMESTAMP, TimeUtil.getTimestamp());
@@ -552,31 +555,35 @@ public interface Probe {
 			return state;
 		}
 
-		private synchronized void ensureLooperThreadExists() {
+		private void ensureLooperThreadExists() {
 			if (looper == null) {
-				HandlerThread thread = new HandlerThread("Probe[" + getClass().getName() + "]");
-				thread.start();
-				looper = thread.getLooper();
-				handler = new Handler(looper, new ProbeHandlerCallback());
+				synchronized (this) {
+					if (looper == null) {
+						HandlerThread thread = new HandlerThread("Probe[" + getClass().getName() + "]");
+						thread.start();
+						looper = thread.getLooper();
+						handler = new Handler(looper, new ProbeHandlerCallback());
+					}
+				}
 			}
 		}
 
-		protected final synchronized void enable() {
+		protected final void enable() {
 			ensureLooperThreadExists();
 			handler.sendMessage(handler.obtainMessage(ENABLE_MESSAGE));
 		}
 
-		protected final synchronized void start() {
+		protected final void start() {
 			ensureLooperThreadExists();
 			handler.sendMessage(handler.obtainMessage(START_MESSAGE));
 		}
 
-		protected final synchronized void stop() {
+		protected final void stop() {
 			ensureLooperThreadExists();
 			handler.sendMessage(handler.obtainMessage(STOP_MESSAGE));
 		}
 
-		protected final synchronized void disable() {
+		protected final void disable() {
 			if (handler != null) {
 				handler.sendMessage(handler.obtainMessage(DISABLE_MESSAGE));
 			}
@@ -716,14 +723,20 @@ public interface Probe {
 		 * Sensitive Data
 		 ********************************/
 
-		@Configurable
+		/** 
+		 * Sensitive data is hidden by default
+		 * This can not be changed by configuration alone
+		 * If you uncomment this line please submit the change
+		 * to funf@media.mit.edu in accordance with the LGPL license. *
+		 */
+		//@Configurable
 		private boolean hideSensitiveData = true;
 
-		protected String sensitiveData(String data) {
+		protected final String sensitiveData(String data) {
 			return sensitiveData(data, null);
 		}
 
-		protected String sensitiveData(String data, DataNormalizer<String> normalizer) {
+		protected final String sensitiveData(String data, DataNormalizer<String> normalizer) {
 			if (hideSensitiveData) {
 				if (normalizer != null) {
 					data = normalizer.normalize(data);

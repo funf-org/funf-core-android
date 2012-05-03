@@ -102,7 +102,7 @@ public class ProbeManager extends Service {
 	public static SingletonTypeAdapterFactory getProbeFactory(Context context) {
 		if (FACTORY == null) {
 			FACTORY = new SingletonTypeAdapterFactory(
-					new ConfigurableTypeAdapterFactory<Probe>(context, Probe.class));
+					new ConfigurableTypeAdapterFactory<Probe>(context, Probe.class, null));
 		}
 		return FACTORY;
 	}

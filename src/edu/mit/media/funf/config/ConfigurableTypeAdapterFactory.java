@@ -66,18 +66,36 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 		return false;
 	}
 	
-
+	public static boolean isTypeInstatiable(Class<?> type) {
+		try {
+			type.newInstance();
+			return true;
+		} catch (IllegalAccessException e1) {
+		} catch (InstantiationException e1) {
+		}
+		return false;
+	}
 
 	@Override
 	public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
-		final boolean canUseDefaultClass = defaultClass != null && defaultClass.isAssignableFrom(type.getRawType());
+
+		
+		
 		if (baseClass.isAssignableFrom(type.getRawType())) {
+			// 1 use type if instatiable
+			// 2 use default if type cannot be instantiated and type is assignable from type
+			// 3 fail
+			final boolean canUseDefaultClass = defaultClass != null && type.getRawType().isAssignableFrom(defaultClass);
+			final boolean typeIsInstantiable = isTypeInstatiable(type.getRawType());
+			@SuppressWarnings("unchecked")
+			final Class<? extends T> defautRuntimeClass = (Class<? extends T>) (typeIsInstantiable ? type.getRawType() : (canUseDefaultClass ? defaultClass : null));
 			// TODO: create caching data structures
 			return new TypeAdapter<T>() {
 				@Override
 				public void write(JsonWriter out, T value) throws IOException {
 					// TODO: need to handle null
 					JsonObject jsonObject = new JsonObject();
+					jsonObject.addProperty(TYPE, value.getClass().getName());
 					List<Field> configurableFields = new ArrayList<Field>();
 					AnnotationUtil.getAllFieldsWithAnnotation(configurableFields, value.getClass(), Configurable.class);
 					for (Field field : configurableFields) {
@@ -144,7 +162,6 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 								field.setAccessible(currentAccessibility);
 							}
 						}
-						return gson.fromJson(el, runtimeType);
 					} 
 					
 					// Inject Context
@@ -169,7 +186,7 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 
 				@SuppressWarnings("unchecked")
 				private Class<? extends T> getRuntimeType(JsonElement el) {
-					return ConfigurableTypeAdapterFactory.getRuntimeType(el, (Class<T>)type.getRawType(), canUseDefaultClass ? (Class<? extends T>)defaultClass : null);
+					return ConfigurableTypeAdapterFactory.getRuntimeType(el, (Class<T>)type.getRawType(), defautRuntimeClass);
 				}
 			};
 		}
@@ -181,13 +198,18 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 	public static <T> Class<? extends T> getRuntimeType(JsonElement el, Class<T> baseClass, Class<? extends T> defaultClass) {
 		Class<? extends T> type = defaultClass;
 		String typeString = null;
-		try {
-			if (el.isJsonObject()) {
-				typeString = el.getAsJsonObject().remove(TYPE).getAsString();
-			} else if (el.isJsonPrimitive()){
-				typeString = el.getAsString();
+		if (el != null) {
+			try {
+				if (el.isJsonObject()) {
+					JsonObject jsonObject = el.getAsJsonObject();
+					if (jsonObject.has(TYPE)) {
+						typeString = jsonObject.get(TYPE).getAsString();
+					}
+				} else if (el.isJsonPrimitive()){
+					typeString = el.getAsString();
+				}
+			} catch (ClassCastException e) {
 			}
-		} catch (ClassCastException e) {
 		}
 		// TODO: expand string to allow for builtin to be specified as ".SampleProbe"
 		if (typeString != null) {

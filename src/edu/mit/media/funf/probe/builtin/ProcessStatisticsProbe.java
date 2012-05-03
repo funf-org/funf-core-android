@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import android.app.ActivityManager;
@@ -17,6 +18,10 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Debug.MemoryInfo;
 import android.util.Log;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.util.LogUtil;
@@ -47,17 +52,18 @@ public class ProcessStatisticsProbe extends Base {
 		for (int i=0; i<numProcesses; i++ ) {
 			runningProcessIds[i] = runningProcesses.get(i).pid;
 		}
-		ArrayList<MemoryInfo> memoryInfos = new ArrayList<MemoryInfo>(Arrays.asList(am.getProcessMemoryInfo(runningProcessIds)));
-		ArrayList<ProcessErrorStateInfo> errorInfos = new ArrayList<ProcessErrorStateInfo>(am.getProcessesInErrorState());
+		List<MemoryInfo> memoryInfos = Arrays.asList(am.getProcessMemoryInfo(runningProcessIds));
+		List<ProcessErrorStateInfo> errorInfos = am.getProcessesInErrorState();
 		
-		Bundle data = new Bundle();
-		data.putParcelableArrayList("RUNNING_PROCESS_INFO", runningProcesses);
-		data.putParcelableArrayList("RUNNING_PROCESS_MEMORY_INFO", memoryInfos);
-		data.putParcelableArrayList("ERRORED_PROCESS_INFO", errorInfos);
-		data.putBundle("CPU_LOAD", getCpuLoad());
-		data.putBundle("MEM_INFO", getMemInfo());
-		data.putBundle("NET_DEV", getNetDev());
-		sendData(getGson().toJsonTree(data).getAsJsonObject());
+		Gson gson = getGson();
+		JsonObject data = new JsonObject();
+		data.add("RUNNING_PROCESS_INFO", gson.toJsonTree(runningProcesses));
+		data.add("RUNNING_PROCESS_MEMORY_INFO", gson.toJsonTree(memoryInfos));
+		data.add("ERRORED_PROCESS_INFO", gson.toJsonTree(errorInfos));
+		data.add("CPU_LOAD", gson.toJsonTree(getCpuLoad()));
+		data.add("MEM_INFO", gson.toJsonTree(getMemInfo()));
+		data.add("NET_DEV", gson.toJsonTree(getNetDev()));
+		sendData(data);
 		stop();
     }
 	

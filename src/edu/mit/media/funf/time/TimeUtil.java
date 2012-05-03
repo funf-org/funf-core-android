@@ -3,8 +3,12 @@ package edu.mit.media.funf.time;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import android.util.Log;
+
 public class TimeUtil {
 
+	private static final BigDecimal TWO = new BigDecimal(2);
+	
 	public static final int
 		NANO = 9,
 		MICRO = 6,
@@ -63,8 +67,10 @@ public class TimeUtil {
 		if (TimeUtil.secondsOffset == null) {
 			calibrateNanosConversion();
 		} else {
-			BigDecimal currentTimeStamp = getTimestamp();
+			long currentMillis1 = System.currentTimeMillis();
 			long currentNanos = System.nanoTime();
+			long currentMillis2 = System.currentTimeMillis();
+			BigDecimal currentTimeStamp = DecimalTimeUnit.MILLISECONDS.toSeconds(((double)(currentMillis1 + currentMillis2))/2.0);
 			if (TimeUtil._uptimeNanosToTimestamp(currentNanos).subtract(currentTimeStamp).abs().doubleValue() > TimeUtil.CLOCK_OFFSET_TOLERANCE) {
 				calibrateNanosConversion();
 			}
@@ -77,7 +83,7 @@ public class TimeUtil {
 		return roundToMicroPrecision(BigDecimal.valueOf(nanos, NANO).add(TimeUtil.secondsOffset));
 	}
 
-	public static final double CLOCK_OFFSET_TOLERANCE = 0.001;
+	public static final double CLOCK_OFFSET_TOLERANCE = 0.002;
 	public static BigDecimal secondsOffset;
 	public static long referenceMillis;
 	public static long referenceNanos;

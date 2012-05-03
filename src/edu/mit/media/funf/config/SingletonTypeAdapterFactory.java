@@ -37,7 +37,8 @@ public class SingletonTypeAdapterFactory implements TypeAdapterFactory {
 	
 	@Override
 	public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-		return new SingletonTypeAdapter<T>(delegate.create(gson, type), type);
+		TypeAdapter<T> adapter = delegate.create(gson, type);
+		return adapter == null ? null : new SingletonTypeAdapter<T>(adapter, type);
 	}
 	
 	public void clearCache() {
