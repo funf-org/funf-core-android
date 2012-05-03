@@ -12,20 +12,11 @@ import edu.mit.media.funf.probe.Probe;
 
 public class TestConfigurableParsing extends AndroidTestCase {
 
-	private JsonObject getConfig() {
-		JsonObject config = new JsonObject();
-		
-		return config;
-	}
-	
-	private Gson getGson() {
-		return new GsonBuilder().registerTypeAdapterFactory(
-				new ConfigurableTypeAdapterFactory<TestConfigurable>(getContext(), TestConfigurable.class, Test1.class))
-				.create();
-	}
 	
 	public void testConfigurables() {
-		Gson gson = getGson();
+		Gson gson = new GsonBuilder().registerTypeAdapterFactory(
+				new ConfigurableTypeAdapterFactory<TestConfigurable>(getContext(), TestConfigurable.class, Test1.class))
+				.create();
 		Test1 test1 = gson.fromJson(Probe.DEFAULT_CONFIG, Test1.class);
 		assertEquals("Default was not set in configurable", 1, test1.overridden);
 		assertEquals("Default private field was not set in configurable", 2, test1.getPrivateField());
@@ -67,7 +58,29 @@ public class TestConfigurableParsing extends AndroidTestCase {
 	}
 	
 	public void testSingleton() {
+		Gson gson = new GsonBuilder().registerTypeAdapterFactory(
+				new SingletonTypeAdapterFactory(
+				new ConfigurableTypeAdapterFactory<TestConfigurable>(getContext(), TestConfigurable.class, Test1.class))
+				).create();
 		
+		TestConfigurable test1 = gson.fromJson(Probe.DEFAULT_CONFIG, Test1.class);
+		TestConfigurable test2 = gson.fromJson(Probe.DEFAULT_CONFIG, Test1.class);
+		TestConfigurable test3 = gson.fromJson(Probe.DEFAULT_CONFIG, TestConfigurable.class);
+		assertSame("Singleton Type Adapter should return identical object for identical config and runtime configurations",
+				test1, test2);
+		assertSame("Singleton Type Adapter should return identical object for identical config and runtime configurations",
+				test1, test3);
+		
+		test1 = gson.fromJson(Probe.DEFAULT_CONFIG, Test1.class);
+		test2 = gson.fromJson("{\"privateField\": 5}", Test1.class);
+		assertNotSame("Two different configurations should not be cached the same.", test1, test2);
+		
+		// Specifying default should not return different
+		/*  TODO: this is the way it should work, but need to come up with a method for doing this that does not involve creating an instance to figure out if you need to create a new instance
+		test1 = gson.fromJson(Probe.DEFAULT_CONFIG, Test1.class);
+		test2 = gson.fromJson("{\"privateField\": 2}", Test1.class);
+		assertSame("Two configurations that produce the same runtime object should be the same.", test1, test2);
+		*/
 	}
 	
 	public interface TestConfigurable {

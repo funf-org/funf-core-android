@@ -3,7 +3,9 @@ package edu.mit.media.funf.config;
 import static edu.mit.media.funf.util.LogUtil.TAG;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +18,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
 import com.google.gson.internal.Streams;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
@@ -25,7 +26,7 @@ import com.google.gson.stream.JsonWriter;
 import edu.mit.media.funf.util.AnnotationUtil;
 import edu.mit.media.funf.util.LogUtil;
 
-public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
+public class ConfigurableTypeAdapterFactory<E> implements RuntimeTypeAdapterFactory {
 	public static final String TYPE = "@type";
 	
 	private final Context context;
@@ -62,35 +63,26 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 			return true;
 		} catch (IllegalAccessException e) {
 		} catch (InstantiationException e) {
-			System.out.println(e.toString());
-			int i = 0;
 		}
 		return false;
 	}
 	
 	public static boolean isTypeInstatiable(Class<?> type) {
-		try {
-			type.newInstance();
-			return true;
-		} catch (IllegalAccessException e1) {
-		} catch (InstantiationException e1) {
+		int modifiers = type.getModifiers();
+		if (!(Modifier.isAbstract(modifiers) || Modifier.isInterface(modifiers))) {
+			try {
+				Constructor<?> noArgConstructor = type.getConstructor();
+				return Modifier.isPublic(noArgConstructor.getModifiers());
+			} catch (SecurityException e) {
+			} catch (NoSuchMethodException e) {
+			}
 		}
 		return false;
 	}
 
 	@Override
 	public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
-
-		
-		
 		if (baseClass.isAssignableFrom(type.getRawType())) {
-			// 1 use type if instatiable
-			// 2 use default if type cannot be instantiated and type is assignable from type
-			// 3 fail
-			final boolean canUseDefaultClass = defaultClass != null && type.getRawType().isAssignableFrom(defaultClass);
-			final boolean typeIsInstantiable = isTypeInstatiable(type.getRawType());
-			@SuppressWarnings("unchecked")
-			final Class<? extends T> defautRuntimeClass = (Class<? extends T>) (typeIsInstantiable ? type.getRawType() : (canUseDefaultClass ? defaultClass : null));
 			// TODO: create caching data structures
 			return new TypeAdapter<T>() {
 				@Override
@@ -124,7 +116,7 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 				public T read(JsonReader in) throws IOException {
 					// TODO: need to handle null
 					JsonElement el = Streams.parse(in);
-					Class<? extends T> runtimeType = getRuntimeType(el);
+					Class<? extends T> runtimeType = getRuntimeType(el, type);
 					if (runtimeType == null) {
 						throw new ParseException("RuntimeTypeAdapter: Unable to parse runtime type.");
 					}
@@ -185,12 +177,23 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 					return object;
 				}
 				
-
-				@SuppressWarnings("unchecked")
-				private Class<? extends T> getRuntimeType(JsonElement el) {
-					return ConfigurableTypeAdapterFactory.getRuntimeType(el, (Class<T>)type.getRawType(), defautRuntimeClass);
-				}
 			};
+		}
+		return null;
+	}
+	
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> Class<? extends T> getRuntimeType(JsonElement el, TypeToken<T> type) {
+		if (baseClass.isAssignableFrom(type.getRawType())) {
+			// 1 use type if instatiable
+			// 2 use default if type cannot be instantiated and type is assignable from type
+			// 3 fail
+			final boolean canUseDefaultClass = defaultClass != null && type.getRawType().isAssignableFrom(defaultClass);
+			final boolean typeIsInstantiable = isTypeInstatiable(type.getRawType());
+			final Class<? extends T> defautRuntimeClass = (Class<? extends T>) (typeIsInstantiable ? type.getRawType() : (canUseDefaultClass ? defaultClass : null));
+			return ConfigurableTypeAdapterFactory.getRuntimeType(el, (Class<T>)type.getRawType(), defautRuntimeClass);
 		}
 		return null;
 	}
@@ -228,4 +231,6 @@ public class ConfigurableTypeAdapterFactory<E> implements TypeAdapterFactory {
 		}
 		return type;
 	}
+	
+
 }

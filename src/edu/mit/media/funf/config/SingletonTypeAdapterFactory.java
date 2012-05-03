@@ -4,7 +4,9 @@ import static edu.mit.media.funf.json.JsonUtils.immutable;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -27,10 +29,10 @@ import com.google.gson.stream.JsonWriter;
  */
 public class SingletonTypeAdapterFactory implements TypeAdapterFactory {
 
-	private TypeAdapterFactory delegate;
+	private RuntimeTypeAdapterFactory delegate;
 	private Map<String,Object> cache;
 	
-	public SingletonTypeAdapterFactory(TypeAdapterFactory delegate) {
+	public SingletonTypeAdapterFactory(RuntimeTypeAdapterFactory delegate) {
 		this.delegate = delegate;
 		this.cache = new HashMap<String,Object>();
 	}
@@ -39,6 +41,20 @@ public class SingletonTypeAdapterFactory implements TypeAdapterFactory {
 	public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
 		TypeAdapter<T> adapter = delegate.create(gson, type);
 		return adapter == null ? null : new SingletonTypeAdapter<T>(adapter, type);
+	}
+	
+	public void clearCache(Object o) {
+		synchronized (cache) {
+			Set<String> toRemove = new HashSet<String>();
+			for (Map.Entry<String, Object> entry : cache.entrySet()) {
+				if (o == entry.getValue()) {
+					toRemove.add(entry.getKey());
+				}
+			}
+			for (String key : toRemove) {
+				cache.remove(key);
+			}
+		}
 	}
 	
 	public void clearCache() {
@@ -65,8 +81,7 @@ public class SingletonTypeAdapterFactory implements TypeAdapterFactory {
 		@Override
 		public E read(JsonReader in) throws IOException {
 			JsonElement el = Streams.parse(in);
-			@SuppressWarnings("unchecked")
-			Class<? extends E> runtimeType = ConfigurableTypeAdapterFactory.getRuntimeType(el, (Class<E>)type.getRawType(), (Class<E>)type.getRawType());
+			Class<? extends E> runtimeType = delegate.getRuntimeType(el, type);
 			String configString = runtimeType.toString() + immutable(el).toString();
 			// TODO: surround this in a try catch class cast exception
 			@SuppressWarnings("unchecked")
