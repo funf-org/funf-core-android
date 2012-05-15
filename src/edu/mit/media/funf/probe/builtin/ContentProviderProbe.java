@@ -15,7 +15,8 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.AnyCell;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.BooleanCell;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.DoubleCell;
@@ -26,7 +27,7 @@ import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.StringCe
 import edu.mit.media.funf.security.HashUtil;
 import edu.mit.media.funf.util.LogUtil;
 
-@DefaultSchedule(period=3600)
+@Schedule.DefaultSchedule(interval=3600)
 public abstract class ContentProviderProbe extends ImpulseProbe {
 
 	private Gson gson;

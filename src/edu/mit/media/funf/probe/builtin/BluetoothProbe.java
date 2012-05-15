@@ -8,9 +8,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
@@ -18,7 +19,7 @@ import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.time.TimeUtil;
 
 @DisplayName("Nearby Bluetooth Devices Probe")
-@DefaultSchedule(period=300)
+@Schedule.DefaultSchedule(interval=300)
 @RequiredFeatures("android.hardware.bluetooth")
 @RequiredPermissions({android.Manifest.permission.BLUETOOTH, android.Manifest.permission.BLUETOOTH_ADMIN})
 public class BluetoothProbe extends Base implements PassiveProbe {

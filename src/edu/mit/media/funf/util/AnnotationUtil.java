@@ -16,6 +16,20 @@ public class AnnotationUtil {
 	    return AnnotationUtil.getAllFieldsWithAnnotation(fields, type, null);
 	}
 	
+	public static Field getField(String name, Class<?> type) {
+		for (Field field: type.getDeclaredFields()) {
+			if (field.getName().equals(name)) {
+				return field;
+			}
+	    }
+	
+	    if (type.getSuperclass() != null) {
+	        return getField(name, type.getSuperclass());
+	    }
+		
+		return null;
+	}
+	
 	public static List<Field> getAllFieldsOfType(List<Field> fields, Class<?> type, Class<?> fieldType) {
 		for (Field field: type.getDeclaredFields()) {
 			if (fieldType == null || fieldType.isAssignableFrom(field.getType())) {

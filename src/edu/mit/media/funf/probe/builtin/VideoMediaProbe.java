@@ -5,12 +5,13 @@ import java.util.Map;
 
 import android.net.Uri;
 import android.provider.MediaStore.Video;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.time.DecimalTimeUnit;
 
 @DisplayName("Video File Stats Probe")
-@DefaultSchedule(period=604800)
+@Schedule.DefaultSchedule(interval=604800)
 public class VideoMediaProbe extends DatedContentProviderProbe {
 
 	@Override

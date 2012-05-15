@@ -11,15 +11,16 @@ import android.util.Log;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.SensorKeys;
 import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LogUtil;
 
-@DefaultSchedule(period=SensorProbe.DEFAULT_PERIOD, duration=SensorProbe.DEFAULT_DURATION)
+@Schedule.DefaultSchedule(interval=SensorProbe.DEFAULT_PERIOD, duration=SensorProbe.DEFAULT_DURATION)
 public abstract class SensorProbe extends Base implements ContinuousProbe, SensorKeys {
 	
 	public static final double DEFAULT_PERIOD = 3600;

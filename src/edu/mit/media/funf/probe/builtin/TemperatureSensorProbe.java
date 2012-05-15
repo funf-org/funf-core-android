@@ -22,7 +22,8 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Description;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.TemperatureSensorKeys;
 
@@ -33,7 +34,7 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.TemperatureSensorKeys;
  */
 @Description("Returns sensor distance in centimeters or only a binary near/far measurement.")
 //@RequiredFeatures("android.hardware.sensor.temperature") // doesn't exist yet
-@DefaultSchedule(period=1200, duration=10)
+@Schedule.DefaultSchedule(interval=1200, duration=10)
 public class TemperatureSensorProbe extends SensorProbe implements TemperatureSensorKeys {
 
 	public int getSensorType() {

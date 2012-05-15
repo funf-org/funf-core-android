@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 
 import android.net.Uri;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
@@ -115,7 +116,7 @@ public class JsonUtils {
 			if (replace || !destination.has(sourceVal.getKey())) {
 				String key = sourceVal.getKey();
 				JsonElement value = sourceVal.getValue();
-				if (value.isJsonObject() && destination.get(key).isJsonObject()) {
+				if (value.isJsonObject() && destination.has(key) && destination.get(key).isJsonObject()) {
 					deepCopyOnto(value.getAsJsonObject(), destination.get(key).getAsJsonObject(), replace, false);
 				} else {
 					destination.add(key, value);
@@ -123,6 +124,8 @@ public class JsonUtils {
 			}
 		}
 	}
+	
+	public static final Gson GSON = new Gson();
 	
 	public static final String JSON_SCHEME = "json";
 	

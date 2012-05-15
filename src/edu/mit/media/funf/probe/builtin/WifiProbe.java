@@ -16,14 +16,15 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Base;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.util.LogUtil;
 
-@DefaultSchedule(period=300)
+@Schedule.DefaultSchedule(interval=300)
 @RequiredPermissions({Manifest.permission.ACCESS_WIFI_STATE, Manifest.permission.CHANGE_WIFI_STATE})
 @RequiredFeatures("android.hardware.wifi")
 @DisplayName("Nearby Wifi Devices Probe")

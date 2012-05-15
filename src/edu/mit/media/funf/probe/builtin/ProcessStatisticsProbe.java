@@ -22,8 +22,9 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Base;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.util.LogUtil;
 
 /**
@@ -33,7 +34,7 @@ import edu.mit.media.funf.util.LogUtil;
  * @author Hossein Falaki
  * @author Alan Gardner
  */
-@DefaultSchedule(period=300)
+@Schedule.DefaultSchedule(interval=300)
 public class ProcessStatisticsProbe extends Base {
 
     /** Address of the network devices stat */

@@ -5,9 +5,10 @@ import android.telephony.TelephonyManager;
 
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.data.DataNormalizer.PhoneNumberNormalizer;
 import edu.mit.media.funf.probe.Probe.Base;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
@@ -15,7 +16,7 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.TelephonyKeys;
 
 @RequiredPermissions(android.Manifest.permission.READ_PHONE_STATE)
 @RequiredFeatures("android.hardware.telephony")
-@DefaultSchedule(period=604800)
+@Schedule.DefaultSchedule(interval=604800)
 @DisplayName("Mobile Network Info Probe")
 public class TelephonyProbe extends Base implements TelephonyKeys {
 

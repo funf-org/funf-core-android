@@ -22,11 +22,12 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.LightSensorKeys;
 
-@DefaultSchedule(period=300, duration=SensorProbe.DEFAULT_DURATION)
+@Schedule.DefaultSchedule(interval=300, duration=SensorProbe.DEFAULT_DURATION)
 @RequiredFeatures("android.hardware.sensor.light")
 public class LightSensorProbe extends SensorProbe implements LightSensorKeys {
 

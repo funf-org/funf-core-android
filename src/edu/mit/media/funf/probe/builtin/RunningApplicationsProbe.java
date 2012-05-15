@@ -15,12 +15,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
-import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
+import edu.mit.media.funf.config.RuntimeTypeAdapterFactory;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Description;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
@@ -32,7 +33,7 @@ import edu.mit.media.funf.util.LogUtil;
 @DisplayName("Running Applications")
 @Description("Emits the applications the user is running using a polling method.")
 @RequiredPermissions(android.Manifest.permission.GET_TASKS)
-@DefaultSchedule(period=0, duration=Double.MAX_VALUE, opportunistic=true)
+@Schedule.DefaultSchedule(interval=0, duration=Double.MAX_VALUE, opportunistic=true)
 public class RunningApplicationsProbe extends Base implements ContinuousProbe, PassiveProbe, RunningApplicationsKeys {
 
 	@Configurable
@@ -90,7 +91,7 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 		@Override
 		public void onDataReceived(IJsonObject completeProbeUri, IJsonObject data) {
 			Log.d(LogUtil.TAG, "RunningApplications: " + data);
-			String type = completeProbeUri.get(ConfigurableTypeAdapterFactory.TYPE).getAsString();
+			String type = completeProbeUri.get(RuntimeTypeAdapterFactory.TYPE).getAsString();
 			if (ScreenProbe.class.getName().equals(type)) {
 				boolean screenOn = data.get(ScreenProbe.SCREEN_ON).getAsBoolean();
 				if (screenOn) {

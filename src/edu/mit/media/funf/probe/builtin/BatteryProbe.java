@@ -4,12 +4,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Base;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 
-@DefaultSchedule(period=300)
+@Schedule.DefaultSchedule(interval=300)
 @RequiredPermissions(android.Manifest.permission.BATTERY_STATS)
 public class BatteryProbe extends Base implements PassiveProbe {
 

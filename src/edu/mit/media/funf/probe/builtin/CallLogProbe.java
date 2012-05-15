@@ -6,11 +6,12 @@ import java.util.Map;
 import android.net.Uri;
 import android.provider.CallLog;
 import android.provider.CallLog.Calls;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.PhoneNumberCell;
 
-@DefaultSchedule(period=36000)
+@Schedule.DefaultSchedule(interval=36000)
 @RequiredPermissions(android.Manifest.permission.READ_CONTACTS)
 public class CallLogProbe extends DatedContentProviderProbe {
 

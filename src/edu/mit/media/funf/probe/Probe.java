@@ -25,7 +25,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.TypeAdapterFactory;
 
-import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.data.DataNormalizer;
 import edu.mit.media.funf.json.BundleTypeAdapter;
 import edu.mit.media.funf.json.IJsonObject;
@@ -41,7 +41,8 @@ public interface Probe {
 	public static final String DEFAULT_CONFIG = "{}";
 	public static final boolean DEFAULT_OPPORTUNISTIC = true;
 	public static final boolean DEFAULT_STRICT = false;
-
+	public static final double DEFAULT_PERIOD = 3600;
+	
 	/**
 	 * Listeners added to this probe will receive data callbacks from this
 	 * probe, until this listener is unregistered. The probe should continue to
@@ -66,7 +67,7 @@ public interface Probe {
 
 	public void removeStateListener(StateListener listener);
 
-	public static final double DEFAULT_PERIOD = 3600;
+	
 
 	public interface PassiveProbe extends Probe {
 
@@ -122,22 +123,6 @@ public interface Probe {
 		 * @param checkpoint
 		 */
 		public void setCheckpoint(JsonElement checkpoint);
-	}
-
-	@Documented
-	@Retention(RUNTIME)
-	@Target(TYPE)
-	@Inherited
-	public @interface DefaultSchedule {
-		String value() default "";
-
-		double period() default Probe.DEFAULT_PERIOD;
-
-		double duration() default ContinuousProbe.DEFAULT_DURATION;
-
-		boolean opportunistic() default DEFAULT_OPPORTUNISTIC;
-
-		boolean strict() default DEFAULT_STRICT;
 	}
 
 	@Documented
@@ -348,7 +333,7 @@ public interface Probe {
 
 	}
 
-	@DefaultSchedule
+	@Schedule.DefaultSchedule
 	public abstract class Base implements Probe, BaseProbeKeys {
 
 		private Context context;

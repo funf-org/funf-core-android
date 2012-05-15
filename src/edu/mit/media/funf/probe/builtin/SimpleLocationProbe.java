@@ -9,10 +9,11 @@ import android.util.Log;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.Base;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
@@ -30,7 +31,7 @@ import edu.mit.media.funf.util.LogUtil;
  */
 @RequiredPermissions({android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION})
 @RequiredFeatures("android.hardware.location")
-@DefaultSchedule(period=1800)
+@Schedule.DefaultSchedule(interval=1800)
 @RequiredProbes(LocationProbe.class)
 public class SimpleLocationProbe extends Base implements PassiveProbe, LocationKeys {
 

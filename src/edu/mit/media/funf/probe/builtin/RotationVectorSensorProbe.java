@@ -21,14 +21,15 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Description;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.RotationVectorSensorKeys;
 
 @Description("Returns sensor distance in centimeters or only a binary near/far measurement.")
 @RequiredFeatures("android.hardware.sensor.gyroscope")
-@DefaultSchedule(period=300, duration=15)
+@Schedule.DefaultSchedule(interval=300, duration=15)
 public class RotationVectorSensorProbe extends SensorProbe implements RotationVectorSensorKeys {
 
 	public int getSensorType() {

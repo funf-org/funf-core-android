@@ -15,6 +15,8 @@ import android.text.Annotation;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.Schedule;
+
 public class AnnotationsTest extends AndroidTestCase {
 
 	@Documented
@@ -78,7 +80,7 @@ public class AnnotationsTest extends AndroidTestCase {
 	
 	public void testReflectionAccessToDefaults() throws IllegalAccessException, InstantiationException {
 
-		Annotation test = (Annotation) Probe.DefaultSchedule.class.newInstance();
+		Annotation test = (Annotation) Schedule.DefaultSchedule.class.newInstance();
 	}
 	
 	public void testGsonKeyOrderStability() {

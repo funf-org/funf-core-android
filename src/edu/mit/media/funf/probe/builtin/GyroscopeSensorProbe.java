@@ -22,7 +22,8 @@
 package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Description;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.GyroscopeSensorKeys;
@@ -38,7 +39,7 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.GyroscopeSensorKeys;
  * Android Reference http://developer.android.com/reference/android/hardware/SensorEvent.html
  */
 @Description("Measures angular speed around each axis.")
-@DefaultSchedule(period=1800, duration = 60)
+@Schedule.DefaultSchedule(interval=1800, duration = 60)
 @RequiredFeatures("android.hardware.sensor.gyroscope")
 public class GyroscopeSensorProbe extends SensorProbe implements GyroscopeSensorKeys {
 

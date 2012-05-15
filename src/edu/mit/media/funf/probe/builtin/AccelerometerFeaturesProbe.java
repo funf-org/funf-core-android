@@ -8,13 +8,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.math.FFT;
 import edu.mit.media.funf.math.Window;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredProbes;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AccelerometerFeaturesKeys;
@@ -27,7 +28,7 @@ import edu.mit.media.funf.time.TimeUtil;
  */
 @RequiredFeatures("android.hardware.sensor.accelerometer")
 @RequiredProbes(AccelerometerSensorProbe.class)
-@DefaultSchedule(period=120, duration=15)
+@Schedule.DefaultSchedule(interval=120, duration=15)
 public class AccelerometerFeaturesProbe extends Base implements ContinuousProbe, AccelerometerFeaturesKeys {
 	
 	@Configurable

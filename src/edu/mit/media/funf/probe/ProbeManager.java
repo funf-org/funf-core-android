@@ -20,12 +20,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
+import edu.mit.media.funf.config.DefaultRuntimeTypeAdapterFactory;
 import edu.mit.media.funf.config.SingletonTypeAdapterFactory;
 import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DataListener;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.time.TimeUtil;
 
@@ -135,7 +137,7 @@ public class ProbeManager extends Service {
 						 Set<ScheduledRequest> dataRequests = requests.get(listener);
 						 boolean opportunistic = false;
 						 for (ScheduledRequest dataRequest : dataRequests) {
-							 Class<? extends Probe> runtimeClass = ConfigurableTypeAdapterFactory.getRuntimeType(JsonUtils.fromUri(intent.getData()), Probe.class, null);
+							 Class<? extends Probe> runtimeClass = DefaultRuntimeTypeAdapterFactory.getRuntimeType(JsonUtils.fromUri(intent.getData()), Probe.class, null);
 							 BasicSchedule schedule = new BasicSchedule(runtimeClass, dataRequest.getSchedule());
 							 opportunistic = opportunistic || schedule.isOpportunistic();
 						 }
@@ -251,7 +253,7 @@ public class ProbeManager extends Service {
 		private boolean strict = false;
 		
 		private BasicSchedule(Class<? extends Probe> probeClass, JsonObject values) {
-			DefaultSchedule annotation = probeClass.getAnnotation(DefaultSchedule.class);
+			Schedule.DefaultSchedule annotation = probeClass.getAnnotation(Schedule.DefaultSchedule.class);
 			String defaultScheduleString = annotation == null ? null : annotation.value();
 			JsonObject defaultSchedule = null;
 			try {
@@ -306,7 +308,7 @@ public class ProbeManager extends Service {
 	}
 	
 	private void schedule(Uri probeUri) {
-		Class<? extends Probe> probeClass = ConfigurableTypeAdapterFactory.getRuntimeType(JsonUtils.fromUri(probeUri), Probe.class, null);
+		Class<? extends Probe> probeClass = DefaultRuntimeTypeAdapterFactory.getRuntimeType(JsonUtils.fromUri(probeUri), Probe.class, null);
 		
 		// Figure out when the next time this probe needs to be run is
 		Double nextRunTime = null;
@@ -356,7 +358,7 @@ public class ProbeManager extends Service {
 	}
 	
 	private void scheduleStop(Uri probeUri) {
-		Class<? extends Probe> probeClass = ConfigurableTypeAdapterFactory.getRuntimeType(JsonUtils.fromUri(probeUri), Probe.class, null);
+		Class<? extends Probe> probeClass = DefaultRuntimeTypeAdapterFactory.getRuntimeType(JsonUtils.fromUri(probeUri), Probe.class, null);
 		
 		// Only continuous probes can be stopped
 		if (ContinuousProbe.class.isAssignableFrom(probeClass)) {

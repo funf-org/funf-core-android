@@ -5,10 +5,11 @@ import java.util.Map;
 
 import android.net.Uri;
 import android.provider.Browser;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 
-@DefaultSchedule(period=604800)
+@Schedule.DefaultSchedule(interval=604800)
 @RequiredPermissions(android.Manifest.permission.READ_HISTORY_BOOKMARKS)
 public class BrowserBookmarksProbe extends DatedContentProviderProbe {
 

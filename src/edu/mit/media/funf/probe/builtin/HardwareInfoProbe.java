@@ -7,11 +7,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.HardwareInfoKeys;
 
-@DefaultSchedule(period=604800)
+@Schedule.DefaultSchedule(interval=604800)
 @RequiredPermissions({android.Manifest.permission.ACCESS_WIFI_STATE, android.Manifest.permission.BLUETOOTH, android.Manifest.permission.READ_PHONE_STATE})
 public class HardwareInfoProbe extends ImpulseProbe implements HardwareInfoKeys {
 

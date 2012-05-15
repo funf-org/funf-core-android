@@ -4,7 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import android.net.Uri;
-import edu.mit.media.funf.probe.Probe.DefaultSchedule;
+import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.AndroidInternal.Sms;
@@ -14,7 +15,7 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.SmsKeys;
  * @author alangardner
  *
  */
-@DefaultSchedule(period=36000)
+@Schedule.DefaultSchedule(interval=36000)
 @DisplayName("SMS Log Probe")
 @RequiredPermissions(android.Manifest.permission.READ_SMS)
 public class SmsProbe extends DatedContentProviderProbe implements SmsKeys {

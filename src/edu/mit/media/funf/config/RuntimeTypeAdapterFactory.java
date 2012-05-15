@@ -6,5 +6,7 @@ import com.google.gson.reflect.TypeToken;
 
 public interface RuntimeTypeAdapterFactory extends TypeAdapterFactory {
 	
+	public static final String TYPE = "@type";
+
 	public <T> Class<? extends T> getRuntimeType(final JsonElement el, final TypeToken<T> type);
 }
