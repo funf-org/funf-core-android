@@ -1,29 +1,34 @@
 package edu.mit.media.funf.pipeline;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 import edu.mit.media.funf.FunfManager;
+import edu.mit.media.funf.FunfManager.Scheduler;
 import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 
 public class BasicPipeline implements Pipeline, DataListener {
 
-	private Map<String,Schedule> schedulers = new HashMap<String, Schedule>();
+	private Map<String,Schedule> schedules = new HashMap<String, Schedule>();  // Specially named field for collecting schedules
 	private FunfManager manager;
 	private Gson gson;
+	
+
+	@Configurable
+	private List<JsonElement> data;
 	
 	/*
 	
 	private Map<String,Schedule> schedules;
 	private Map<String,Trigger> triggers;
 
-	@Configurable
-	private List<JsonElement> data;
 	
 	@Configurable
 	private Storage storage;
@@ -54,18 +59,16 @@ public class BasicPipeline implements Pipeline, DataListener {
 		this.manager = manager;
 		this.gson = manager.getGsonBuilder().create();
 		
-		/*
-		Scheduler scheduler = manager.getScheduler();
 		for (JsonElement dataRequest : data) {
-			scheduler.set(this, dataRequest);
+			manager.requestData(this, dataRequest);
 		}
-		*/
-		// For each data request, schedule
 	}
 	
 	@Override
 	public void onDestroy() {
-		
+		for (JsonElement dataRequest : data) {
+			manager.unrequestData(this, dataRequest);
+		}
 	}
 
 	@Override

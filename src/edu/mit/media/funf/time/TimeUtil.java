@@ -49,7 +49,7 @@ public class TimeUtil {
 		TimeUtil.referenceMillis = updatedMillis;
 		TimeUtil.secondsOffset = BigDecimal.valueOf(TimeUtil.referenceMillis, MILLI).subtract(BigDecimal.valueOf(TimeUtil.referenceNanos, NANO));
 	}
-
+	
 	public static BigDecimal roundToMilliPrecision(BigDecimal timestamp) {
 		return timestamp.setScale(MILLI, RoundingMode.HALF_EVEN);
 	}

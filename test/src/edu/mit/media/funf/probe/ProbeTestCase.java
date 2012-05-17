@@ -6,6 +6,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.FunfManager;
+
 
 public class ProbeTestCase<T extends Probe> extends AndroidTestCase {
 
@@ -18,7 +20,7 @@ public class ProbeTestCase<T extends Probe> extends AndroidTestCase {
 	
 	public Gson getFactory() {
 		if (factory == null) {
-			factory = new GsonBuilder().registerTypeAdapterFactory(ProbeManager.getProbeFactory(getContext())).create();
+			factory = new GsonBuilder().registerTypeAdapterFactory(FunfManager.getProbeFactory(getContext())).create();
 		}
 		return factory;
 	}

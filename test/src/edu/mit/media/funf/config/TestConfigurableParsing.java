@@ -7,7 +7,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.Probe;
 
 public class TestConfigurableParsing extends AndroidTestCase {
@@ -15,8 +14,14 @@ public class TestConfigurableParsing extends AndroidTestCase {
 	
 	public void testConfigurables() {
 		Gson gson = new GsonBuilder().registerTypeAdapterFactory(
-				new ConfigurableTypeAdapterFactory<TestConfigurable>(getContext(), TestConfigurable.class, Test1.class))
-				.create();
+				new SingletonTypeAdapterFactory(
+					new DefaultRuntimeTypeAdapterFactory<TestConfigurable>(
+							getContext(), 
+							TestConfigurable.class, 
+							Test1.class, 
+							new ConfigurableTypeAdapterFactory())
+					)
+				).create();
 		Test1 test1 = gson.fromJson(Probe.DEFAULT_CONFIG, Test1.class);
 		assertEquals("Default was not set in configurable", 1, test1.overridden);
 		assertEquals("Default private field was not set in configurable", 2, test1.getPrivateField());
@@ -60,7 +65,12 @@ public class TestConfigurableParsing extends AndroidTestCase {
 	public void testSingleton() {
 		Gson gson = new GsonBuilder().registerTypeAdapterFactory(
 				new SingletonTypeAdapterFactory(
-				new ConfigurableTypeAdapterFactory<TestConfigurable>(getContext(), TestConfigurable.class, Test1.class))
+					new DefaultRuntimeTypeAdapterFactory<TestConfigurable>(
+							getContext(), 
+							TestConfigurable.class, 
+							Test1.class, 
+							new ConfigurableTypeAdapterFactory())
+					)
 				).create();
 		
 		TestConfigurable test1 = gson.fromJson(Probe.DEFAULT_CONFIG, Test1.class);

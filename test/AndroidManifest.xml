@@ -33,6 +33,7 @@
     <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
         
+        <service android:name="edu.mit.media.funf.FunfManager"></service>
         <service android:name="edu.mit.media.funf.tests.ExampleService"></service>
     </application>
     

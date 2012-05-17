@@ -25,7 +25,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.TypeAdapterFactory;
 
-import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.FunfManager;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.data.DataNormalizer;
 import edu.mit.media.funf.json.BundleTypeAdapter;
 import edu.mit.media.funf.json.IJsonObject;
@@ -333,7 +334,7 @@ public interface Probe {
 
 	}
 
-	@Schedule.DefaultSchedule
+	@DefaultSchedule
 	public abstract class Base implements Probe, BaseProbeKeys {
 
 		private Context context;
@@ -361,7 +362,7 @@ public interface Probe {
 
 		protected GsonBuilder getGsonBuilder() {
 			GsonBuilder builder = new GsonBuilder();
-			builder.registerTypeAdapterFactory(ProbeManager.getProbeFactory(getContext()));
+			builder.registerTypeAdapterFactory(FunfManager.getProbeFactory(getContext()));
 			TypeAdapterFactory adapterFactory = getSerializationFactory();
 			if (adapterFactory != null) {
 				builder.registerTypeAdapterFactory(adapterFactory);

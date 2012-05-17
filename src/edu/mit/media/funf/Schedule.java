@@ -51,6 +51,13 @@ public interface Schedule {
 		public BasicSchedule() {
 		}
 		
+		public BasicSchedule(Schedule schedule) {
+			interval = schedule.getInterval();
+			duration = schedule.getDuration();
+			opportunistic = schedule.isOpportunistic();
+			strict = schedule.isStrict();
+		}
+		
 		public BasicSchedule(BigDecimal interval, BigDecimal duration, boolean opportunistic, boolean strict) {
 			this.interval = interval;
 			this.duration = duration;
@@ -101,27 +108,6 @@ public interface Schedule {
 		public boolean isStrict() {
 			return strict;
 		}
-		
-		
-
-		
-		public static BasicSchedule create(JsonElement specifiedSchedule, Schedule.DefaultSchedule annotation, Gson gson) {
-			String defaultScheduleString = annotation == null ? null : annotation.value();
-			JsonObject defaultSchedule = null;
-			try {
-				defaultSchedule = new JsonParser().parse(defaultScheduleString).getAsJsonObject();
-			} catch (IllegalStateException e) {
-				// TODO: allow formats other than json in specified schedule
-				defaultSchedule = gson.toJsonTree(annotation).getAsJsonObject();
-			}
-			
-			JsonObject schedule = defaultSchedule;
-			if (specifiedSchedule != null && specifiedSchedule.isJsonObject()) {
-				JsonUtils.deepCopyOnto(specifiedSchedule.getAsJsonObject(), schedule, true);
-			}
-			return gson.fromJson(schedule, BasicSchedule.class);
-		}
-		
 		
 	}
 

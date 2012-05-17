@@ -20,6 +20,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
 import edu.mit.media.funf.config.DefaultRuntimeTypeAdapterFactory;
 import edu.mit.media.funf.config.RuntimeTypeAdapterFactory;
@@ -33,7 +34,6 @@ public class PipelineFactory implements RuntimeTypeAdapterFactory {
 	public static final TypeToken<Map<String,Schedule>> SCHEDULES_FIELD_TYPE_TOKEN = new TypeToken<Map<String,Schedule>>(){};
 	public static final String SCHEDULE = "@schedule";
 	
-	private final Context context;
 	private RuntimeTypeAdapterFactory delegate;
 	
 	/**
@@ -52,7 +52,6 @@ public class PipelineFactory implements RuntimeTypeAdapterFactory {
 	 */
 	public PipelineFactory(Context context, Class<? extends Pipeline> defaultClass) {
 		assert context != null;
-		this.context = context;
 		this.delegate = new DefaultRuntimeTypeAdapterFactory<Pipeline>(context, Pipeline.class, defaultClass, new ConfigurableTypeAdapterFactory());
 	}
 	
@@ -114,7 +113,7 @@ public class PipelineFactory implements RuntimeTypeAdapterFactory {
 				JsonObject defaultSchedules = new JsonObject();
 				List<Field> fields = new ArrayList<Field>();
 				for (Field field : AnnotationUtil.getAllFields(fields, result.getClass())) {
-					Schedule.DefaultSchedule defaultSchedule = field.getAnnotation(Schedule.DefaultSchedule.class);
+					DefaultSchedule defaultSchedule = field.getAnnotation(DefaultSchedule.class);
 					if (defaultSchedule == null) {
 						boolean currentAccessibility = field.isAccessible();
 						try {
@@ -122,7 +121,7 @@ public class PipelineFactory implements RuntimeTypeAdapterFactory {
 							Object fieldValue = field.get(result);
 							if (fieldValue != null) {
 								Class<?> fieldRuntimeClass = field.get(result).getClass();
-								defaultSchedule = fieldRuntimeClass.getAnnotation(Schedule.DefaultSchedule.class);
+								defaultSchedule = fieldRuntimeClass.getAnnotation(DefaultSchedule.class);
 							}
 						} catch (IllegalArgumentException e) {
 							Log.e(LogUtil.TAG, "Bad access of configurable fields!!", e);
@@ -133,7 +132,7 @@ public class PipelineFactory implements RuntimeTypeAdapterFactory {
 						}
 					}
 					if (defaultSchedule != null) {
-						defaultSchedules.add(field.getName(), gson.toJsonTree(defaultSchedule));
+						defaultSchedules.add(field.getName(), gson.toJsonTree(defaultSchedule, DefaultSchedule.class));
 					}
 				}
 				

@@ -16,6 +16,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 
 public class JsonUtils {
 
@@ -93,6 +94,10 @@ public class JsonUtils {
 			return new IJsonObject(el.getAsJsonObject());
 		} else if (el instanceof JsonArray) {
 			return new IJsonArray(el.getAsJsonArray());
+		} else if (el instanceof JsonPrimitive && el.getAsJsonPrimitive().isNumber()) {
+			// Ensure that all LazilyParsedNumbers have been parsed into a consistent Number type.
+			// Otherwise hash codes are not consistent, because LazilyParsedNumbers are never seen as integral.
+			return new JsonPrimitive(el.getAsBigDecimal());
 		}
 		return el;
 	}

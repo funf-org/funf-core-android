@@ -14,13 +14,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.FunfManager;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.Probe.State;
 import edu.mit.media.funf.probe.Probe.StateListener;
-import edu.mit.media.funf.probe.ProbeManager;
 
 
 /**
@@ -61,7 +61,7 @@ public class TestAllBuiltinProbes extends AndroidTestCase {
 	private Gson gson;
 	public Gson getGson() {
 		if (gson == null) {
-			gson = new GsonBuilder().registerTypeAdapterFactory(ProbeManager.getProbeFactory(getContext())).create();
+			gson = new GsonBuilder().registerTypeAdapterFactory(FunfManager.getProbeFactory(getContext())).create();
 		}
 		return gson;
 	}

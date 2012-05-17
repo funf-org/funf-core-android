@@ -16,6 +16,13 @@ public class AnnotationUtil {
 	    return AnnotationUtil.getAllFieldsWithAnnotation(fields, type, null);
 	}
 	
+	/**
+	 * Returns the field with the given name on the type lowest in the class hierarchy.
+	 * 
+	 * @param name The name of the field to get
+	 * @param type The class on which to search for the field.
+	 * @return The field with this name lowest in the hierarchy, otherwise null if the field does not exist in the class hierarchy.
+	 */
 	public static Field getField(String name, Class<?> type) {
 		for (Field field: type.getDeclaredFields()) {
 			if (field.getName().equals(name)) {

@@ -6,10 +6,14 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import android.util.Log;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+
+import edu.mit.media.funf.util.HashCodeUtil;
 
 /**
  * An immutable JsonObject that orders keys alphabetically for consistency in
