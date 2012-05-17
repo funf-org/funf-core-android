@@ -34,10 +34,10 @@ import com.google.gson.TypeAdapterFactory;
 
 import edu.mit.media.funf.Schedule.BasicSchedule;
 import edu.mit.media.funf.Schedule.DefaultSchedule;
-import edu.mit.media.funf.config.ContextInjectorTypeAdapaterFactory;
-import edu.mit.media.funf.config.DefaultScheduleSerializer;
 import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
+import edu.mit.media.funf.config.ContextInjectorTypeAdapaterFactory;
 import edu.mit.media.funf.config.DefaultRuntimeTypeAdapterFactory;
+import edu.mit.media.funf.config.DefaultScheduleSerializer;
 import edu.mit.media.funf.config.SingletonTypeAdapterFactory;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.json.JsonUtils;
@@ -89,6 +89,7 @@ public class FunfManager extends Service {
 		this.handler = new Handler();
 		getGson(); // Sets gson
 		this.dataRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
+		this.pipelines = new HashMap<String, Pipeline>();
 		// TODO: load data requests from disk?  or just do pipelines
 		
 		// Load stored pipeline config
@@ -108,9 +109,22 @@ public class FunfManager extends Service {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+
 		// TODO: call onDestroy on all pipelines
+		for (Pipeline pipeline : pipelines.values()) {
+			pipeline.onDestroy();
+		}
+		
+		// TODO: save outstanding requests
 		// TODO: remove all remaining Alarms
+
 		// TODO: make sure to destroy all probes
+		for (Object probeObject : getProbeFactory().getCached()) {
+			String componentString = JsonUtils.immutable(gson.toJsonTree(probeObject)).toString();
+			cancelProbe(componentString);
+			((Probe)probeObject).destroy();
+		}
+		getProbeFactory().clearCache();
 	}
 	
 	@Override
@@ -400,10 +414,7 @@ public class FunfManager extends Service {
 			String componentString = completeProbeConfig.toString();
 			List<DataRequestInfo> requests = dataRequests.get(completeProbeConfig);
 			if (requests.isEmpty()) {
-				scheduler.cancel(PROBE_TYPE, getComponenentUri(componentString, PROBE_ACTION_REGISTER));
-				scheduler.cancel(PROBE_TYPE, getComponenentUri(componentString, PROBE_ACTION_UNREGISTER));
-				scheduler.cancel(PROBE_TYPE, getComponenentUri(componentString, PROBE_ACTION_REGISTER_PASSIVE));
-				scheduler.cancel(PROBE_TYPE, getComponenentUri(componentString, PROBE_ACTION_UNREGISTER_PASSIVE));
+				cancelProbe(componentString);
 			} else {
 				Schedule mergedSchedule = getMergedSchedule(requests);
 				for (DataRequestInfo request: requests) {
@@ -467,6 +478,15 @@ public class FunfManager extends Service {
 		intent.setDataAndType(componentUri, type);
 		return intent;
 	}
+	
+
+	private void cancelProbe(String probeConfig) {
+		scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_REGISTER));
+		scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_UNREGISTER));
+		scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_REGISTER_PASSIVE));
+		scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_UNREGISTER_PASSIVE));
+	}
+	
 	////////////////////////////////////////////////////
 
 

@@ -3,6 +3,7 @@ package edu.mit.media.funf.config;
 import static edu.mit.media.funf.json.JsonUtils.immutable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,6 +42,10 @@ public class SingletonTypeAdapterFactory implements TypeAdapterFactory {
 	public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
 		TypeAdapter<T> adapter = delegate.create(gson, type);
 		return adapter == null ? null : new SingletonTypeAdapter<T>(adapter, type);
+	}
+	
+	public Collection<Object> getCached() {
+		return this.cache.values();
 	}
 	
 	public void clearCache(Object o) {

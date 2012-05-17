@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
