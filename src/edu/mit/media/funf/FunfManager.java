@@ -398,6 +398,29 @@ public class FunfManager extends Service {
 		rescheduleProbe(completeProbeConfig);
 	}
 	
+	private String getPipelineName(Pipeline pipeline) {
+		for (Map.Entry<String, Pipeline> entry : pipelines.entrySet()) {
+			if (entry.getValue() == pipeline) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+	
+	public void registerPipelineAction(Pipeline pipeline, String action, Schedule schedule) {
+		String name = getPipelineName(pipeline);
+		if (name != null) {
+			scheduler.set(PIPELINE_TYPE, getComponenentUri(name, action), schedule);
+		}
+	}
+	
+	public void unregisterPipelineAction(Pipeline pipeline, String action) {
+		String name = getPipelineName(pipeline);
+		if (name != null) {
+			scheduler.cancel(PIPELINE_TYPE, getComponenentUri(name, action));
+		}
+	}
+	
 	/**
 	 * This version does not reschedule.
 	 * @param listener

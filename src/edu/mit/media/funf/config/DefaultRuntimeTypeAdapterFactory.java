@@ -147,6 +147,12 @@ public class DefaultRuntimeTypeAdapterFactory<E> implements RuntimeTypeAdapterFa
 					// TODO: cache these only once per runtime type
 					final TypeAdapter<? extends T> delegate = delegateFactory.create(gson, TypeToken.get(runtimeType));
 					
+					if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
+						JsonObject typeObject = new JsonObject();
+						typeObject.addProperty(TYPE, el.getAsString());
+						el = typeObject;
+					}
+					
 					return delegate.read(new JsonTreeReader(el));
 				}
 				
