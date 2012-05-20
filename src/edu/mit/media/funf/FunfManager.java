@@ -123,8 +123,13 @@ public class FunfManager extends Service {
 		for (String keyName : metadata.keySet()) {
 			// Determine if resource or value, If resource get value
 			// Parse value into JsonElement
+			
 			// If JsonString create uri and (down)load file and parse for pipleine config
 			// If JsonObject use as a pipeline instance config
+			
+			JsonElement pipelineConfig = parser.parse(metadata.getString(keyName));
+			Pipeline pipeline = gson.fromJson(pipelineConfig, Pipeline.class);
+			registerPipeline(keyName, pipeline);
 		}
 		
 	}
@@ -382,6 +387,10 @@ public class FunfManager extends Service {
 		rescheduleProbe(completeProbeConfig);
 	}
 	
+	public void unrequestAllData(DataListener listener) {
+		unrequestData(listener, (IJsonObject)null);
+	}
+	
 	public void unrequestData(DataListener listener, JsonElement probeConfig) {
 		Probe probe = gson.fromJson(probeConfig, Probe.class);
 		IJsonObject completeProbeConfig = (IJsonObject)JsonUtils.immutable(gson.toJsonTree(probe));  // Make sure probe config is complete and consistent
@@ -396,7 +405,15 @@ public class FunfManager extends Service {
 	 */
 	private void unrequestData(DataListener listener, IJsonObject completeProbeConfig) {
 		synchronized (dataRequests) {
-			List<DataRequestInfo> requests = dataRequests.get(completeProbeConfig);
+			List<DataRequestInfo> requests = null;
+			if (completeProbeConfig == null) {
+				requests = new ArrayList<FunfManager.DataRequestInfo>();
+				for (List<DataRequestInfo> requestInfos : dataRequests.values()) {
+					requests.addAll(requestInfos);
+				}
+			} else {
+				requests = dataRequests.get(completeProbeConfig);
+			}
 			Probe probe = gson.fromJson(completeProbeConfig, Probe.class);
 			for (int i = 0; i < requests.size(); i++) {
 				if (requests.get(i).listener == listener) {
