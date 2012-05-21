@@ -23,6 +23,7 @@
  */
 package edu.mit.media.funf;
 
+import static edu.mit.media.funf.util.LogUtil.TAG;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -192,17 +194,23 @@ public class FunfManager extends Service {
 		 						probe.registerListener(listenerArray);
 		 					}
 		 					
+		 					Log.d(TAG, "Request: " + probe.getClass().getName());
+		 					
 		 					// Schedule unregister if continuous
 		 					// TODO: do different durations for each schedule
 		 					if (probe instanceof ContinuousProbe) {
 		 						Schedule mergedSchedule = getMergedSchedule(infoForListenersThatNeedData);
 		 						if (mergedSchedule != null) {
-		 							handler.postDelayed(new Runnable() {
-										@Override
-										public void run() {
-											((ContinuousProbe) probe).unregisterListener(listenerArray);
-										}
-									}, TimeUtil.secondsToMillis(mergedSchedule.getDuration()));
+			 						long duration = TimeUtil.secondsToMillis(mergedSchedule.getDuration());
+			 						Log.d(TAG, "DURATION: " + duration);
+			 						if (duration > 0) {
+			 							handler.postDelayed(new Runnable() {
+											@Override
+											public void run() {
+												((ContinuousProbe) probe).unregisterListener(listenerArray);
+											}
+										}, TimeUtil.secondsToMillis(mergedSchedule.getDuration()));
+			 						}
 		 						}
 		 					}
 	 					}
@@ -603,6 +611,7 @@ public class FunfManager extends Service {
 			Intent intent = getFunfIntent(context, type, componentAndAction);
 			PendingIntent operation = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 			
+			// TODO: figure out how to do previous time for all components, including pipeline actions
 			Number previousTime = null;
 			
 			// TODO: add random start for initial
@@ -612,7 +621,7 @@ public class FunfManager extends Service {
 			BigDecimal startTime = schedule.getNextTime(previousTime);
 			if (startTime != null) {
 				long startTimeMillis = TimeUtil.secondsToMillis(startTime);
-				if (schedule.getInterval() == null) {
+				if (schedule.getInterval() == null || schedule.getInterval().intValue() == 0) {
 					alarmManager.set(AlarmManager.RTC_WAKEUP, startTimeMillis, operation);
 				} else {
 					long intervalMillis = TimeUtil.secondsToMillis(schedule.getInterval());

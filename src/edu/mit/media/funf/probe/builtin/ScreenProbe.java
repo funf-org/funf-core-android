@@ -31,7 +31,6 @@ import android.content.IntentFilter;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.Schedule;
-import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.Description;
@@ -72,7 +71,6 @@ public class ScreenProbe extends Base implements ContinuousProbe, ScreenKeys  {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		stop(); // Passive Only, Don't ever keep the device awake
 	}
 
 
@@ -82,5 +80,13 @@ public class ScreenProbe extends Base implements ContinuousProbe, ScreenKeys  {
 		getContext().unregisterReceiver(screenReceiver);
 	}
 
+
+
+	@Override
+	protected boolean isWakeLockedWhileRunning() {
+		return false;
+	}
+
+	
 	
 }

@@ -39,7 +39,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.Schedule;
-import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.config.RuntimeTypeAdapterFactory;
 import edu.mit.media.funf.json.IJsonObject;
@@ -56,12 +55,14 @@ import edu.mit.media.funf.util.LogUtil;
 @DisplayName("Running Applications")
 @Description("Emits the applications the user is running using a polling method.")
 @RequiredPermissions(android.Manifest.permission.GET_TASKS)
-@Schedule.DefaultSchedule(interval=0, duration=Double.MAX_VALUE, opportunistic=true)
+@Schedule.DefaultSchedule(interval=0, duration=0.0, opportunistic=true)
 public class RunningApplicationsProbe extends Base implements ContinuousProbe, PassiveProbe, RunningApplicationsKeys {
 
 	@Configurable
 	private double pollInterval = 1.0;
 	
+	// Used as the flag for polling vs paused
+	private PowerManager pm;
 	
 	private class RunningAppsPoller implements Runnable {
 		
@@ -118,11 +119,9 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 			if (ScreenProbe.class.getName().equals(type)) {
 				boolean screenOn = data.get(ScreenProbe.SCREEN_ON).getAsBoolean();
 				if (screenOn) {
-					if (!getDataListeners().isEmpty()) { // Start only if we have listeners
-						start();
-					}
+					onContinue();
 				} else {
-					stop();
+					onPause();
 				}
 			}
 		}
@@ -138,36 +137,43 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 	protected synchronized void onEnable() {
 		super.onEnable();
 		Log.d(LogUtil.TAG, "RunningApplicationsProbe: onEnable");
-		getGson().fromJson(DEFAULT_CONFIG, ScreenProbe.class).registerListener(screenListener);
-
-		// Set for current state
-		PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
-		if (pm.isScreenOn()) {
-			start();
-		}
+		pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
 	}
 
+	
 	@Override
 	protected void onStart() {
 		super.onStart();
 		Log.d(LogUtil.TAG, "RunningApplicationsProbe: onStart");
-		PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+		getGson().fromJson(DEFAULT_CONFIG, ScreenProbe.class).registerListener(screenListener);
 		if (pm.isScreenOn()) {
+			onContinue();
+		}
+	}
+
+	protected void onContinue() { 
+		if (State.RUNNING.equals(getState()) && am == null) {
+			Log.d(LogUtil.TAG, "RunningApplicationsProbe: onContinue");
 			am = (ActivityManager)getContext().getSystemService(Context.ACTIVITY_SERVICE);
 			getHandler().post(runningAppsPoller);
-		} else {
-			stop();
 		}
-		
 	}
+	
+	protected void onPause() { 
+		if (am != null) {
+			Log.d(LogUtil.TAG, "RunningApplicationsProbe: onPause");
+			am = null;
+			getHandler().removeCallbacks(runningAppsPoller);
+			runningAppsPoller.endCurrentTask();
+		}
+	}
+	
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		Log.d(LogUtil.TAG, "RunningApplicationsProbe: onStop");
-		am = null;
-		getHandler().removeCallbacks(runningAppsPoller);
-		runningAppsPoller.endCurrentTask();
+		onPause();
+		getGson().fromJson(DEFAULT_CONFIG, ScreenProbe.class).unregisterListener(screenListener);
 	}
 
 	@Override
@@ -175,9 +181,10 @@ public class RunningApplicationsProbe extends Base implements ContinuousProbe, P
 		super.onDisable();
 		Log.d(LogUtil.TAG, "RunningApplicationsProbe: onDisable");
 		runningAppsPoller.reset();
-		getGson().fromJson(DEFAULT_CONFIG, ScreenProbe.class).unregisterListener(screenListener);
 	}
 	
-	
+	protected boolean isWakeLockedWhileRunning() {
+		return false;
+	}
 	
 }
