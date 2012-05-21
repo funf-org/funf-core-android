@@ -39,7 +39,7 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.ScreenKeys;
 
 @DisplayName("Screen On/Off")
 @Description("Records when the screen turns off and on.")
-@Schedule.DefaultSchedule(opportunistic=true)
+@Schedule.DefaultSchedule(interval=0, duration=0, opportunistic=true)
 public class ScreenProbe extends Base implements ContinuousProbe, ScreenKeys  {
 
 	private BroadcastReceiver screenReceiver;
