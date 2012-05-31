@@ -24,6 +24,7 @@
 package edu.mit.media.funf;
 
 import static edu.mit.media.funf.util.LogUtil.TAG;
+
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -69,9 +70,12 @@ import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.pipeline.Pipeline;
 import edu.mit.media.funf.pipeline.PipelineFactory;
 import edu.mit.media.funf.probe.Probe;
+import edu.mit.media.funf.probe.Probe.ContinuableProbe;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
+import edu.mit.media.funf.probe.Probe.State;
+import edu.mit.media.funf.probe.Probe.StateListener;
 import edu.mit.media.funf.time.TimeUtil;
 
 public class FunfManager extends Service {
@@ -98,7 +102,21 @@ public class FunfManager extends Service {
 		private DataListener listener;
 		private Schedule schedule;
 		private BigDecimal lastSatisfied;
+		private JsonElement checkpoint;
 	}
+	
+	private StateListener probeStateListener = new StateListener() {
+		@Override
+		public void onStateChanged(Probe probe, State previousState) {
+			if (probe instanceof ContinuableProbe && previousState == State.RUNNING) {
+				JsonElement checkpoint = ((ContinuableProbe)probe).getCheckpoint();
+				IJsonObject config = (IJsonObject)JsonUtils.immutable(gson.toJsonTree(probe));
+				for (DataRequestInfo requestInfo : dataRequests.get(config)) {
+					requestInfo.checkpoint = checkpoint;
+				}
+			}
+		}
+	};
 	
 	// TODO: triggers
 	
@@ -188,9 +206,15 @@ public class FunfManager extends Service {
 	 								infoForListenersThatNeedData.add(requestInfo);
 	 							}
 	 						}
+	 						
+	 						
 	 						final DataListener[] listenerArray = new DataListener[listenersThatNeedData.size()];
 	 						listenersThatNeedData.toArray(listenerArray);
 		 					if (listenerArray.length > 0) {
+		 						if (probe instanceof ContinuableProbe) {
+		 							// TODO: how do we take care of multiple registrants with different checkpoints
+		 							((ContinuableProbe)probe).setCheckpoint(requests.get(0).checkpoint);
+		 						}
 		 						probe.registerListener(listenerArray);
 		 					}
 		 					
@@ -351,7 +375,7 @@ public class FunfManager extends Service {
 	}
 	
 	public void requestData(DataListener listener, JsonElement probeConfig) {
-		requestData(listener, probeConfig, null);
+		requestData(listener, (JsonElement)probeConfig, null);
 	}
 	
 	public void requestData(DataListener listener, JsonElement probeConfig, Schedule schedule) {
@@ -360,6 +384,7 @@ public class FunfManager extends Service {
 		}
 		// Use schedule in probeConfig @schedule annotation
 		Probe probe = gson.fromJson(probeConfig, Probe.class);
+		probe.addStateListener(probeStateListener);
 		if (schedule == null) {
 			DefaultSchedule defaultSchedule = probe.getClass().getAnnotation(DefaultSchedule.class);
 			JsonObject scheduleObject = defaultSchedule == null ? new JsonObject() : gson.toJsonTree(defaultSchedule, DefaultSchedule.class).getAsJsonObject();
@@ -518,10 +543,12 @@ public class FunfManager extends Service {
 	// Use type to differentiate between probe/pipeline
 	// funf:<componenent_name>#<action>
 	
-	public static final String 
+	private static final String 
 		FUNF_SCHEME = "funf";
 
-	public static Uri getComponenentUri(String component, String action) {
+	
+	// TODO: should these public?  May be confusing for people just using the library
+	private static Uri getComponenentUri(String component, String action) {
 		return new Uri.Builder()
 		.scheme(FUNF_SCHEME)
 		.path(component) // Automatically prepends slash
@@ -529,19 +556,19 @@ public class FunfManager extends Service {
 		.build();
 	}
 	
-	public static String getComponentName(Uri componentUri) {
+	private static String getComponentName(Uri componentUri) {
 		return componentUri.getPath().substring(1); // Remove automatically prepended slash from beginning
 	}
 	
-	public static String getAction(Uri componentUri) {
+	private static String getAction(Uri componentUri) {
 		return componentUri.getFragment();
 	}
 	
-	public static Intent getFunfIntent(Context context, String type, String component, String action) {
+	private static Intent getFunfIntent(Context context, String type, String component, String action) {
 		return getFunfIntent(context, type, getComponenentUri(component, action));
 	}
 	
-	public static Intent getFunfIntent(Context context, String type, Uri componentUri) {
+	private static Intent getFunfIntent(Context context, String type, Uri componentUri) {
 		Intent intent = new Intent();
 		intent.setClass(context, FunfManager.class);
 		intent.setPackage(context.getPackageName());
@@ -561,11 +588,11 @@ public class FunfManager extends Service {
 	////////////////////////////////////////////////////
 
 
-	public Scheduler getScheduler() {
+	private Scheduler getScheduler() {
 		return scheduler;
 	}
 	
-	public class Scheduler {
+	private class Scheduler {
 	
 		private AlarmManager alarmManager;
 		private Context context;

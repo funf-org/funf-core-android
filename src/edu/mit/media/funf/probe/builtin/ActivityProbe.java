@@ -49,7 +49,7 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 	@Configurable
 	private double interval = 1.0;
 	
-	private long startTime;
+	//private long startTime;
 	private ActivityCounter activityCounter = new ActivityCounter();
 	
 	@Override
@@ -94,7 +94,7 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 		}
 		
 		private void intervalReset() {
-			Log.d(LogUtil.TAG, "interval RESET");
+			//Log.d(LogUtil.TAG, "interval RESET");
 			// Calculate activity and reset
 			JsonObject data = new JsonObject();
 			if (varianceSum >= 10.0f) {
@@ -127,14 +127,16 @@ public class ActivityProbe extends Base implements ContinuousProbe, PassiveProbe
 		@Override
 		public void onDataReceived(IJsonObject completeProbeUri, IJsonObject data) {
 			double timestamp = data.get(TIMESTAMP).getAsDouble();
-			Log.d(LogUtil.TAG, "Starttime: " + startTime + " intervalStartTime: " + intervalStartTime);
-			Log.d(LogUtil.TAG, "RECEIVED:" + timestamp);
-			if (timestamp >= intervalStartTime + 2 * interval) {
-				Log.d(LogUtil.TAG, "RESET:" + timestamp);
+			//Log.d(LogUtil.TAG, "IntervalStartTime: " + intervalStartTime);
+			//Log.d(LogUtil.TAG, "RECEIVED:" + timestamp);
+			if (intervalStartTime == 0.0 || (timestamp >= intervalStartTime + 2 * interval)) {
+				//Log.d(LogUtil.TAG, "RESET:" + timestamp);
 				reset();
+				intervalStartTime = timestamp;
 			} else if (timestamp >= intervalStartTime + interval) {
-				Log.d(LogUtil.TAG, "interval Reset:" + timestamp);
+				//Log.d(LogUtil.TAG, "interval Reset:" + timestamp);
 				intervalReset();
+				intervalStartTime = timestamp;
 			}
 			float x = data.get(AccelerometerSensorProbe.X).getAsFloat();
 			float y = data.get(AccelerometerSensorProbe.Y).getAsFloat();

@@ -31,7 +31,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 import edu.mit.media.funf.FunfManager;
-import edu.mit.media.funf.FunfManager.Scheduler;
 import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.IJsonObject;
@@ -43,9 +42,14 @@ public class BasicPipeline implements Pipeline, DataListener {
 	private FunfManager manager;
 	private Gson gson;
 	
-
+	
 	@Configurable
 	private List<JsonElement> data;
+
+	/*
+	@Configurable
+	private Storage storage;
+*/
 	
 	/*
 	
