@@ -25,7 +25,6 @@ package edu.mit.media.funf.probe.builtin;
 
 import android.hardware.Sensor;
 import edu.mit.media.funf.Schedule;
-import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Description;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.GyroscopeSensorKeys;

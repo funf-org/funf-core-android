@@ -46,7 +46,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.Schedule;
-import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.util.LogUtil;
 

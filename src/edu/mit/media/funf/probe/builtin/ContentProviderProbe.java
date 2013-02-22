@@ -39,7 +39,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.Schedule;
-import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.AnyCell;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.BooleanCell;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.DoubleCell;

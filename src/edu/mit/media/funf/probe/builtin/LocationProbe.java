@@ -31,11 +31,12 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.Schedule;
-import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
@@ -72,7 +73,7 @@ public class LocationProbe extends Base implements ContinuousProbe, PassiveProbe
 	@Override
 	protected void onEnable() {
 		super.onEnable();
-		gson = getGson();
+		gson = getGsonBuilder().addSerializationExclusionStrategy(new LocationExclusionStrategy()).create();
 		mLocationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
 		String passiveProvider = getPassiveProvider();
 		if (passiveProvider != null) {
@@ -139,6 +140,29 @@ public class LocationProbe extends Base implements ContinuousProbe, PassiveProbe
 		}
 		
 	}
+	
+    public class LocationExclusionStrategy implements ExclusionStrategy {
+
+        public boolean shouldSkipClass(Class<?> cls) {
+            return false;
+        }
+
+        public boolean shouldSkipField(FieldAttributes f) {
+        	String name = f.getName();
+            return (f.getDeclaringClass() == Location.class && 
+            			(name.equals("mResults") 
+            				|| name.equals("mDistance") 
+            				|| name.equals("mInitialBearing") 
+            				|| name.equals("mLat1") 
+            				|| name.equals("mLat2") 
+            				|| name.equals("mLon1") 
+            				|| name.equals("mLon2") 
+            				|| name.equals("mLon2") 
+            				)
+            		);
+        }
+
+    }
 	
 	/**
 	 * Supporting API level 7 which does not have PASSIVE provider

@@ -23,6 +23,8 @@
  */
 package edu.mit.media.funf.config;
 
+import static edu.mit.media.funf.util.LogUtil.TAG;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 
@@ -37,8 +39,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import edu.mit.media.funf.util.AnnotationUtil;
-
-import static edu.mit.media.funf.util.LogUtil.TAG;
 
 public class ContextInjectorTypeAdapaterFactory implements TypeAdapterFactory {
 

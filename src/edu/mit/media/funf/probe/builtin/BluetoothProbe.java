@@ -23,6 +23,8 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
+import static edu.mit.media.funf.util.LogUtil.TAG;
+
 import java.math.BigDecimal;
 
 import android.bluetooth.BluetoothAdapter;
@@ -31,8 +33,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
 import edu.mit.media.funf.Schedule;
-import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DisplayName;
@@ -50,7 +52,7 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 	@Configurable
 	private BigDecimal maxScanTime = BigDecimal.valueOf(30.0);
 	
-	private BluetoothAdapter adapter;
+	private BluetoothAdapter adapter;	
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -127,7 +129,11 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 
 	@Override
 	protected void onDisable() {
-		getContext().unregisterReceiver(receiver);
+		try {
+			getContext().unregisterReceiver(receiver);
+		} catch (IllegalArgumentException e) {
+			Log.w(TAG, getClass().getName() + "Broadcast receiver not registered.", e);
+		}
 	}
 	
 	

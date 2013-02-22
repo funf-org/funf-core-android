@@ -30,7 +30,6 @@ import android.net.Uri;
 import android.provider.CallLog;
 import android.provider.CallLog.Calls;
 import edu.mit.media.funf.Schedule;
-import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ContentProviderProbe.CursorCell.PhoneNumberCell;
 

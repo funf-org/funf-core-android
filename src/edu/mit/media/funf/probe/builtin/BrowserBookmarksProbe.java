@@ -29,7 +29,6 @@ import java.util.Map;
 import android.net.Uri;
 import android.provider.Browser;
 import edu.mit.media.funf.Schedule;
-import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 
 @Schedule.DefaultSchedule(interval=604800)

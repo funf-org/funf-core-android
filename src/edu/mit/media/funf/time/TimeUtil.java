@@ -26,8 +26,6 @@ package edu.mit.media.funf.time;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import android.util.Log;
-
 public class TimeUtil {
 
 	private static final BigDecimal TWO = new BigDecimal(2);
