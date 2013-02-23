@@ -45,6 +45,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -132,26 +133,41 @@ public class FunfManager extends Service {
 		this.handler = new Handler();
 		getGson(); // Sets gson
 		this.dataRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
-		this.pipelines = new HashMap<String, Pipeline>();
-		// TODO: load data requests from disk?  or just do pipelines
-		
-		// Load stored pipeline config
+		reload();
+	}
+	
+	public void reload() {
+	  if (Looper.myLooper() != Looper.getMainLooper()) {
+	    handler.post(new Runnable() {
+          @Override
+          public void run() {
+            reload();
+          }
+        });
+	  } else {
 
+        this.pipelines = new HashMap<String, Pipeline>();
+        // TODO: load data requests from disk?  or just do pipelines
+        
+        // Load stored pipeline config
+        
 
-		// TODO: bootstrap from meta parameters if pipelines don't exist
-		Bundle metadata = getMetadata();
-		for (String keyName : metadata.keySet()) {
-			// Determine if resource or value, If resource get value
-			// Parse value into JsonElement
-			
-			// If JsonString create uri and (down)load file and parse for pipleine config
-			// If JsonObject use as a pipeline instance config
-			
-			JsonElement pipelineConfig = parser.parse(metadata.getString(keyName));
-			Pipeline pipeline = gson.fromJson(pipelineConfig, Pipeline.class);
-			registerPipeline(keyName, pipeline);
-		}
-		
+        // TODO: bootstrap from meta parameters if pipelines don't exist
+        Bundle metadata = getMetadata();
+        for (String keyName : metadata.keySet()) {
+          if (!pipelines.containsKey(keyName)) {
+            // Determine if resource or value, If resource get value
+            // Parse value into JsonElement
+            
+            // If JsonString create uri and (down)load file and parse for pipleine config
+            // If JsonObject use as a pipeline instance config
+            
+            JsonElement pipelineConfig = parser.parse(metadata.getString(keyName));
+            Pipeline pipeline = gson.fromJson(pipelineConfig, Pipeline.class);
+            registerPipeline(keyName, pipeline);
+          }
+        }
+	  }
 	}
 
 	@Override
