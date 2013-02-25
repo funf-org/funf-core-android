@@ -29,8 +29,10 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -38,6 +40,7 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
@@ -78,6 +81,7 @@ import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.State;
 import edu.mit.media.funf.probe.Probe.StateListener;
 import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.LogUtil;
 
 public class FunfManager extends Service {
 	
@@ -95,8 +99,10 @@ public class FunfManager extends Service {
 	PROBE_ACTION_REGISTER_PASSIVE = "register-passive",
 	PROBE_ACTION_UNREGISTER_PASSIVE = "unregister-passive";
 	
+	
 	private Handler handler;
 	private JsonParser parser;
+	private SharedPreferences prefs;
 	private Map<String,Pipeline> pipelines;
 	private Map<IJsonObject,List<DataRequestInfo>> dataRequests; 	
 	private class DataRequestInfo {
@@ -133,6 +139,8 @@ public class FunfManager extends Service {
 		this.handler = new Handler();
 		getGson(); // Sets gson
 		this.dataRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
+		this.prefs = getSharedPreferences(getClass().getName(), MODE_PRIVATE);
+		this.pipelines = new HashMap<String, Pipeline>();
 		reload();
 	}
 	
@@ -144,29 +152,62 @@ public class FunfManager extends Service {
             reload();
           }
         });
-	  } else {
-
-        this.pipelines = new HashMap<String, Pipeline>();
-        // TODO: load data requests from disk?  or just do pipelines
-        
-        // Load stored pipeline config
-        
-
-        // TODO: bootstrap from meta parameters if pipelines don't exist
-        Bundle metadata = getMetadata();
-        for (String keyName : metadata.keySet()) {
-          if (!pipelines.containsKey(keyName)) {
-            // Determine if resource or value, If resource get value
-            // Parse value into JsonElement
-            
-            // If JsonString create uri and (down)load file and parse for pipleine config
-            // If JsonObject use as a pipeline instance config
-            
-            JsonElement pipelineConfig = parser.parse(metadata.getString(keyName));
-            Pipeline pipeline = gson.fromJson(pipelineConfig, Pipeline.class);
-            registerPipeline(keyName, pipeline);
+	    return;
+	  } 
+      Set<String> pipelineNames = new HashSet<String>();
+      pipelineNames.addAll(prefs.getAll().keySet());
+      Bundle metadata = getMetadata();
+      pipelineNames.addAll(metadata.keySet());
+      for (String pipelineName : pipelineNames) {
+        reload(pipelineName);
+      }
+	}
+	
+	public void reload(final String name) {
+      if (Looper.myLooper() != Looper.getMainLooper()) {
+        handler.post(new Runnable() {
+          @Override
+          public void run() {
+            reload(name);
           }
-        }
+        });
+        return;
+      }
+	  String pipelineConfig = null;
+	  Bundle metadata = getMetadata();
+	  if (prefs.contains(name)) {
+	    pipelineConfig = prefs.getString(name, null);
+	  } else if (metadata.containsKey(name)) {
+	    pipelineConfig = metadata.getString(name);
+	  } 
+	  if (pipelineConfig != null) {
+	    Pipeline newPipeline = gson.fromJson((String)metadata.getString(name), Pipeline.class);
+	    pipelines.put(name, newPipeline);
+	    registerPipeline(name, newPipeline); // Will unregister previous before running
+	  } else {
+	    unregisterPipeline(name);
+	  }
+	}
+	
+	public JsonObject getPipelineConfig(String name) {
+	  String configString = prefs.getString(name, null);
+	  Bundle metadata = getMetadata();
+	  if (configString == null && metadata.containsKey(name)) {
+	    configString = metadata.getString(name);
+	  }
+	  return configString == null ? null : new JsonParser().parse(configString).getAsJsonObject();
+	}
+	
+	public boolean saveAndReload(String name, JsonObject config) {
+	  try {
+	    // Check if this is a valid pipeline before saving
+	    Pipeline pipeline = getGson().fromJson(config, Pipeline.class);
+	    boolean result = prefs.edit().putString(name, config.toString()).commit();
+	    reload(name);
+	    return result;
+	  } catch (Exception e) {
+	    Log.e(LogUtil.TAG, "Unable to save config: " + config.toString());
+	    return false;
 	  }
 	}
 

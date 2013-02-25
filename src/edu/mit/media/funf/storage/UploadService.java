@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import android.app.Service;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -41,7 +40,7 @@ import edu.mit.media.funf.util.HashCodeUtil;
 import edu.mit.media.funf.util.LockUtil;
 import edu.mit.media.funf.util.LogUtil;
 
-public abstract class UploadService {
+public class UploadService {
 
   @Configurable
   private boolean wifiOnly = false;
@@ -102,16 +101,12 @@ public abstract class UploadService {
     }
   }
 
-  public int onRun(String archiveName, String remoteArchiveName) {
+  public void run(FileArchive archive, RemoteFileArchive remoteArchive) {
     Log.i(LogUtil.TAG, "Starting...");
     if (isOnline()) {
-      if (archiveName != null && remoteArchiveName != null) {
-        FileArchive archive = getArchive(archiveName);
-        RemoteFileArchive remoteArchive = getRemoteArchive(remoteArchiveName);
-        if (archive != null && remoteArchive != null) {
-          for (File file : archive.getAll()) {
-            archive(archive, remoteArchive, file, wifiOnly);
-          }
+      if (archive != null && remoteArchive != null) {
+        for (File file : archive.getAll()) {
+          archive(archive, remoteArchive, file, wifiOnly);
         }
       }
     }
@@ -120,27 +115,7 @@ public abstract class UploadService {
     if (uploadThread != null && !uploadThread.isAlive()) {
       uploadThread.start();
     }
-
-    return Service.START_STICKY;
   }
-
-  /**
-   * Returns the file archive that the upload service will use.
-   * 
-   * @param databaseName
-   * @return
-   */
-  public FileArchive getArchive(String name) {
-    return DefaultArchive.getArchive(ctx, name);
-  }
-
-  /**
-   * Get the remote archive with the specified name
-   * 
-   * @param name
-   * @return
-   */
-  protected abstract RemoteFileArchive getRemoteArchive(final String name);
 
 
   public void archive(FileArchive archive, RemoteFileArchive remoteArchive, File file,

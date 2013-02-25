@@ -19,6 +19,7 @@
  */
 package edu.mit.media.funf.pipeline;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +46,10 @@ import edu.mit.media.funf.config.RuntimeTypeAdapterFactory;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.builtin.ProbeKeys;
+import edu.mit.media.funf.storage.DefaultArchive;
 import edu.mit.media.funf.storage.FileArchive;
 import edu.mit.media.funf.storage.NameValueDatabaseHelper;
+import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.storage.UploadService;
 import edu.mit.media.funf.util.LogUtil;
 
@@ -59,31 +62,31 @@ public class BasicPipeline implements Pipeline, DataListener {
   
   private final int ARCHIVE = 0, UPLOAD = 1, UPDATE = 2, DATA = 3;
   
-  //Specially named field for collecting schedules
-  private Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
-  private FunfManager manager;
-  private Gson gson;
-  
+
   @Configurable
   private String name = "default";
   
   @Configurable
   private int version = 1;
   
-  private SQLiteOpenHelper databaseHelper;
+  @Configurable
+  private FileArchive storage = null;
   
   @Configurable
-  private FileArchive storage;
+  private RemoteFileArchive backend = null;
 
   @Configurable
-  private UploadService upload;
+  private ConfigUpdater update = null;
 
   @Configurable
-  private ConfigUpdater update;
-
-  @Configurable
-  private List<JsonElement> data;
+  private List<JsonElement> data = null;
   
+  //Specially named field for collecting schedules
+  private Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
+  private FunfManager manager;
+  private Gson gson;
+  private SQLiteOpenHelper databaseHelper = null;
+  private UploadService uploadService = null;
   private Looper looper;
   private Handler handler;
   private Handler.Callback callback = new Handler.Callback() {
@@ -92,13 +95,31 @@ public class BasicPipeline implements Pipeline, DataListener {
     public boolean handleMessage(Message msg) {
       switch (msg.what) {
         case ARCHIVE:
-          
+          if (storage != null) {
+            SQLiteDatabase db = databaseHelper.getWritableDatabase();
+            // TODO: add check to make sure this is not empty
+            File dbFile = new File(db.getPath());
+            db.close();
+            if (storage.add(dbFile)) {
+              dbFile.delete();
+            }
+            databaseHelper.getWritableDatabase(); // Build new database
+          }
           break;
         case UPLOAD:
-          
+          if (storage != null && backend != null) {
+            if (uploadService != null) {
+              uploadService.onDestroy();
+            }
+            uploadService = new UploadService();
+            uploadService.onCreate(manager);
+            uploadService.run(storage, backend);
+          }
           break;
         case UPDATE:
-          
+          if (update != null) {
+            update.run(name, manager);
+          }
           break;
         case DATA:
           String name = ((JsonObject)msg.obj).get("name").getAsString();
@@ -114,7 +135,6 @@ public class BasicPipeline implements Pipeline, DataListener {
   };
   
   protected void writeData(String name, IJsonObject data) {
-
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     final double timestamp = data.get(ProbeKeys.BaseProbeKeys.TIMESTAMP).getAsDouble();
     final String value = data.toString();
@@ -130,22 +150,11 @@ public class BasicPipeline implements Pipeline, DataListener {
   }
 
 
-  // Build schedules and probe requests
-  // Send to scheduler
-  // Listen for data
-  // Record data
-  // Archive data (optional)
-  // Upload data (optional)
-
-  // Update pipeline (file, resource, or online)
-  // This could simply put a json file to the proper location
-  // FunfManager could be responsible for destroying this, and recreating
-
-  // Needs to potentially be able to handle other scheduling of events
-
-
   @Override
   public void onCreate(FunfManager manager) {
+    if (storage == null) {
+      storage = DefaultArchive.getArchive(manager, name);
+    }
     this.manager = manager;
     this.gson = manager.getGsonBuilder().create();
     this.databaseHelper = new NameValueDatabaseHelper(manager, name, version);
@@ -156,12 +165,21 @@ public class BasicPipeline implements Pipeline, DataListener {
     for (JsonElement dataRequest : data) {
       manager.requestData(this, dataRequest);
     }
+    for (Map.Entry<String, Schedule> schedule : schedules.entrySet()) {
+      manager.registerPipelineAction(this, schedule.getKey(), schedule.getValue());
+    }
   }
 
   @Override
   public void onDestroy() {
     for (JsonElement dataRequest : data) {
       manager.unrequestData(this, dataRequest);
+    }
+    for (Map.Entry<String, Schedule> schedule : schedules.entrySet()) {
+      manager.unregisterPipelineAction(this, schedule.getKey());
+    }
+    if (uploadService != null) {
+      uploadService.onDestroy();
     }
     looper.quit();
   }

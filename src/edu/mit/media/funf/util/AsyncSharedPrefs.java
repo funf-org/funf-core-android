@@ -172,6 +172,25 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
                 return this;
             }
         }
+        public Editor putStringSet(String key, Set<String> value) {
+            synchronized (this) {
+              mModified.put(key, value);
+              if (setStringSetMethod == null) {
+                throw new RuntimeException("Method does not exist.");
+              } else {
+                try {
+                  setStringSetMethod.invoke(editor, key, value);
+                } catch (IllegalArgumentException e) {
+                  Log.wtf(LogUtil.TAG, "Unable to putStringSet apply for some reason.", e);
+                } catch (IllegalAccessException e) {
+                  Log.wtf(LogUtil.TAG, "Unable to putStringSet apply for some reason.", e);
+                } catch (InvocationTargetException e) {
+                  Log.wtf(LogUtil.TAG, "Unable to putStringSet apply for some reason.", e);
+                }
+              }
+              return this;
+            }
+        }
         public Editor putInt(String key, int value) {
             synchronized (this) {
                 mModified.put(key, value);
@@ -257,7 +276,46 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 			}).start();
 			return true;
 		}
+		
+        @Override
+        public void apply() {
+          if (applyMethod == null) {
+            commit();
+          } else {
+            try {
+              applyMethod.invoke(this);
+            } catch (IllegalArgumentException e) {
+              Log.wtf(LogUtil.TAG, "Unable to run apply for some reason.", e);
+            } catch (IllegalAccessException e) {
+              Log.wtf(LogUtil.TAG, "Unable to run apply for some reason.", e);
+            } catch (InvocationTargetException e) {
+              Log.wtf(LogUtil.TAG, "Unable to run apply for some reason.", e);
+            }
+          }
+        }
+		
+		
 	}
+	
+
+	  @Override
+	  public Set<String> getStringSet(String key, Set<String> defaultValue) {
+	    if (getStringSetMethod == null) {
+	      Log.wtf(LogUtil.TAG, "Unable to run getStringSet for some reason.");
+	      return defaultValue;
+	    } else {
+	      try {
+            return (Set<String>)getStringSetMethod.invoke(this, key, defaultValue);
+          } catch (IllegalArgumentException e) {
+            Log.wtf(LogUtil.TAG, "Unable to run getStringSet for some reason.", e);
+          } catch (IllegalAccessException e) {
+            Log.wtf(LogUtil.TAG, "Unable to run getStringSet for some reason.", e);
+          } catch (InvocationTargetException e) {
+            Log.wtf(LogUtil.TAG, "Unable to run getStringSet for some reason.", e);
+          }
+	      return defaultValue;
+	    }
+	  }
 	
 	
 	// STATIC apply
@@ -273,6 +331,28 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 		}
 		return null;
 	}
+
+    private static final Method setStringSetMethod = getSetStringSetMethod();
+    
+    private static Method getSetStringSetMethod() {
+        try {
+            return SharedPreferences.Editor.class.getMethod("putStringSet");
+        } catch (NoSuchMethodException e) {
+            Log.i(TAG, "putStringSet method does not exist, using async commit.");
+        }
+        return null;
+    }
+    
+    private static final Method getStringSetMethod = getGetStringSetMethod();
+    
+    private static Method getGetStringSetMethod() {
+        try {
+            return SharedPreferences.class.getMethod("getStringSet");
+        } catch (NoSuchMethodException e) {
+            Log.i(TAG, "putStringSet method does not exist, using async commit.");
+        }
+        return null;
+    }
 	
 	
 	/**
@@ -299,5 +379,6 @@ public class AsyncSharedPrefs implements SharedPreferences, OnSharedPreferenceCh
 			}
 		}).start();
 	}
+
 
 }
