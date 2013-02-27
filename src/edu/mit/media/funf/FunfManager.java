@@ -28,6 +28,7 @@ import static edu.mit.media.funf.util.LogUtil.TAG;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -82,6 +83,7 @@ import edu.mit.media.funf.probe.Probe.State;
 import edu.mit.media.funf.probe.Probe.StateListener;
 import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LogUtil;
+import edu.mit.media.funf.util.StringUtil;
 
 public class FunfManager extends Service {
 	
@@ -94,6 +96,9 @@ public class FunfManager extends Service {
 	PIPELINE_TYPE = "funf/pipeline";
 	
 	private static final String 
+	DISABLED_PIPELINE_LIST = "__DISABLED__";
+	
+	private static final String 
 	PROBE_ACTION_REGISTER = "register",
 	PROBE_ACTION_UNREGISTER = "unregister",
 	PROBE_ACTION_REGISTER_PASSIVE = "register-passive",
@@ -104,6 +109,7 @@ public class FunfManager extends Service {
 	private JsonParser parser;
 	private SharedPreferences prefs;
 	private Map<String,Pipeline> pipelines;
+	private Set<String> disabledPipelineNames;
 	private Map<IJsonObject,List<DataRequestInfo>> dataRequests; 	
 	private class DataRequestInfo {
 		private DataListener listener;
@@ -141,6 +147,8 @@ public class FunfManager extends Service {
 		this.dataRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
 		this.prefs = getSharedPreferences(getClass().getName(), MODE_PRIVATE);
 		this.pipelines = new HashMap<String, Pipeline>();
+		this.disabledPipelineNames = new HashSet<String>(Arrays.asList(prefs.getString(DISABLED_PIPELINE_LIST, "").split(",")));
+		this.disabledPipelineNames.remove(""); // Remove the empty name, if no disabled pipelines exist
 		reload();
 	}
 	
@@ -156,6 +164,7 @@ public class FunfManager extends Service {
 	  } 
       Set<String> pipelineNames = new HashSet<String>();
       pipelineNames.addAll(prefs.getAll().keySet());
+      pipelineNames.remove(DISABLED_PIPELINE_LIST);
       Bundle metadata = getMetadata();
       pipelineNames.addAll(metadata.keySet());
       for (String pipelineName : pipelineNames) {
@@ -175,17 +184,18 @@ public class FunfManager extends Service {
       }
 	  String pipelineConfig = null;
 	  Bundle metadata = getMetadata();
-	  if (prefs.contains(name)) {
+	  if (disabledPipelineNames.contains(name)) {
+	    // Disabled, so don't load any config
+	  } else if (prefs.contains(name)) {
 	    pipelineConfig = prefs.getString(name, null);
 	  } else if (metadata.containsKey(name)) {
 	    pipelineConfig = metadata.getString(name);
 	  } 
-	  if (pipelineConfig != null) {
-	    Pipeline newPipeline = gson.fromJson((String)metadata.getString(name), Pipeline.class);
-	    pipelines.put(name, newPipeline);
-	    registerPipeline(name, newPipeline); // Will unregister previous before running
+	  if (pipelineConfig == null) {
+        unregisterPipeline(name);
 	  } else {
-	    unregisterPipeline(name);
+	    Pipeline newPipeline = gson.fromJson((String)metadata.getString(name), Pipeline.class);
+	    registerPipeline(name, newPipeline); // Will unregister previous before running
 	  }
 	}
 	
@@ -429,6 +439,22 @@ public class FunfManager extends Service {
 		if (existingPipeline != null) {
 			existingPipeline.onDestroy();
 		}
+	}
+	
+	public void enablePipeline(String name) {
+	  boolean previouslyDisabled = disabledPipelineNames.remove(name);
+	  if (previouslyDisabled) {
+	    prefs.edit().putString(DISABLED_PIPELINE_LIST, StringUtil.join(disabledPipelineNames, ",")).commit();
+	    reload(name);
+	  }
+	}
+	
+	public void disablePipeline(String name) {
+	  boolean previouslyEnabled = disabledPipelineNames.add(name);
+      if (previouslyEnabled) {
+        prefs.edit().putString(DISABLED_PIPELINE_LIST, StringUtil.join(disabledPipelineNames, ",")).commit();
+        reload(name);
+      }
 	}
 	
 	public void requestData(DataListener listener, JsonElement probeConfig) {

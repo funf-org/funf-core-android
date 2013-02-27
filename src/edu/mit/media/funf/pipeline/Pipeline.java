@@ -51,4 +51,10 @@ public interface Pipeline {
 	 */
 	public void onDestroy();
 	
+	/**
+	 * Returns true if this pipeline is enabled, meaning onCreate has been called 
+	 * and onDestroy has not yet been called.
+	 */
+	public boolean isEnabled();
+	
 }

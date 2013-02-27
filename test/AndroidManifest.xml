@@ -25,7 +25,7 @@
           package="edu.mit.media.funf.tests"
           android:versionCode="1"
           android:versionName="1.0">
-    <uses-sdk  android:minSdkVersion="7" android:targetSdkVersion="8" />
+    <uses-sdk  android:minSdkVersion="8" android:targetSdkVersion="17" />
     <!-- We add an application tag here just so that we can indicate that
          this package needs to link against the android.test library,
          which is needed when building test cases.  
@@ -33,8 +33,18 @@
     <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
         
-        <service android:name="edu.mit.media.funf.FunfManager"></service>
-        <service android:name="edu.mit.media.funf.tests.ExampleService"></service>
+        <service android:name="edu.mit.media.funf.FunfManager" >
+            <meta-data android:name="default" android:value="@string/default_pipeline"/>
+        </service>
+        <receiver android:name="edu.mit.media.funf.Launcher" android:enabled="true">
+        	<intent-filter>
+        		<action android:name="android.intent.action.BATTERY_CHANGED" />
+        		<action android:name="android.intent.action.BOOT_COMPLETED" />
+        		<action android:name="android.intent.action.DOCK_EVENT" />
+        		<action android:name="android.intent.action.ACTION_SCREEN_ON" />
+        		<action android:name="android.intent.action.USER_PRESENT" />
+        	</intent-filter>
+ </receiver>
     </application>
     
     <!-- All probes -->

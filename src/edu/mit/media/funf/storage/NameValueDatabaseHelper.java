@@ -74,7 +74,7 @@ public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 		String installationUuid = UuidUtil.getInstallationId(context);
 		String fileUuid = UUID.randomUUID().toString();
 		double createdTime = TimeUtil.getTimestamp().doubleValue();
-		db.execSQL(String.format("insert into %s (%s, %s, %s, %s) values ('%s', '%s', '%s', %d)", 
+		db.execSQL(String.format("insert into %s (%s, %s, %s, %s) values ('%s', '%s', '%s', %f)", 
 				FILE_INFO_TABLE.name, 
 				COLUMN_DATABASE_NAME, COLUMN_INSTALLATION, COLUMN_UUID, COLUMN_CREATED,
 				databaseName, installationUuid, fileUuid, createdTime));

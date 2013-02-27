@@ -20,6 +20,8 @@
 package edu.mit.media.funf.pipeline;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,9 +81,11 @@ public class BasicPipeline implements Pipeline, DataListener {
   private ConfigUpdater update = null;
 
   @Configurable
-  private List<JsonElement> data = null;
+  private List<JsonElement> data = Collections.unmodifiableList(new ArrayList<JsonElement>());
   
   //Specially named field for collecting schedules
+  
+  private boolean enabled;
   private Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
   private FunfManager manager;
   private Gson gson;
@@ -162,6 +166,7 @@ public class BasicPipeline implements Pipeline, DataListener {
     thread.start();
     this.looper = thread.getLooper();
     this.handler = new Handler(looper, callback);
+    enabled = true;
     for (JsonElement dataRequest : data) {
       manager.requestData(this, dataRequest);
     }
@@ -182,6 +187,7 @@ public class BasicPipeline implements Pipeline, DataListener {
       uploadService.onDestroy();
     }
     looper.quit();
+    enabled = false;
   }
 
   @Override
@@ -194,6 +200,15 @@ public class BasicPipeline implements Pipeline, DataListener {
     } else if (ACTION_UPDATE.equals(action)) {
       handler.obtainMessage(UPDATE, config).sendToTarget();
     } 
+  }
+  
+  public SQLiteDatabase getDb() {
+    return databaseHelper.getReadableDatabase();
+  }
+  
+  @Override
+  public boolean isEnabled() {
+    return enabled;
   }
 
   @Override
