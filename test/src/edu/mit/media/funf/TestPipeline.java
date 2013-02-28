@@ -66,6 +66,12 @@ public class TestPipeline extends AndroidTestCase {
 		public Map<String,Schedule> getSchedules() {
 			return schedules;
 		}
+
+        @Override
+        public boolean isEnabled() {
+          // TODO Auto-generated method stub
+          return false;
+        }
 	}
 	
 	public String SAMPLE_PIPELINE_CONFIG = "{" +

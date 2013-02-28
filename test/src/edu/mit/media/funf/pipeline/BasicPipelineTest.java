@@ -50,7 +50,7 @@ public class BasicPipelineTest extends AndroidTestCase {
 
 
   public void testAsdf() {
-    String testPipelineConfig = getContext().getResources().getString(R.string.test_pipeline);
+    String testPipelineConfig = getContext().getResources().getString(R.string.default_pipeline);
     Pipeline pipeline = mgr.getGson().fromJson(testPipelineConfig, Pipeline.class);
     Log.d("FunfTest", "PIPELINE: " + mgr.getGson().toJson(pipeline));
     pipeline.onCreate(mgr);
