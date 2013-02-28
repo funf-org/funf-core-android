@@ -65,10 +65,12 @@ import com.google.gson.TypeAdapterFactory;
 
 import edu.mit.media.funf.Schedule.BasicSchedule;
 import edu.mit.media.funf.Schedule.DefaultSchedule;
+import edu.mit.media.funf.config.ConfigUpdater;
 import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
 import edu.mit.media.funf.config.ContextInjectorTypeAdapaterFactory;
 import edu.mit.media.funf.config.DefaultRuntimeTypeAdapterFactory;
 import edu.mit.media.funf.config.DefaultScheduleSerializer;
+import edu.mit.media.funf.config.HttpConfigUpdater;
 import edu.mit.media.funf.config.SingletonTypeAdapterFactory;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.json.JsonUtils;
@@ -81,6 +83,10 @@ import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.State;
 import edu.mit.media.funf.probe.Probe.StateListener;
+import edu.mit.media.funf.storage.DefaultArchive;
+import edu.mit.media.funf.storage.FileArchive;
+import edu.mit.media.funf.storage.HttpArchive;
+import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.StringUtil;
@@ -367,6 +373,9 @@ public class FunfManager extends Service {
 		.registerTypeAdapterFactory(getProbeFactory(context))
 		.registerTypeAdapterFactory(getPipelineFactory(context))
 		.registerTypeAdapterFactory(new DefaultRuntimeTypeAdapterFactory<Schedule>(context, Schedule.class, BasicSchedule.class))
+		.registerTypeAdapterFactory(new DefaultRuntimeTypeAdapterFactory<ConfigUpdater>(context, ConfigUpdater.class, HttpConfigUpdater.class))
+		.registerTypeAdapterFactory(new DefaultRuntimeTypeAdapterFactory<FileArchive>(context, FileArchive.class, null)) // TODO: this will probably fail if it ever gets called without a @type field
+		.registerTypeAdapterFactory(new DefaultRuntimeTypeAdapterFactory<RemoteFileArchive>(context, RemoteFileArchive.class, HttpArchive.class))
 		.registerTypeAdapter(DefaultSchedule.class, new DefaultScheduleSerializer())
 		.registerTypeAdapter(Class.class, new JsonSerializer<Class<?>>() {
 

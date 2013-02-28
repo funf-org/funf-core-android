@@ -761,7 +761,8 @@ public interface Probe {
 		 ********************************/
 
 		/**
-		 * Used to override the serialiazation technique for multiple types
+		 * Used to override the serialiazation technique for multiple types.
+		 * You can override this method to have getGson() return a Gson object that includes your TypeAdapterFactory.
 		 * 
 		 * @return
 		 */
@@ -769,6 +770,11 @@ public interface Probe {
 			return null;
 		}
 
+		/**
+		 * Return true if this should be wake locked while in running.  
+		 * For most probes this will return true, but some may need to allow the device to sleep.
+		 * @return
+		 */
 		protected boolean isWakeLockedWhileRunning() {
 			return true;
 		}

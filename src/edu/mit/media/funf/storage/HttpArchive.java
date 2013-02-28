@@ -33,6 +33,7 @@ import java.net.URL;
 
 import android.net.Uri;
 import android.util.Log;
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.util.LogUtil;
 
 /**
@@ -43,7 +44,8 @@ import edu.mit.media.funf.util.LogUtil;
  */
 public class HttpArchive implements RemoteFileArchive {
 	
-	private String uploadUrl;
+    @Configurable
+	private String url;
 	@SuppressWarnings("unused")
 	private String mimeType;
 	
@@ -52,12 +54,12 @@ public class HttpArchive implements RemoteFileArchive {
 	}
 	
 	public HttpArchive(final String uploadUrl, final String mimeType) {
-		this.uploadUrl = uploadUrl;
+		this.url = uploadUrl;
 		this.mimeType = mimeType;
 	}
 	
 	public String getId() {
-		return uploadUrl;
+		return url;
 	}
 	
 	public boolean add(File file) {
@@ -92,7 +94,7 @@ public class HttpArchive implements RemoteFileArchive {
 		}
 	    return true;
 		*/
-		return isValidUrl(uploadUrl) ? uploadFile(file, uploadUrl) : false;
+		return isValidUrl(url) ? uploadFile(file, url) : false;
 	}
 	
 	public static boolean isValidUrl(String url) {

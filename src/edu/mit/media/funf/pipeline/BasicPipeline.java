@@ -72,10 +72,10 @@ public class BasicPipeline implements Pipeline, DataListener {
   private int version = 1;
   
   @Configurable
-  private FileArchive storage = null;
+  private FileArchive archive = null;
   
   @Configurable
-  private RemoteFileArchive backend = null;
+  private RemoteFileArchive upload = null;
 
   @Configurable
   private ConfigUpdater update = null;
@@ -99,25 +99,25 @@ public class BasicPipeline implements Pipeline, DataListener {
     public boolean handleMessage(Message msg) {
       switch (msg.what) {
         case ARCHIVE:
-          if (storage != null) {
+          if (archive != null) {
             SQLiteDatabase db = databaseHelper.getWritableDatabase();
             // TODO: add check to make sure this is not empty
             File dbFile = new File(db.getPath());
             db.close();
-            if (storage.add(dbFile)) {
+            if (archive.add(dbFile)) {
               dbFile.delete();
             }
             databaseHelper.getWritableDatabase(); // Build new database
           }
           break;
         case UPLOAD:
-          if (storage != null && backend != null) {
+          if (archive != null && upload != null) {
             if (uploadService != null) {
               uploadService.onDestroy();
             }
             uploadService = new UploadService();
             uploadService.onCreate(manager);
-            uploadService.run(storage, backend);
+            uploadService.run(archive, upload);
           }
           break;
         case UPDATE:
@@ -156,8 +156,8 @@ public class BasicPipeline implements Pipeline, DataListener {
 
   @Override
   public void onCreate(FunfManager manager) {
-    if (storage == null) {
-      storage = DefaultArchive.getArchive(manager, name);
+    if (archive == null) {
+      archive = DefaultArchive.getArchive(manager, name);
     }
     this.manager = manager;
     this.gson = manager.getGsonBuilder().create();
