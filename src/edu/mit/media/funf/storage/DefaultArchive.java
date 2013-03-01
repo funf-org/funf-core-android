@@ -23,12 +23,8 @@
  */
 package edu.mit.media.funf.storage;
 
-import static edu.mit.media.funf.util.AsyncSharedPrefs.async;
-
 import java.io.File;
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -36,7 +32,7 @@ import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.PBEKeySpec;
 
 import android.content.Context;
-import android.content.SharedPreferences;
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.security.Base64Coder;
 import edu.mit.media.funf.util.FileUtil;
 import edu.mit.media.funf.util.NameGenerator;
@@ -52,11 +48,7 @@ import edu.mit.media.funf.util.NameGenerator.SystemUniqueTimestampNameGenerator;
  */
 public class DefaultArchive implements FileArchive {
 
-	private static final String ENCRYPTION_PREFS = "edu.mit.media.funf.configured.ConfiguredEncryption";
-	private static final String ENCRYPTION_KEY = "ENCRYPTION_KEY";
 	private static final String DES_ENCRYPTION = "DES";
-	
-	private static final char[] DEFAULT_PASSWORD = "changeme".toCharArray();
 	
 	private final static byte[] SALT = {
         (byte)0xa6, (byte)0xab, (byte)0x09, (byte)0x93,
@@ -64,31 +56,31 @@ public class DefaultArchive implements FileArchive {
     };
 	private final static int ITERATION_COUNT = 135; // # of times password is hashed
 	
-	protected final String databaseName;
-	protected final Context context;
-	protected final SharedPreferences preferences;
+	@Configurable
+	protected String name;
 	
+	@Configurable
+	protected String password;
 	
-	private DefaultArchive(Context context, String databaseName) {
-		this.context = context.getApplicationContext();
-		this.databaseName = databaseName;
-		this.preferences = async(this.context.getSharedPreferences(ENCRYPTION_PREFS, Context.MODE_PRIVATE));
+	@Configurable
+	protected String key;
+	
+    protected Context context;
+	
+	public DefaultArchive() {
 	}
 	
-	private static final Map<String,DefaultArchive> instances = new HashMap<String, DefaultArchive>();
-	/**
-	 * Get an instance of the default archive for the specified database name
-	 * @param context
-	 * @param databaseName
-	 * @return
-	 */
-	public synchronized static DefaultArchive getArchive(Context context, String databaseName) {
-		DefaultArchive archive = instances.get(databaseName);
-		if (archive == null) {
-			archive = new DefaultArchive(context, databaseName);
-			instances.put(databaseName, archive);
-		}
-		return archive;
+	public DefaultArchive(Context ctx, String name) {
+	  this.context = ctx;
+	  this.name = name;
+	}
+	
+	public void setContext(Context context) {
+	  this.context = context;
+	}
+	
+	public void setName(String name) {
+	  this.name = name;
 	}
 	
 	/**
@@ -117,35 +109,31 @@ public class DefaultArchive implements FileArchive {
 		} 
 	}
 	
+	
+	private SecretKey keyCache = null;
 	protected SecretKey getKey() {
-		String encodedDesKey = preferences.getString(ENCRYPTION_KEY, null);
-		if (encodedDesKey == null) { // Use default password if key set
-			setEncryptionPassword(DEFAULT_PASSWORD); 
-			encodedDesKey = preferences.getString(ENCRYPTION_KEY, null);
-		}
-		assert encodedDesKey != null;
-		try {
-			DESKeySpec des = new DESKeySpec(Base64Coder.decode(encodedDesKey.toCharArray()));
-			return SecretKeyFactory.getInstance(DES_ENCRYPTION).generateSecret(des);
-		} catch (GeneralSecurityException e) {
-			throw new RuntimeException("Unable to build key for encryption", e);
-		} 
+	  if (keyCache == null) {
+	    if (key != null) {
+	      setEncryptionKey(Base64Coder.decode(key.toCharArray()));
+	    } else if (password != null) {
+	      setEncryptionPassword(password.toCharArray());
+	    } 
+	  }
+	  return keyCache; 
 	}
 	
-	private void saveKey(SecretKey secretKey) {
-		SharedPreferences.Editor edit = preferences.edit();
-		edit.putString(ENCRYPTION_KEY, new String(Base64Coder.encode(secretKey.getEncoded())));
-		edit.commit();
-		// Reset delegate archive, to reinitialize key
-		delegateArchive = null;
-		getDelegateArchive();
-	}
+    private void saveKey(SecretKey secretKey) {
+      keyCache = secretKey;
+      // Reset delegate archive, to reinitialize key
+      delegateArchive = null;
+      getDelegateArchive();
+    }
 
 	/////////////////////
 	// Delegate
 	
 	public String getPathOnSDCard() {
-		return FileUtil.getSdCardPath(context) + databaseName + "/";
+		return FileUtil.getSdCardPath(context) + name + "/";
 	}
 	
 	private FileArchive delegateArchive; // Cache
@@ -158,7 +146,7 @@ public class DefaultArchive implements FileArchive {
 					FileArchive backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
 					FileArchive mainArchive = new CompositeFileArchive(
 							getTimestampedDbFileArchive(new File(rootSdCardPath + "archive"), context, key),
-							getTimestampedDbFileArchive(context.getDir("funf_" + databaseName + "_archive", Context.MODE_PRIVATE), context, key)
+							getTimestampedDbFileArchive(context.getDir("funf_" + name + "_archive", Context.MODE_PRIVATE), context, key)
 							);
 					delegateArchive = new BackedUpArchive(mainArchive, backupArchive);
 				}

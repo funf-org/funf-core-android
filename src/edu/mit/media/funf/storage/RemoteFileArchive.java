@@ -38,6 +38,10 @@ public interface RemoteFileArchive {
 	 */
 	public boolean add(File file);
 	
+	/**
+	 * @return true if this remote archive is available currently
+	 */
+	public boolean isAvailable();
 	
 	/**
 	 * A unique string that represents this remote archive.  These will mostly be URIs,

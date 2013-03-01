@@ -36,7 +36,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -83,14 +82,15 @@ public class BasicPipeline implements Pipeline, DataListener {
   @Configurable
   private List<JsonElement> data = Collections.unmodifiableList(new ArrayList<JsonElement>());
   
-  //Specially named field for collecting schedules
+  @Configurable
+  private Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
+  
+  @Configurable
+  private UploadService uploader;
   
   private boolean enabled;
-  private Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
   private FunfManager manager;
-  private Gson gson;
   private SQLiteOpenHelper databaseHelper = null;
-  private UploadService uploadService = null;
   private Looper looper;
   private Handler handler;
   private Handler.Callback callback = new Handler.Callback() {
@@ -111,13 +111,8 @@ public class BasicPipeline implements Pipeline, DataListener {
           }
           break;
         case UPLOAD:
-          if (archive != null && upload != null) {
-            if (uploadService != null) {
-              uploadService.onDestroy();
-            }
-            uploadService = new UploadService();
-            uploadService.onCreate(manager);
-            uploadService.run(archive, upload);
+          if (archive != null && upload != null && uploader != null) {
+            uploader.run(archive, upload);
           }
           break;
         case UPDATE:
@@ -157,10 +152,13 @@ public class BasicPipeline implements Pipeline, DataListener {
   @Override
   public void onCreate(FunfManager manager) {
     if (archive == null) {
-      archive = DefaultArchive.getArchive(manager, name);
+      archive = new DefaultArchive(manager, name);
+    }
+    if (uploader == null) {
+      uploader = new UploadService(manager);
+      uploader.start();
     }
     this.manager = manager;
-    this.gson = manager.getGsonBuilder().create();
     this.databaseHelper = new NameValueDatabaseHelper(manager, name, version);
     HandlerThread thread = new HandlerThread(getClass().getName());
     thread.start();
@@ -183,8 +181,8 @@ public class BasicPipeline implements Pipeline, DataListener {
     for (Map.Entry<String, Schedule> schedule : schedules.entrySet()) {
       manager.unregisterPipelineAction(this, schedule.getKey());
     }
-    if (uploadService != null) {
-      uploadService.onDestroy();
+    if (uploader != null) {
+      uploader.stop();
     }
     looper.quit();
     enabled = false;
@@ -204,6 +202,10 @@ public class BasicPipeline implements Pipeline, DataListener {
   
   public SQLiteDatabase getDb() {
     return databaseHelper.getReadableDatabase();
+  }
+  
+  public List<JsonElement> getDataRequests() {
+    return data == null ? null : Collections.unmodifiableList(data);
   }
   
   @Override

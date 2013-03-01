@@ -22,119 +22,111 @@ package edu.mit.media.funf.storage;
 
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Set;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.NetworkInfo.State;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
 import edu.mit.media.funf.config.Configurable;
-import edu.mit.media.funf.util.EqualsUtil;
-import edu.mit.media.funf.util.HashCodeUtil;
 import edu.mit.media.funf.util.LockUtil;
 import edu.mit.media.funf.util.LogUtil;
 
 public class UploadService {
 
   @Configurable
-  private boolean wifiOnly = false;
+  private int maxRemoteRetries = 6; 
   
   @Configurable
-  public int maxRemoteRetries = 6; 
+  private int maxFileRetries = 3;
   
-  @Configurable
-  public int maxFileRetries = 3;
+  private Context context;
   
-
-  private Context ctx;
-  private ConnectivityManager connectivityManager;
   private Map<String, Integer> fileFailures;
   private Map<String, Integer> remoteArchiveFailures;
-  private Queue<ArchiveFile> filesToUpload;
-  private Thread uploadThread;
+  private Set<File> filesToUpload;
   private WakeLock lock;
-  private Handler mainHandler;
-  private Runnable stopSelfTask = new Runnable() {
+  
+  private Handler uploadHandler;
+  private Looper looper;
+  private Runnable endUploads = new Runnable() {
     
     @Override
     public void run() {
-      onDestroy();
+      if (lock != null && lock.isHeld()) {
+        lock.release();
+      }
+      lock = null;
     }
   };
+  
+  public UploadService() {
+    
+  }
+  
+  public UploadService(Context context) {
+    setContext(context);
+  }
+  
+  public void setContext(Context context) {
+    this.context = context;
+  }
 
-  public void onCreate(Context ctx) {
-    this.ctx = ctx;
-    mainHandler = new Handler();
-    Log.i(LogUtil.TAG, "Creating...");
-    connectivityManager = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
-    lock = LockUtil.getWakeLock(ctx);
+  public void start() {
+    HandlerThread thread = new HandlerThread(getClass().getName());
+    looper = thread.getLooper();
+    uploadHandler = new Handler(looper);
     fileFailures = new HashMap<String, Integer>();
     remoteArchiveFailures = new HashMap<String, Integer>();
-    filesToUpload = new ConcurrentLinkedQueue<ArchiveFile>();
-    // TODO: consider and add multiple upload threads
-    uploadThread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (Thread.currentThread().equals(uploadThread) && !filesToUpload.isEmpty()) {
-          ArchiveFile archiveFile = filesToUpload.poll();
-          runArchive(archiveFile.archive, archiveFile.remoteArchive, archiveFile.file,
-              archiveFile.wifiOnly);
-        }
-        uploadThread = null;
-        mainHandler.post(stopSelfTask);
+    filesToUpload = Collections.synchronizedSet(new HashSet<File>());
+  }
+
+  public void stop() {
+    looper.quit();
+    endUploads.run();
+  }
+
+  public void run(final FileArchive archive, final RemoteFileArchive remoteArchive) {
+    Log.i(LogUtil.TAG, "Running upload...");
+    if (archive != null && remoteArchive != null) {
+      if (lock == null) {
+        lock = LockUtil.getWakeLock(context);
       }
-    });
-  }
-
-  public void onDestroy() {
-    if (uploadThread != null && uploadThread.isAlive()) {
-      uploadThread = null;
-    }
-    if (lock != null && lock.isHeld()) {
-      lock.release();
-    }
-  }
-
-  public void run(FileArchive archive, RemoteFileArchive remoteArchive) {
-    Log.i(LogUtil.TAG, "Starting...");
-    if (isOnline()) {
-      if (archive != null && remoteArchive != null) {
-        for (File file : archive.getAll()) {
-          archive(archive, remoteArchive, file, wifiOnly);
-        }
+      for (final File file : archive.getAll()) {
+        archive(archive, remoteArchive, file);
       }
     }
-
-    // Start upload thread if necessary, even if no files to ensure stop
-    if (uploadThread != null && !uploadThread.isAlive()) {
-      uploadThread.start();
-    }
   }
 
 
-  public void archive(FileArchive archive, RemoteFileArchive remoteArchive, File file,
-      boolean wifiOnly) {
-    ArchiveFile archiveFile = new ArchiveFile(archive, remoteArchive, file, wifiOnly);
-    if (!filesToUpload.contains(archiveFile)) {
-      Log.i(LogUtil.TAG, "Queuing " + file.getName());
-      filesToUpload.offer(archiveFile);
+  public void archive(final FileArchive archive, final RemoteFileArchive remoteArchive, final File file) {
+    if (!filesToUpload.contains(file)) {
+      filesToUpload.add(file);
+      uploadHandler.post(new Runnable() {
+        @Override
+        public void run() {
+          runArchive(archive, remoteArchive, file);
+        }
+      });
+      uploadHandler.removeCallbacks(endUploads);
+      uploadHandler.post(endUploads); // Add stop self to end
     }
   }
 
-  protected void runArchive(FileArchive archive, RemoteFileArchive remoteArchive, File file,
-      boolean wifiOnly) {
+  protected void runArchive(FileArchive archive, RemoteFileArchive remoteArchive, File file) {
     Integer numRemoteFailures = remoteArchiveFailures.get(remoteArchive.getId());
     numRemoteFailures = (numRemoteFailures == null) ? 0 : numRemoteFailures;
-    if (numRemoteFailures < maxRemoteRetries && isOnline()) {
+    if (numRemoteFailures < maxRemoteRetries && remoteArchive.isAvailable()) {
       Log.i(LogUtil.TAG, "Archiving..." + file.getName());
       if (remoteArchive.add(file)) {
         archive.remove(file);
+        filesToUpload.remove(file);
       } else {
         Integer numFileFailures = fileFailures.get(file.getName());
         numFileFailures = (numFileFailures == null) ? 1 : numFileFailures + 1;
@@ -143,58 +135,19 @@ public class UploadService {
         remoteArchiveFailures.put(remoteArchive.getId(), numRemoteFailures);
         // 3 Attempts
         if (numFileFailures < maxFileRetries) {
-          filesToUpload.offer(new ArchiveFile(archive, remoteArchive, file, wifiOnly));
+          filesToUpload.remove(file); // Remove so we can queue up again
+          archive(archive, remoteArchive, file);
         } else {
           Log.i(LogUtil.TAG, "Failed to upload '" + file.getAbsolutePath() + "' after 3 attempts.");
+          filesToUpload.remove(file);
         }
       }
     } else {
       Log.i(LogUtil.TAG, "Canceling upload.  Remote archive '" + remoteArchive.getId()
           + "' is not currently available.");
+      filesToUpload.remove(file);
     }
   }
 
-  /**
-   * Convenience class for pairing the database name with the db file
-   */
-  protected class ArchiveFile {
-    public final FileArchive archive;
-    public final RemoteFileArchive remoteArchive;
-    public final File file;
-    public final boolean wifiOnly;
-
-    public ArchiveFile(FileArchive archive, RemoteFileArchive remoteArchive, File file,
-        boolean wifiOnly) {
-      this.archive = archive;
-      this.remoteArchive = remoteArchive;
-      this.file = file;
-      this.wifiOnly = wifiOnly;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return o != null && o instanceof ArchiveFile
-          && EqualsUtil.areEqual(remoteArchive.getId(), ((ArchiveFile) o).remoteArchive.getId())
-          && EqualsUtil.areEqual(file, ((ArchiveFile) o).file);
-    }
-
-    @Override
-    public int hashCode() {
-      return HashCodeUtil.hash(HashCodeUtil.hash(HashCodeUtil.SEED, file), remoteArchive.getId());
-    }
-  }
-
-  public boolean isOnline() {
-    NetworkInfo netInfo = connectivityManager.getActiveNetworkInfo();
-    if (!wifiOnly && netInfo != null && netInfo.isConnectedOrConnecting()) {
-      return true;
-    } else if (wifiOnly) {
-      State wifiInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
-      if (State.CONNECTED.equals(wifiInfo) || State.CONNECTING.equals(wifiInfo)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
 }

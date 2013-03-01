@@ -31,7 +31,11 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.net.NetworkInfo.State;
 import android.util.Log;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.util.LogUtil;
@@ -46,21 +50,56 @@ public class HttpArchive implements RemoteFileArchive {
 	
     @Configurable
 	private String url;
+    
+    @Configurable
+    private boolean wifiOnly = false;
+    
+    private Context context;
+    
 	@SuppressWarnings("unused")
 	private String mimeType;
 	
-	public HttpArchive(final String uploadUrl) {
-		this(uploadUrl, "application/x-binary");
+	public HttpArchive() {
+	  
 	}
 	
-	public HttpArchive(final String uploadUrl, final String mimeType) {
+	public HttpArchive(Context context, final String uploadUrl) {
+		this(context, uploadUrl, "application/x-binary");
+	}
+	
+	public HttpArchive(Context context, final String uploadUrl, final String mimeType) {
 		this.url = uploadUrl;
 		this.mimeType = mimeType;
 	}
 	
-	public String getId() {
-		return url;
+	public void setContext(Context context) {
+	  this.context = context;
 	}
+	
+	public void setUrl(String url) {
+	  this.url = url;
+	}
+	
+	public boolean isAvailable() {
+	  assert context != null;
+	  ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+      NetworkInfo netInfo = connectivityManager.getActiveNetworkInfo();
+      if (!wifiOnly && netInfo != null && netInfo.isConnectedOrConnecting()) {
+        return true;
+      } else if (wifiOnly) {
+        State wifiInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
+        if (State.CONNECTED.equals(wifiInfo) || State.CONNECTING.equals(wifiInfo)) {
+          return true;
+        }
+      }
+      return false;
+	}
+	
+	public String getId() {
+	  return url;
+	}
+	
+	
 	
 	public boolean add(File file) {
 		/*
