@@ -42,7 +42,7 @@
         <javadoc packagenames="src" sourcepath="${src.dir}" destdir="${docs.dir}">
             <!-- Define which files / directory should get included, we include all -->
             <fileset dir="${src.dir}">
-                <include name="**/edu/mit/media/funf/*" />
+                <include name="**" />
                 <!-- TODO: add excludes or includes to filter external libraries -->
             </fileset>
         </javadoc>
