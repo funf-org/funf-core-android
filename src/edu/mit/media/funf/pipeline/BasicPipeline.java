@@ -85,7 +85,6 @@ public class BasicPipeline implements Pipeline, DataListener {
   @Configurable
   private Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
   
-  @Configurable
   private UploadService uploader;
   
   private boolean enabled;
