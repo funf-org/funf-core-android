@@ -200,7 +200,7 @@ public class FunfManager extends Service {
 	  if (pipelineConfig == null) {
         unregisterPipeline(name);
 	  } else {
-	    Pipeline newPipeline = gson.fromJson((String)metadata.getString(name), Pipeline.class);
+	    Pipeline newPipeline = gson.fromJson(pipelineConfig, Pipeline.class);
 	    registerPipeline(name, newPipeline); // Will unregister previous before running
 	  }
 	}
@@ -364,6 +364,17 @@ public class FunfManager extends Service {
 		return getGsonBuilder(this);
 	}
 	
+	public static class ConfigurableRuntimeTypeAdapterFactory<E> extends DefaultRuntimeTypeAdapterFactory<E> {
+
+      public ConfigurableRuntimeTypeAdapterFactory(Context context, Class<E> baseClass, Class<? extends E> defaultClass) {
+        super(context, 
+            baseClass, 
+            defaultClass, 
+            new ContextInjectorTypeAdapaterFactory(context, new ConfigurableTypeAdapterFactory()));
+      }
+	  
+	}
+	
 	/**
 	 * Get a gson builder with the probe factory built in
 	 * @return
@@ -372,10 +383,10 @@ public class FunfManager extends Service {
 		return new GsonBuilder()
 		.registerTypeAdapterFactory(getProbeFactory(context))
 		.registerTypeAdapterFactory(getPipelineFactory(context))
-		.registerTypeAdapterFactory(new DefaultRuntimeTypeAdapterFactory<Schedule>(context, Schedule.class, BasicSchedule.class))
-		.registerTypeAdapterFactory(new DefaultRuntimeTypeAdapterFactory<ConfigUpdater>(context, ConfigUpdater.class, HttpConfigUpdater.class))
-		.registerTypeAdapterFactory(new DefaultRuntimeTypeAdapterFactory<FileArchive>(context, FileArchive.class, null)) // TODO: this will probably fail if it ever gets called without a @type field
-		.registerTypeAdapterFactory(new DefaultRuntimeTypeAdapterFactory<RemoteFileArchive>(context, RemoteFileArchive.class, HttpArchive.class))
+		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<Schedule>(context, Schedule.class, BasicSchedule.class))
+		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<ConfigUpdater>(context, ConfigUpdater.class, HttpConfigUpdater.class))
+		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<FileArchive>(context, FileArchive.class, null)) // TODO: this will probably fail if it ever gets called without a @type field
+		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<RemoteFileArchive>(context, RemoteFileArchive.class, HttpArchive.class))
 		.registerTypeAdapter(DefaultSchedule.class, new DefaultScheduleSerializer())
 		.registerTypeAdapter(Class.class, new JsonSerializer<Class<?>>() {
 
@@ -444,10 +455,12 @@ public class FunfManager extends Service {
 	}
 	
 	public void unregisterPipeline(String name) {
-		Pipeline existingPipeline = pipelines.get(name);
+	  synchronized (pipelines) {
+		Pipeline existingPipeline = pipelines.remove(name);
 		if (existingPipeline != null) {
 			existingPipeline.onDestroy();
 		}
+	  }
 	}
 	
 	public void enablePipeline(String name) {

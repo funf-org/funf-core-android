@@ -80,6 +80,7 @@ public class UploadService {
 
   public void start() {
     HandlerThread thread = new HandlerThread(getClass().getName());
+    thread.start();
     looper = thread.getLooper();
     uploadHandler = new Handler(looper);
     fileFailures = new HashMap<String, Integer>();

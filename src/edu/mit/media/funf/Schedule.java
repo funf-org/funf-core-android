@@ -33,6 +33,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.math.BigDecimal;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.time.DecimalTimeUnit;
 import edu.mit.media.funf.time.TimeUtil;
@@ -58,9 +59,16 @@ public interface Schedule {
 	
 	public class BasicSchedule implements Schedule {
 		
+	    @Configurable
 		private BigDecimal interval = null;
+	    
+	    @Configurable
 		private BigDecimal duration = null;
+	    
+	    @Configurable
 		private boolean opportunistic = true;
+	    
+	    @Configurable
 		private boolean strict = false;
 		
 		public BasicSchedule() {
