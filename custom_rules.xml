@@ -24,6 +24,30 @@
  -->
 <project name="funf" default="help">
 
+    <property name="src.dir" location="src" />
+    <property name="docs.dir" location="bin/docs" />
+
+    <!-- Deletes the existing build, docs and dist directory-->
+    <target name="clean">
+        <delete dir="${docs.dir}" />
+    </target>
+
+    <!-- Creates the  build, docs and dist directory-->
+    <target name="makedir">
+        <mkdir dir="${docs.dir}" />
+    </target>
+
+    <!-- Creates Javadoc -->
+    <target name="docs">
+        <javadoc packagenames="src" sourcepath="${src.dir}" destdir="${docs.dir}">
+            <!-- Define which files / directory should get included, we include all -->
+            <fileset dir="${src.dir}">
+                <include name="**" />
+                <!-- TODO: add excludes or includes to filter external libraries -->
+            </fileset>
+        </javadoc>
+    </target>
+
 	<target name="getgitdetails" >
 	        <exec executable="git" outputproperty="git.tagstring">
 	                <arg value="describe"/>
