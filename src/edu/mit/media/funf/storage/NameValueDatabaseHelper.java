@@ -44,7 +44,7 @@ public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 	public static final String COLUMN_VALUE = "value";
 	public static final Table DATA_TABLE = new Table("data", 
 			Arrays.asList(new Column(COLUMN_NAME, "TEXT"), // ACTION from data broadcast
-					      new Column(COLUMN_TIMESTAMP, "INTEGER"), // TIMESTAMP in data broadcast
+					      new Column(COLUMN_TIMESTAMP, "FLOAT"), // TIMESTAMP in data broadcast
 					      new Column(COLUMN_VALUE, "TEXT"))); // JSON representing 
 	public static final String COLUMN_DATABASE_NAME= "dbname";
 	public static final String COLUMN_INSTALLATION = "device";
@@ -54,7 +54,7 @@ public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 			Arrays.asList(new Column(COLUMN_DATABASE_NAME, "TEXT"), // Name of this database
 						  new Column(COLUMN_INSTALLATION, "TEXT"), // Universally Unique Id for device installation 
 				      	  new Column(COLUMN_UUID, "TEXT"), // Universally Unique Id for file 
-					      new Column(COLUMN_CREATED, "INTEGER"))); // TIMESTAMP in data broadcast
+					      new Column(COLUMN_CREATED, "FLOAT"))); // TIMESTAMP in data broadcast
 	
 	
 	private final Context context;

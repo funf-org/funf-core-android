@@ -212,6 +212,91 @@ public class BasicPipeline implements Pipeline, DataListener {
     return enabled;
   }
 
+  public String getName() {
+    return name;
+  }
+
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+
+  public int getVersion() {
+    return version;
+  }
+
+
+  public void setVersion(int version) {
+    this.version = version;
+  }
+
+
+  public FileArchive getArchive() {
+    return archive;
+  }
+
+
+  public void setArchive(FileArchive archive) {
+    this.archive = archive;
+  }
+
+
+  public RemoteFileArchive getUpload() {
+    return upload;
+  }
+
+
+  public void setUpload(RemoteFileArchive upload) {
+    this.upload = upload;
+  }
+
+
+  public ConfigUpdater getUpdate() {
+    return update;
+  }
+
+
+  public void setUpdate(ConfigUpdater update) {
+    this.update = update;
+  }
+
+
+  public void setDataRequests(List<JsonElement> data) {
+    this.data = data;
+  }
+
+
+  public Map<String, Schedule> getSchedules() {
+    return schedules;
+  }
+
+
+  public void setSchedules(Map<String, Schedule> schedules) {
+    this.schedules = schedules;
+  }
+
+
+  public UploadService getUploader() {
+    return uploader;
+  }
+
+
+  public void setUploader(UploadService uploader) {
+    this.uploader = uploader;
+  }
+
+
+  public SQLiteOpenHelper getDatabaseHelper() {
+    return databaseHelper;
+  }
+
+
+  public void setDatabaseHelper(SQLiteOpenHelper databaseHelper) {
+    this.databaseHelper = databaseHelper;
+  }
+
+
   @Override
   public void onDataReceived(IJsonObject probeConfig, IJsonObject data) {
     JsonObject record = new JsonObject();
