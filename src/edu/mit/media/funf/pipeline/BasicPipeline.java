@@ -53,6 +53,7 @@ import edu.mit.media.funf.storage.NameValueDatabaseHelper;
 import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.storage.UploadService;
 import edu.mit.media.funf.util.LogUtil;
+import edu.mit.media.funf.util.StringUtil;
 
 public class BasicPipeline implements Pipeline, DataListener {
 
@@ -106,7 +107,7 @@ public class BasicPipeline implements Pipeline, DataListener {
             if (archive.add(dbFile)) {
               dbFile.delete();
             }
-            databaseHelper = new NameValueDatabaseHelper(manager, name, version);
+            databaseHelper = new NameValueDatabaseHelper(manager, StringUtil.simpleFilesafe(name), version);
             databaseHelper.getWritableDatabase(); // Build new database
           }
           break;
@@ -159,7 +160,7 @@ public class BasicPipeline implements Pipeline, DataListener {
       uploader.start();
     }
     this.manager = manager;
-    this.databaseHelper = new NameValueDatabaseHelper(manager, name, version);
+    this.databaseHelper = new NameValueDatabaseHelper(manager, StringUtil.simpleFilesafe(name), version);
     HandlerThread thread = new HandlerThread(getClass().getName());
     thread.start();
     this.looper = thread.getLooper();

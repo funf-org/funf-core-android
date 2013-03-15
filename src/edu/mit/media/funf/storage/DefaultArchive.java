@@ -36,6 +36,7 @@ import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.security.Base64Coder;
 import edu.mit.media.funf.util.FileUtil;
 import edu.mit.media.funf.util.NameGenerator;
+import edu.mit.media.funf.util.StringUtil;
 import edu.mit.media.funf.util.NameGenerator.CompositeNameGenerator;
 import edu.mit.media.funf.util.NameGenerator.RequiredSuffixNameGenerator;
 import edu.mit.media.funf.util.NameGenerator.SystemUniqueTimestampNameGenerator;
@@ -57,7 +58,7 @@ public class DefaultArchive implements FileArchive {
 	private final static int ITERATION_COUNT = 135; // # of times password is hashed
 	
 	@Configurable
-	protected String name;
+	protected String name = "default";
 	
 	@Configurable
 	protected String password;
@@ -131,9 +132,14 @@ public class DefaultArchive implements FileArchive {
 
 	/////////////////////
 	// Delegate
+    
+    
+    private String getCleanedName() {
+      return StringUtil.simpleFilesafe(name);
+    }
 	
 	public String getPathOnSDCard() {
-		return FileUtil.getSdCardPath(context) + name + "/";
+		return FileUtil.getSdCardPath(context) + getCleanedName() + "/";
 	}
 	
 	private FileArchive delegateArchive; // Cache
@@ -146,7 +152,7 @@ public class DefaultArchive implements FileArchive {
 					FileArchive backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
 					FileArchive mainArchive = new CompositeFileArchive(
 							getTimestampedDbFileArchive(new File(rootSdCardPath + "archive"), context, key),
-							getTimestampedDbFileArchive(context.getDir("funf_" + name + "_archive", Context.MODE_PRIVATE), context, key)
+							getTimestampedDbFileArchive(context.getDir("funf_" + getCleanedName() + "_archive", Context.MODE_PRIVATE), context, key)
 							);
 					delegateArchive = new BackedUpArchive(mainArchive, backupArchive);
 				}

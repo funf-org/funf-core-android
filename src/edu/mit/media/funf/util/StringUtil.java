@@ -55,4 +55,8 @@ public class StringUtil {
 		}
 		return joined.toString();
 	}
+	
+	public static String simpleFilesafe(String value) {
+	  return value == null ? "" : value.replaceAll("[^a-zA-Z0-9-_\\.]", "_").toLowerCase();
+	}
 }
