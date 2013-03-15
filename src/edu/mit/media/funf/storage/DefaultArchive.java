@@ -93,7 +93,7 @@ public class DefaultArchive implements FileArchive {
 		try {
 			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
 			SecretKey secretKey = factory.generateSecret(keySpec);
-			saveKey(secretKey);
+			setEncryptionKey(secretKey.getEncoded());
 		} catch (GeneralSecurityException e) {
 			throw new RuntimeException("Unable to encrypt data files.", e);
 		} 

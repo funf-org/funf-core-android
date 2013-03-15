@@ -385,7 +385,7 @@ public class FunfManager extends Service {
 		.registerTypeAdapterFactory(getPipelineFactory(context))
 		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<Schedule>(context, Schedule.class, BasicSchedule.class))
 		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<ConfigUpdater>(context, ConfigUpdater.class, HttpConfigUpdater.class))
-		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<FileArchive>(context, FileArchive.class, DefaultArchive.class)) // TODO: this will probably fail if it ever gets called without a @type field
+		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<FileArchive>(context, FileArchive.class, DefaultArchive.class))
 		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<RemoteFileArchive>(context, RemoteFileArchive.class, HttpArchive.class))
 		.registerTypeAdapter(DefaultSchedule.class, new DefaultScheduleSerializer())
 		.registerTypeAdapter(Class.class, new JsonSerializer<Class<?>>() {
