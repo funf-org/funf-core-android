@@ -106,6 +106,7 @@ public class BasicPipeline implements Pipeline, DataListener {
             if (archive.add(dbFile)) {
               dbFile.delete();
             }
+            databaseHelper = new NameValueDatabaseHelper(manager, name, version);
             databaseHelper.getWritableDatabase(); // Build new database
           }
           break;
