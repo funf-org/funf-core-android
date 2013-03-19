@@ -36,10 +36,10 @@ import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.security.Base64Coder;
 import edu.mit.media.funf.util.FileUtil;
 import edu.mit.media.funf.util.NameGenerator;
-import edu.mit.media.funf.util.StringUtil;
 import edu.mit.media.funf.util.NameGenerator.CompositeNameGenerator;
 import edu.mit.media.funf.util.NameGenerator.RequiredSuffixNameGenerator;
 import edu.mit.media.funf.util.NameGenerator.SystemUniqueTimestampNameGenerator;
+import edu.mit.media.funf.util.StringUtil;
 
 /**
  * A default implementation of a file archive, which should be good enough for most cases.

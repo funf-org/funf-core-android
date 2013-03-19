@@ -48,6 +48,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.probe.Probe.ContinuableProbe;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
@@ -55,6 +56,7 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.ContactKeys;
 
 @DisplayName("Contacts Probe")
 @RequiredPermissions(android.Manifest.permission.READ_CONTACTS)
+@Schedule.DefaultSchedule(interval=604800)
 public class ContactProbe extends ContentProviderProbe implements ContactKeys, ContinuableProbe {
 
 	private class VersionMap extends TreeMap<Integer,Integer> {private static final long serialVersionUID = 8835219249716647742L;}

@@ -27,7 +27,7 @@ public class DefaultArchiveTest extends AndroidTestCase {
 
 	
 	public void testEncryptionKeyGeneration() {
-		DefaultArchive testDbArchive = DefaultArchive.getArchive(getContext(), "testDb");
+		DefaultArchive testDbArchive = new DefaultArchive(getContext(), "testDb");
 		testDbArchive.setEncryptionPassword("changeme".toCharArray());
 		testDbArchive.setEncryptionPassword("test1234".toCharArray());
 	}

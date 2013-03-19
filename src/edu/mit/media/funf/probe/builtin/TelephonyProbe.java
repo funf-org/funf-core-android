@@ -30,7 +30,6 @@ import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.data.DataNormalizer.PhoneNumberNormalizer;
-import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
@@ -40,7 +39,7 @@ import edu.mit.media.funf.probe.builtin.ProbeKeys.TelephonyKeys;
 @RequiredFeatures("android.hardware.telephony")
 @Schedule.DefaultSchedule(interval=604800)
 @DisplayName("Mobile Network Info Probe")
-public class TelephonyProbe extends Base implements TelephonyKeys {
+public class TelephonyProbe extends ImpulseProbe implements TelephonyKeys {
 
 	@Override
 	protected void onStart() {

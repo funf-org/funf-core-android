@@ -62,7 +62,7 @@ public class BasicPipeline implements Pipeline, DataListener {
   ACTION_UPLOAD = "upload",
   ACTION_UPDATE = "update";
   
-  private final int ARCHIVE = 0, UPLOAD = 1, UPDATE = 2, DATA = 3;
+  protected final int ARCHIVE = 0, UPLOAD = 1, UPDATE = 2, DATA = 3;
   
 
   @Configurable
@@ -97,6 +97,7 @@ public class BasicPipeline implements Pipeline, DataListener {
     
     @Override
     public boolean handleMessage(Message msg) {
+      onBeforeRun(msg.what, (IJsonObject)msg.obj);
       switch (msg.what) {
         case ARCHIVE:
           if (archive != null) {
@@ -129,7 +130,7 @@ public class BasicPipeline implements Pipeline, DataListener {
         default:
           break;
       }
-      // TODO Auto-generated method stub
+      onAfterRun(msg.what, (IJsonObject)msg.obj);
       return false;
     }
   };
@@ -200,6 +201,25 @@ public class BasicPipeline implements Pipeline, DataListener {
       handler.obtainMessage(UPDATE, config).sendToTarget();
     } 
   }
+  
+  /**
+   * Used as a hook to customize behavior before an action takes place.
+   * @param action the type of action taking place
+   * @param config the configuration for the action
+   */
+  protected void onBeforeRun(int action, JsonElement config) {
+    
+  }
+  
+  /**
+   * Used as a hook to customize behavior after an action takes place.
+   * @param action the type of action taking place
+   * @param config the configuration for the action
+   */
+  protected void onAfterRun(int action, JsonElement config) {
+    
+  }
+  
   
   public SQLiteDatabase getDb() {
     return databaseHelper.getReadableDatabase();
