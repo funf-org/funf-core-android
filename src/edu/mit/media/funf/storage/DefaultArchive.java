@@ -90,6 +90,9 @@ public class DefaultArchive implements FileArchive {
 	 * @param encryptionPassword
 	 */
 	public void setEncryptionPassword(char[] encryptionPassword) { // Uses char[] instead of String to prevent caching
+	  if (encryptionPassword == null || encryptionPassword.length == 0) {
+	    setEncryptionKey(null);
+	  } else {
 		PBEKeySpec keySpec = new PBEKeySpec(encryptionPassword, SALT, ITERATION_COUNT);
 		try {
 			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
@@ -98,9 +101,13 @@ public class DefaultArchive implements FileArchive {
 		} catch (GeneralSecurityException e) {
 			throw new RuntimeException("Unable to encrypt data files.", e);
 		} 
+	  }
 	}
 	
 	public void setEncryptionKey(byte[] encryptionKey) {
+	  if (encryptionKey == null || encryptionKey.length == 0) {
+        saveKey(null);
+      } else {
 		try {
 			DESKeySpec des = new DESKeySpec(encryptionKey);
 			SecretKey key = SecretKeyFactory.getInstance(DES_ENCRYPTION).generateSecret(des);
@@ -108,11 +115,12 @@ public class DefaultArchive implements FileArchive {
 		} catch (GeneralSecurityException e) {
 			throw new RuntimeException("Unable to build key for encryption", e);
 		} 
+      }
 	}
 	
 	
 	private SecretKey keyCache = null;
-	protected SecretKey getKey() {
+	public SecretKey getSecretKey() {
 	  if (keyCache == null) {
 	    if (key != null) {
 	      setEncryptionKey(Base64Coder.decode(key.toCharArray()));
@@ -147,7 +155,7 @@ public class DefaultArchive implements FileArchive {
 		if (delegateArchive == null) {
 			synchronized (this) {
 				if (delegateArchive == null) {
-					SecretKey key = getKey();
+					SecretKey key = getSecretKey();
 					String rootSdCardPath = getPathOnSDCard();
 					FileArchive backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
 					FileArchive mainArchive = new CompositeFileArchive(

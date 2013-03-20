@@ -2,6 +2,7 @@ package edu.mit.media.funf.config;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import edu.mit.media.funf.util.IOUtil;
 
@@ -15,9 +16,18 @@ public class HttpConfigUpdater extends ConfigUpdater {
   private String url;
   
   @Override
-  protected JsonObject getConfig() {
-    String content = IOUtil.httpGet(url, null);
-    return new JsonParser().parse(content).getAsJsonObject();
+  public JsonObject getConfig() throws ConfigUpdateException {
+    try {
+      String content = IOUtil.httpGet(url, null);
+      if (content == null) {
+        throw new ConfigUpdateException("Unable to download configuration.");
+      }
+      return new JsonParser().parse(content).getAsJsonObject();
+    } catch (JsonSyntaxException e) {
+      throw new ConfigUpdateException("Bad json in configuration.", e);
+    } catch (IllegalStateException e) {
+      throw new ConfigUpdateException("Bad json in configuration.", e);
+    }
   }
 
   public String getUrl() {

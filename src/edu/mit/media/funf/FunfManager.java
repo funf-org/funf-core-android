@@ -214,17 +214,23 @@ public class FunfManager extends Service {
 	  return configString == null ? null : new JsonParser().parse(configString).getAsJsonObject();
 	}
 	
-	public boolean saveAndReload(String name, JsonObject config) {
+	public boolean save(String name, JsonObject config) {
 	  try {
-	    // Check if this is a valid pipeline before saving
-	    Pipeline pipeline = getGson().fromJson(config, Pipeline.class);
-	    boolean result = prefs.edit().putString(name, config.toString()).commit();
-	    reload(name);
-	    return result;
-	  } catch (Exception e) {
-	    Log.e(LogUtil.TAG, "Unable to save config: " + config.toString());
-	    return false;
+        // Check if this is a valid pipeline before saving
+  	    Pipeline pipeline = getGson().fromJson(config, Pipeline.class);
+        return prefs.edit().putString(name, config.toString()).commit();
+      } catch (Exception e) {
+        Log.e(LogUtil.TAG, "Unable to save config: " + config.toString());
+        return false;
+      }
+	}
+	
+	public boolean saveAndReload(String name, JsonObject config) {
+	  boolean success = save(name, config);
+	  if (success) {
+        reload(name);
 	  }
+	  return success;
 	}
 
 	@Override
@@ -469,6 +475,10 @@ public class FunfManager extends Service {
 	    prefs.edit().putString(DISABLED_PIPELINE_LIST, StringUtil.join(disabledPipelineNames, ",")).commit();
 	    reload(name);
 	  }
+	}
+	
+	public boolean isEnabled(String name) {
+	  return !disabledPipelineNames.contains(name);
 	}
 	
 	public void disablePipeline(String name) {

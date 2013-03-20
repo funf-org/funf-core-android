@@ -1,7 +1,6 @@
 /**
  * 
- * Funf: Open Sensing Framework Copyright (C) 2010-2011 Nadav Aharony, Wei Pan, Alex Pentland.
- * Acknowledgments: Alan Gardner Contact: nadav@media.mit.edu
+ * Funf: Open Sensing Framework Copyright (C) 2013 Alan Gardner
  * 
  * This file is part of Funf.
  * 
@@ -66,25 +65,25 @@ public class BasicPipeline implements Pipeline, DataListener {
   
 
   @Configurable
-  private String name = "default";
+  protected String name = "default";
   
   @Configurable
-  private int version = 1;
+  protected int version = 1;
   
   @Configurable
-  private FileArchive archive = null;
+  protected FileArchive archive = null;
   
   @Configurable
-  private RemoteFileArchive upload = null;
+  protected RemoteFileArchive upload = null;
 
   @Configurable
-  private ConfigUpdater update = null;
+  protected ConfigUpdater update = null;
 
   @Configurable
-  private List<JsonElement> data = Collections.unmodifiableList(new ArrayList<JsonElement>());
+  protected List<JsonElement> data = new ArrayList<JsonElement>();
   
   @Configurable
-  private Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
+  protected Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
   
   private UploadService uploader;
   
@@ -101,15 +100,7 @@ public class BasicPipeline implements Pipeline, DataListener {
       switch (msg.what) {
         case ARCHIVE:
           if (archive != null) {
-            SQLiteDatabase db = databaseHelper.getWritableDatabase();
-            // TODO: add check to make sure this is not empty
-            File dbFile = new File(db.getPath());
-            db.close();
-            if (archive.add(dbFile)) {
-              dbFile.delete();
-            }
-            databaseHelper = new NameValueDatabaseHelper(manager, StringUtil.simpleFilesafe(name), version);
-            databaseHelper.getWritableDatabase(); // Build new database
+            runArchive();
           }
           break;
         case UPLOAD:
@@ -134,6 +125,18 @@ public class BasicPipeline implements Pipeline, DataListener {
       return false;
     }
   };
+  
+  protected void runArchive() {
+    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    // TODO: add check to make sure this is not empty
+    File dbFile = new File(db.getPath());
+    db.close();
+    if (archive.add(dbFile)) {
+      dbFile.delete();
+    }
+    databaseHelper = new NameValueDatabaseHelper(manager, StringUtil.simpleFilesafe(name), version);
+    databaseHelper.getWritableDatabase(); // Build new database
+  }
   
   protected void writeData(String name, IJsonObject data) {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
@@ -220,6 +223,14 @@ public class BasicPipeline implements Pipeline, DataListener {
     
   }
   
+  protected Handler getHandler() {
+    return handler;
+  }
+  
+  protected FunfManager getFunfManager() {
+    return manager;
+  }
+  
   
   public SQLiteDatabase getDb() {
     return databaseHelper.getReadableDatabase();
@@ -285,7 +296,7 @@ public class BasicPipeline implements Pipeline, DataListener {
 
 
   public void setDataRequests(List<JsonElement> data) {
-    this.data = data;
+    this.data = new ArrayList<JsonElement>(data); // Defensive copy
   }
 
 
