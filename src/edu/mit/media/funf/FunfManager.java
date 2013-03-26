@@ -450,6 +450,7 @@ public class FunfManager extends Service {
 	
 	public void registerPipeline(String name, Pipeline pipeline) {
 		synchronized (pipelines) {
+		  Log.d(LogUtil.TAG, "Registering pipeline: " + name);
 			unregisterPipeline(name);
 			pipelines.put(name, pipeline);
 			pipeline.onCreate(this);
@@ -478,7 +479,7 @@ public class FunfManager extends Service {
 	}
 	
 	public boolean isEnabled(String name) {
-	  return !disabledPipelineNames.contains(name);
+	  return this.pipelines.containsKey(name) && !disabledPipelineNames.contains(name);
 	}
 	
 	public void disablePipeline(String name) {

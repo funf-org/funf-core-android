@@ -44,6 +44,7 @@ public class AndroidInfoProbe extends ImpulseProbe implements AndroidInfoKeys {
 				+ " " + Build.TAGS);
 		data.addProperty(SDK, Integer.parseInt(Build.VERSION.SDK, 10));
 		sendData(data);
+		stop();
 	}
 	
 }

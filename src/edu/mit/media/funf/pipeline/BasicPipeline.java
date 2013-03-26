@@ -96,7 +96,7 @@ public class BasicPipeline implements Pipeline, DataListener {
     
     @Override
     public boolean handleMessage(Message msg) {
-      onBeforeRun(msg.what, (IJsonObject)msg.obj);
+      onBeforeRun(msg.what, (JsonObject)msg.obj);
       switch (msg.what) {
         case ARCHIVE:
           if (archive != null) {
@@ -121,7 +121,7 @@ public class BasicPipeline implements Pipeline, DataListener {
         default:
           break;
       }
-      onAfterRun(msg.what, (IJsonObject)msg.obj);
+      onAfterRun(msg.what, (JsonObject)msg.obj);
       return false;
     }
   };

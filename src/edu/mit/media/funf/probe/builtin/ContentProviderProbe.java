@@ -67,6 +67,7 @@ public abstract class ContentProviderProbe extends ImpulseProbe {
 				sendData(data);
 			}
 		}
+		stop();
 	}
 
 	
