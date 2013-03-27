@@ -115,6 +115,7 @@ public class FunfManager extends Service {
 	private JsonParser parser;
 	private SharedPreferences prefs;
 	private Map<String,Pipeline> pipelines;
+	private Map<String,Pipeline> disabledPipelines;
 	private Set<String> disabledPipelineNames;
 	private Map<IJsonObject,List<DataRequestInfo>> dataRequests; 	
 	private class DataRequestInfo {
@@ -153,6 +154,7 @@ public class FunfManager extends Service {
 		this.dataRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
 		this.prefs = getSharedPreferences(getClass().getName(), MODE_PRIVATE);
 		this.pipelines = new HashMap<String, Pipeline>();
+		this.disabledPipelines = new HashMap<String, Pipeline>();
 		this.disabledPipelineNames = new HashSet<String>(Arrays.asList(prefs.getString(DISABLED_PIPELINE_LIST, "").split(",")));
 		this.disabledPipelineNames.remove(""); // Remove the empty name, if no disabled pipelines exist
 		reload();
@@ -190,13 +192,17 @@ public class FunfManager extends Service {
       }
 	  String pipelineConfig = null;
 	  Bundle metadata = getMetadata();
-	  if (disabledPipelineNames.contains(name)) {
-	    // Disabled, so don't load any config
-	  } else if (prefs.contains(name)) {
+	  if (prefs.contains(name)) {
 	    pipelineConfig = prefs.getString(name, null);
 	  } else if (metadata.containsKey(name)) {
 	    pipelineConfig = metadata.getString(name);
 	  } 
+	  if (disabledPipelineNames.contains(name)) {
+        // Disabled, so don't load any config
+	    Pipeline disabledPipeline = gson.fromJson(pipelineConfig, Pipeline.class);
+	    disabledPipelines.put(name, disabledPipeline);
+	    pipelineConfig = null;
+      }
 	  if (pipelineConfig == null) {
         unregisterPipeline(name);
 	  } else {
@@ -458,7 +464,11 @@ public class FunfManager extends Service {
 	}
 	
 	public Pipeline getRegisteredPipeline(String name) {
-		return pipelines.get(name);
+		Pipeline p = pipelines.get(name);
+		if (p == null) {
+		  p = disabledPipelines.get(name);
+		}
+		return p;
 	}
 	
 	public void unregisterPipeline(String name) {

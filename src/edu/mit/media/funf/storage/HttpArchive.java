@@ -35,17 +35,17 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.NetworkInfo.State;
-import android.net.Uri;
 import android.util.Log;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.util.IOUtil;
 import edu.mit.media.funf.util.LogUtil;
 
 /**
  * Archives a file to the url specified using POST HTTP method.
- * 
- * NOTE: not complete or tested
  *
  */
+@DefaultSchedule(interval=21600) // 6h
 public class HttpArchive implements RemoteFileArchive {
 	
     @Configurable
@@ -133,25 +133,7 @@ public class HttpArchive implements RemoteFileArchive {
 		}
 	    return true;
 		*/
-		return isValidUrl(url) ? uploadFile(file, url) : false;
-	}
-	
-	public static boolean isValidUrl(String url) {
-		Log.d(LogUtil.TAG, "Validating url");
-		boolean isValidUrl = false;
-		if (url != null &&  !url.trim().equals("")) {
-			try {
-				Uri test = Uri.parse(url);
-				isValidUrl = test.getScheme() != null 
-				&& test.getScheme().startsWith("http") 
-				&& test.getHost() != null 
-				&& !test.getHost().trim().equals("");
-			} catch (Exception e) {
-				Log.d(LogUtil.TAG, "Not valid", e);
-			}
-		}
-		Log.d(LogUtil.TAG, "Valid url? " + isValidUrl);
-		return isValidUrl;
+		return IOUtil.isValidUrl(url) ? uploadFile(file, url) : false;
 	}
 	
 	/**

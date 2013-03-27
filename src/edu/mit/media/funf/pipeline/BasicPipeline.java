@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -126,6 +127,10 @@ public class BasicPipeline implements Pipeline, DataListener {
     }
   };
   
+  protected void reloadDbHelper(Context ctx) {
+    this.databaseHelper = new NameValueDatabaseHelper(ctx, StringUtil.simpleFilesafe(name), version);
+  }
+  
   protected void runArchive() {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     // TODO: add check to make sure this is not empty
@@ -134,7 +139,7 @@ public class BasicPipeline implements Pipeline, DataListener {
     if (archive.add(dbFile)) {
       dbFile.delete();
     }
-    databaseHelper = new NameValueDatabaseHelper(manager, StringUtil.simpleFilesafe(name), version);
+    reloadDbHelper(manager);
     databaseHelper.getWritableDatabase(); // Build new database
   }
   
@@ -164,7 +169,7 @@ public class BasicPipeline implements Pipeline, DataListener {
       uploader.start();
     }
     this.manager = manager;
-    this.databaseHelper = new NameValueDatabaseHelper(manager, StringUtil.simpleFilesafe(name), version);
+    reloadDbHelper(manager);
     HandlerThread thread = new HandlerThread(getClass().getName());
     thread.start();
     this.looper = thread.getLooper();

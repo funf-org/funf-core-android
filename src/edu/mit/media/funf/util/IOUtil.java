@@ -60,6 +60,7 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpParams;
 
+import android.net.Uri;
 import android.util.Log;
 
 public class IOUtil {
@@ -116,4 +117,22 @@ public class IOUtil {
 		}
 		return false;
 	}
+
+  public static boolean isValidUrl(String url) {
+  	Log.d(LogUtil.TAG, "Validating url");
+  	boolean isValidUrl = false;
+  	if (url != null &&  !url.trim().equals("")) {
+  		try {
+  			Uri test = Uri.parse(url);
+  			isValidUrl = test.getScheme() != null 
+  			&& test.getScheme().startsWith("http") 
+  			&& test.getHost() != null 
+  			&& !test.getHost().trim().equals("");
+  		} catch (Exception e) {
+  			Log.d(LogUtil.TAG, "Not valid", e);
+  		}
+  	}
+  	Log.d(LogUtil.TAG, "Valid url? " + isValidUrl);
+  	return isValidUrl;
+  }
 }

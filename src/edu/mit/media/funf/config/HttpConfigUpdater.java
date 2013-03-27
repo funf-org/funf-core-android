@@ -18,7 +18,10 @@ public class HttpConfigUpdater extends ConfigUpdater {
   @Override
   public JsonObject getConfig() throws ConfigUpdateException {
     try {
-      String content = IOUtil.httpGet(url, null);
+      String content = null; 
+      if (IOUtil.isValidUrl(url)) {
+        content = IOUtil.httpGet(url, null);
+      }
       if (content == null) {
         throw new ConfigUpdateException("Unable to download configuration.");
       }

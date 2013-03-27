@@ -40,6 +40,7 @@ import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.ContinuousProbe;
+import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
@@ -51,6 +52,7 @@ import edu.mit.media.funf.time.DecimalTimeUnit;
  * @author alangardner
  *
  */
+@DisplayName("Continuous Location Probe")
 @RequiredPermissions({android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION})
 @RequiredFeatures("android.hardware.location")
 @Schedule.DefaultSchedule(interval=1800)

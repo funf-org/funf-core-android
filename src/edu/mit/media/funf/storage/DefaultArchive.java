@@ -32,6 +32,7 @@ import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.PBEKeySpec;
 
 import android.content.Context;
+import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.security.Base64Coder;
 import edu.mit.media.funf.util.FileUtil;
@@ -47,6 +48,7 @@ import edu.mit.media.funf.util.StringUtil;
  * This archive provides internal memory and SD card redundancy, managed backups, as well as file encryption.
  * Archives are singletons by database name.
  */
+@DefaultSchedule(interval=3600)
 public class DefaultArchive implements FileArchive {
 
 	private static final String DES_ENCRYPTION = "DES";
