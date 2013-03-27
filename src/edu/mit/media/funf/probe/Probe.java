@@ -96,7 +96,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 	PROBE_STATE_ENABLED = "ENABLED",
 	PROBE_STATE_DISABLED = "DISABLED";
 	
-	private static final long FAR_IN_FUTURE_MILLIS = 365 * 24 * 60 * 60 * 1000; // One year
+	private static final long FAR_IN_FUTURE_MILLIS = 365L * 24 * 60 * 60 * 1000; // One year
 	
 	private PowerManager.WakeLock lock;
 	private Intent requestsIntent;
@@ -689,7 +689,7 @@ public abstract class Probe extends CustomizedIntentService implements BaseProbe
 		if (periodParameter == null) {
 			return true;
 		} else {
-			long period = dataRequest.getLong(periodParameter.getName(), (Long)periodParameter.getValue());
+			long period = Utils.getLong(dataRequest, periodParameter.getName(), (Long)periodParameter.getValue());
 			return dataTime >= (lastDataSentTime + period);
 		}
 	}

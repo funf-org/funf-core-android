@@ -231,6 +231,7 @@ public abstract class ConfiguredPipeline extends CustomizedIntentService impleme
 		if (pi != null) {
 			AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
 			alarmManager.cancel(pi);
+			pi.cancel();
 		}
 	}
 	

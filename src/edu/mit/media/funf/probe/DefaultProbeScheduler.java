@@ -64,7 +64,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 		}
 
 		// Check if should run now
-		long period = Utils.secondsToMillis(params.getLong(Parameter.Builtin.PERIOD.name, 0L));
+		long period = Utils.secondsToMillis(Utils.getLong(params, Parameter.Builtin.PERIOD.name, 0L));
 		long startTime = Utils.secondsToMillis(Utils.getLong(params, Parameter.Builtin.START.name, 0L));
 		long endTime = Utils.secondsToMillis(Utils.getLong(params, Parameter.Builtin.END.name, 0L));
 		long mostRecentTimeRun = Utils.secondsToMillis(probe.getPreviousRunTime());
@@ -101,7 +101,7 @@ public class DefaultProbeScheduler implements ProbeScheduler {
 			return null;
 		}
 		
-		long period = Utils.secondsToMillis(params.getLong(Parameter.Builtin.PERIOD.name, 0L));
+		long period = Utils.secondsToMillis(Utils.getLong(params, Parameter.Builtin.PERIOD.name, 0L));
 		long mostRecentTimeRun = Utils.secondsToMillis(probe.getPreviousRunTime());
 		if (probe.isAvailableOnDevice() && period != 0L) {
 			ArrayList<Bundle> dataRequests = new ArrayList<Bundle>();

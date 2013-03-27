@@ -95,16 +95,11 @@ public interface FileCopier {
 	public static class EncryptedFileCopier implements FileCopier {
 		public static final String TAG = EncryptedFileCopier.class.getName();
 		private final SecretKey key;
-		private final String algorithm;
+		private final String transformation;
 		
-		public EncryptedFileCopier(SecretKey key) {
-			this(key, "DES");
-		}
-		
-		public EncryptedFileCopier(SecretKey key, String algorithm) {
-			assert key != null && algorithm != null;
+		public EncryptedFileCopier(SecretKey key, String transformation) {
 			this.key = key;
-			this.algorithm = algorithm;
+			this.transformation = transformation;
 		}
 		
 		private Cipher cipher; // Cache
@@ -113,7 +108,7 @@ public interface FileCopier {
 				synchronized (this) {
 					if (cipher == null) {
 						try {
-							cipher = Cipher.getInstance(algorithm);     
+							cipher = Cipher.getInstance(transformation);     
 							cipher.init(Cipher.ENCRYPT_MODE, key);
 						} catch (Exception e) {
 							Log.e(TAG, "Error creating cipher", e);
