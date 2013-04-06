@@ -38,6 +38,8 @@ import android.net.wifi.WifiManager.WifiLock;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.probe.Probe.Base;
@@ -52,6 +54,8 @@ import edu.mit.media.funf.util.LogUtil;
 @DisplayName("Nearby Wifi Devices Probe")
 public class WifiProbe extends Base {
 
+    public static final String TSF = "tsf";
+  
 	private static final String LOCK_KEY = WifiProbe.class.getName();
 	
 	private WifiManager wifiManager;
@@ -66,7 +70,12 @@ public class WifiProbe extends Base {
 				if (results != null) {
 					Gson gson = getGson();
 					for (ScanResult result : results) {
-						sendData(gson.toJsonTree(result).getAsJsonObject());
+					  JsonObject data = gson.toJsonTree(result).getAsJsonObject();
+					  if (data.has(TIMESTAMP)) {
+					    JsonElement el = data.remove(TIMESTAMP);
+					    data.add(TSF, el);
+					  }
+					  sendData(data);
 					}
 				}
 				if (getState() == State.RUNNING) {
