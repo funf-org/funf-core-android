@@ -192,6 +192,11 @@ public class ProbeKeys {
 		DEVICE_ID = "deviceId";	
 	}
 	
+	public static interface HighBandwidthKeys extends BaseProbeKeys {
+		public static final String 
+		FILENAME = "filename";
+	}
+	
 	public static interface ImagesKeys extends BaseProbeKeys, android.provider.MediaStore.Images.ImageColumns {
 		public static final String 
 		IMAGES = "images";	
