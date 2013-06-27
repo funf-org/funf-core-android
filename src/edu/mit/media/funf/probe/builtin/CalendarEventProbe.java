@@ -26,43 +26,62 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import com.google.gson.JsonObject;
-
+import android.annotation.TargetApi;
 import android.database.Cursor;
-import android.net.Uri;
+import android.os.Build;
+import android.provider.CalendarContract;
 import android.provider.CalendarContract.Events;
-import android.util.Log;
 
 import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
-import edu.mit.media.funf.util.LogUtil;
 
+@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 @DisplayName("Calendar Event Probe")
 @RequiredPermissions(android.Manifest.permission.READ_CALENDAR)
 @Schedule.DefaultSchedule(interval=3600)
 public class CalendarEventProbe extends ContentProviderProbe implements PassiveProbe {
 
-	// Filter out events that start after this number of minutes from the current time
+	// Filter out events that start after this delay in seconds from the current time
 	@Configurable 
-	private long maxStartDelay = 60; 	
-	private long minutesToMilliSecs = 60000;
-	
+	private long maxStartDelay = 3600;  
+
 	@Override
 	protected Cursor getCursor(String[] projection) {
+		if (!Arrays.asList(projection).contains("dtstart") || 
+				!Arrays.asList(projection).contains("dtend")) {
+			List<String> projectionList = new ArrayList<String>(Arrays.asList(projection));
+			if (!Arrays.asList(projection).contains("dtstart"))
+				projectionList.add("dtstart");
+			if (!Arrays.asList(projection).contains("dtend"))
+				projectionList.add("dtend");
+			projection = new String[projectionList.size()];
+			projectionList.toArray(projection);
+		}
+
+		String currentTime = String.valueOf(System.currentTimeMillis());
+		String maxStartTime = String.valueOf(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(maxStartDelay));
+		String dateFilter = null;
+		String[] dateFilterParams = null;
+		dateFilter = "(? < dtstart AND dtstart < ?) OR (? > dtstart AND ? < dtend)";
+		dateFilterParams = new String[] {currentTime, maxStartTime, currentTime, currentTime };
 		return getContext().getContentResolver().query(
-				Uri.parse("content://com.android.calendar/events"), //CalendarContract.Events.CONTENT_URI
-                projection, 
-                null, 
-                null, 
-                null);
+				CalendarContract.Events.CONTENT_URI, // Uri.parse("content://com.android.calendar/events")
+				projection, 
+				dateFilter, 
+				dateFilterParams, 
+				"dtstart ASC");
 	}
-	
+
 	private Map<String, CursorCell<?>> calendarEventProjectionMap;
 	private Map<String, CursorCell<?>> getCalendarEventProjectionMap() {
 		if (calendarEventProjectionMap == null) {
@@ -84,29 +103,11 @@ public class CalendarEventProbe extends ContentProviderProbe implements PassiveP
 		}
 		return calendarEventProjectionMap;
 	}
-	
+
 	@Override
 	protected Map<String, CursorCell<?>> getProjectionMap() {
 		Map<String,CursorCell<?>> projectionKeyToType = new HashMap<String, CursorCell<?>>();
 		projectionKeyToType.putAll(getCalendarEventProjectionMap());
 		return projectionKeyToType;
-	}
-	
-	@Override
-	protected JsonObject parseData(Cursor cursor, String[] projection, Map<String, CursorCell<?>> projectionMap) {
-		JsonObject calendarEvent = super.parseData(cursor, projection, getCalendarEventProjectionMap());
-		if (calendarEvent != null) {
-			long dtstart = calendarEvent.get("dtstart").getAsLong();
-			long dtend = calendarEvent.get("dtend").getAsLong();
-			long currentTime = System.currentTimeMillis();
-			if (((dtstart - currentTime) < maxStartDelay*minutesToMilliSecs && currentTime < dtstart) || 
-					(currentTime > dtstart && currentTime < dtend)) {
-				Log.d(LogUtil.TAG, "adding calendar event");
-				return calendarEvent;
-			} else {
-				//Log.d(LogUtil.TAG, "skipping calendar event");
-			}
-		}
-		return null;
 	}
 }
