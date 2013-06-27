@@ -36,6 +36,7 @@ import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
@@ -48,23 +49,20 @@ import edu.mit.media.funf.util.NameGenerator.SystemUniqueTimestampNameGenerator;
 @DisplayName("Audio Recorder Probe")
 @RequiredPermissions({android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.RECORD_AUDIO})
 @RequiredFeatures("android.hardware.microphone")
-@Schedule.DefaultSchedule(interval=1800)
-public class AudioRecorderProbe extends ImpulseProbe implements PassiveProbe, HighBandwidthKeys{
-	
-	@Configurable
-	private String fileNameBase = "audiorectest";
-	
-	@Configurable
-	private String folderPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-	
-	@Configurable
-	private int recordingLength = 5000; // Duration of recording in seconds
-	
-	private String mFileName;
-	private MediaRecorder mRecorder;	
-	private NameGenerator mNameGenerator;
-	
-	private void startRecording() {
+@Schedule.DefaultSchedule(interval=1800, duration=10)
+public class AudioRecorderProbe extends Base implements PassiveProbe, HighBandwidthKeys {
+
+    @Configurable
+    private String fileNameBase = "audiorectest";
+
+    @Configurable
+    private String folderPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+
+    private String mFileName;
+    private MediaRecorder mRecorder;    
+    private NameGenerator mNameGenerator;
+
+    private void startRecording() {
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
@@ -75,47 +73,46 @@ public class AudioRecorderProbe extends ImpulseProbe implements PassiveProbe, Hi
             mRecorder.prepare();
         } catch (IOException e) {
             Log.e(LogUtil.TAG, "prepare() failed");
+            stop();
         }
 
         mRecorder.start();
     }
-	
-	private void stopRecording() {
+
+    private void stopRecording() {
         mRecorder.stop();
         mRecorder.reset();
         mRecorder.release();
         mRecorder = null;
     }
-	
-	@Override
-	protected void onEnable() {
-		super.onEnable();
-		mNameGenerator = new SystemUniqueTimestampNameGenerator(getContext());
-	}
-	
-	@Override
-	protected void onStart() {
-		super.onStart();
+
+    @Override
+    protected void onEnable() {
+        super.onEnable();
+        mNameGenerator = new SystemUniqueTimestampNameGenerator(getContext());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
         mFileName = folderPath + "/" + mNameGenerator.generateName(fileNameBase) + ".mp4";
         Log.e(LogUtil.TAG, "Recording audio: start");
-		startRecording();
-		try {
-			wait(recordingLength);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			Log.e(LogUtil.TAG, "recording interrupted");
-		}
-		stopRecording();
-		Log.e(LogUtil.TAG, "Recording audio: stop");
-		JsonObject data = new JsonObject();
-		data.addProperty(FILENAME, mFileName);
-		sendData(data);
-		stop();
-	}
+        startRecording();
+    }
 
-	@Override
-	protected void onDisable() {
-		super.onDisable();
-		
-	}
+    @Override
+    protected void onStop() {
+        stopRecording();
+        Log.e(LogUtil.TAG, "Recording audio: stop");
+        JsonObject data = new JsonObject();
+        data.addProperty(FILENAME, mFileName);
+        sendData(data);
+    }
+    
+    @Override
+    protected void onDisable() {
+        super.onDisable();
+
+    }
+
 }
