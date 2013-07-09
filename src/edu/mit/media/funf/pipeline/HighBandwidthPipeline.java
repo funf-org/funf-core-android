@@ -22,16 +22,19 @@ package edu.mit.media.funf.pipeline;
 
 import java.io.File;
 
+import com.google.gson.JsonObject;
+
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
-
-import com.google.gson.JsonObject;
+import android.util.Log;
 
 import edu.mit.media.funf.FunfManager;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
+import edu.mit.media.funf.probe.builtin.ProbeKeys.HighBandwidthKeys;
+import edu.mit.media.funf.util.LogUtil;
 
 public class HighBandwidthPipeline extends BasicPipeline implements Pipeline, DataListener {
 
@@ -43,15 +46,14 @@ public class HighBandwidthPipeline extends BasicPipeline implements Pipeline, Da
 
     @Override
     public boolean handleMessage(Message msg) {
-      onBeforeRun(msg.what, (JsonObject)msg.obj);
       switch (msg.what) {
         case LARGE:
+          Log.d(LogUtil.TAG, "handling large file");
           writeLargeData((String)msg.obj);
           break;
         default:
           break;
       }
-      onAfterRun(msg.what, (JsonObject)msg.obj);
       return false;
     }
   };
@@ -80,12 +82,18 @@ public class HighBandwidthPipeline extends BasicPipeline implements Pipeline, Da
   
   @Override
   public void onDataReceived(IJsonObject probeConfig, IJsonObject data) {
-    super.onDataReceived(probeConfig, data);
-
     // check for reference to high bandwidth data
-    if (data.get("filename") != null) {
-      String filename = data.get("filename").getAsString();
-      largeHandler.obtainMessage(LARGE, filename);
-    }   
+    if (data.has(HighBandwidthKeys.FILENAME)) {
+      String filepath = data.get(HighBandwidthKeys.FILENAME).getAsString();
+      largeHandler.obtainMessage(LARGE, filepath).sendToTarget();
+      
+      File file = new File(filepath);
+      JsonObject newData = data.getAsJsonObject();
+      newData.remove(HighBandwidthKeys.FILENAME);
+      newData.addProperty(HighBandwidthKeys.FILENAME, file.getName());
+      data = new IJsonObject(newData);
+    }
+    
+    super.onDataReceived(probeConfig, data);
   }
 }

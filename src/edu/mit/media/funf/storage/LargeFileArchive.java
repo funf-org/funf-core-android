@@ -32,12 +32,14 @@ import java.util.List;
 
 import javax.crypto.SecretKey;
 
+import android.util.Log;
+import android.webkit.MimeTypeMap;
+
+import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.NameGenerator;
-import edu.mit.media.funf.util.NameGenerator.SystemUniqueTimestampNameGenerator;
+import edu.mit.media.funf.util.NameGenerator.IdentityNameGenerator;
 
 public class LargeFileArchive extends DefaultArchive implements FileArchive {
-
-	private String[] recognizedExtensions = { "jpg", "mp4", "mp3", "3gp" };
 
 	private FileArchive largeFileArchive; // Cache
 	protected FileArchive getLargeFileArchive() {
@@ -48,7 +50,7 @@ public class LargeFileArchive extends DefaultArchive implements FileArchive {
 					String rootSdCardPath = getPathOnSDCard();
 					FileArchive backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backupLarge"));
 					
-					NameGenerator nameGenerator = new SystemUniqueTimestampNameGenerator(context);
+					NameGenerator nameGenerator = new IdentityNameGenerator();
 					FileCopier copier = (key == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(key, "DES");
 					DirectoryCleaner cleaner = new DirectoryCleaner.KeepAll();
 					FileArchive mainArchive = new FileDirectoryArchive(new File(rootSdCardPath + "archiveLarge"), nameGenerator, copier, cleaner);
@@ -62,15 +64,22 @@ public class LargeFileArchive extends DefaultArchive implements FileArchive {
 
 
 	protected boolean isLargeFile(File item) {
-		String filenameArray[] = item.getAbsolutePath().split("\\.");
-		String extension = filenameArray[filenameArray.length-1];
-		return Arrays.asList(recognizedExtensions).contains(extension);
+	    String extension = MimeTypeMap.getFileExtensionFromUrl(item.getAbsolutePath());
+	    if (extension == null)
+	        return false;
+	    String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+	    if (type == null || "".equals(type) || "null".equals(type))
+	        return false;
+	    else 
+	        return true;
 	}
 
 	@Override
 	public boolean add(File item) {
-		if (isLargeFile(item))
-			return getLargeFileArchive().add(item);
+		if (isLargeFile(item)) {
+		    Log.d(LogUtil.TAG, "adding to large archive");
+		    return getLargeFileArchive().add(item);
+		}			
 		else
 			return getDelegateArchive().add(item);
 	}
