@@ -26,6 +26,7 @@ package edu.mit.media.funf.storage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import android.content.Context;
@@ -74,7 +75,7 @@ public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 		String installationUuid = UuidUtil.getInstallationId(context);
 		String fileUuid = UUID.randomUUID().toString();
 		double createdTime = TimeUtil.getTimestamp().doubleValue();
-		db.execSQL(String.format("insert into %s (%s, %s, %s, %s) values ('%s', '%s', '%s', %f)", 
+		db.execSQL(String.format(Locale.US, "insert into %s (%s, %s, %s, %s) values ('%s', '%s', '%s', %f)", 
 				FILE_INFO_TABLE.name, 
 				COLUMN_DATABASE_NAME, COLUMN_INSTALLATION, COLUMN_UUID, COLUMN_CREATED,
 				databaseName, installationUuid, fileUuid, createdTime));
