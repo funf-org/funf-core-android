@@ -25,6 +25,7 @@
  */
 package edu.mit.media.funf.probe.builtin;
 
+import java.io.File;
 import java.io.IOException;
 
 import android.annotation.SuppressLint;
@@ -35,6 +36,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.media.MediaRecorder.OutputFormat;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Environment;
@@ -54,6 +56,7 @@ import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
 import edu.mit.media.funf.probe.Probe.RequiredPermissions;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.HighBandwidthKeys;
+import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.NameGenerator;
 import edu.mit.media.funf.util.NameGenerator.SystemUniqueTimestampNameGenerator;
@@ -65,21 +68,52 @@ import edu.mit.media.funf.util.NameGenerator.SystemUniqueTimestampNameGenerator;
 public class VideoCaptureProbe extends ImpulseProbe implements PassiveProbe, HighBandwidthKeys, SurfaceHolder.Callback {
 
 	@Configurable
-	private String fileNameBase = "videocapturetest";
+	private String fileNameBase = "videorec";
 	
 	@Configurable
-	private String folderPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+	private String folderName = "videocapturetest";
 		
 	@Configurable
 	private int selectedCamera = 1; // BACK_FACING = 0, FRONT_FACING = 1
 		
 	@Configurable
-	private int cameraOpenDelay = 500; // allow delay for camera open in milliseconds
+	private int cameraOpenDelay = 1; // allow delay for camera open in seconds
 	
 	@Configurable
-	private int recordingLength = 5000; // Duration of recording in seconds
+	private int recordingLength = 5; // Duration of recording in seconds
+	
+	@Configurable
+	private String videoProfile = "LOW"; // LOW, HIGH, QCIF, CIF, 480P, 720P, 1080P, QVGA
+	// If the camera does not support the configured profile, 
+	// by default the "LOW" profile will be selected
+	
+	@Configurable
+	private boolean timeLapse = false;
+	
+	@Configurable
+	private double captureRate = 24;
 		
+	private enum CameraProfile {
+      QUALITY_LOW,
+      QUALITY_QCIF,
+      QUALITY_CIF,
+      QUALITY_480P,
+      QUALITY_720P,
+      QUALITY_1080P,
+      QUALITY_QVGA,
+      QUALITY_HIGH,
+      QUALITY_TIME_LAPSE_LOW,
+      QUALITY_TIME_LAPSE_QCIF,
+      QUALITY_TIME_LAPSE_CIF,
+      QUALITY_TIME_LAPSE_480P,
+      QUALITY_TIME_LAPSE_720P,
+      QUALITY_TIME_LAPSE_1080P,
+      QUALITY_TIME_LAPSE_QVGA,
+      QUALITY_TIME_LAPSE_HIGH
+    }
+	
 	private String mFileName;	
+	private String mFolderPath;
 	private NameGenerator mNameGenerator;
 
 	private Camera mCamera;
@@ -111,7 +145,7 @@ public class VideoCaptureProbe extends ImpulseProbe implements PassiveProbe, Hig
 
 		@Override
 		public void onTick(long millisUntilFinished) {
-			Log.d(LogUtil.TAG, "Video capture: seconds remaining = " + millisUntilFinished / 1000);
+			//Log.d(LogUtil.TAG, "Video capture: seconds remaining = " + millisUntilFinished / 1000);
 		}
 		
 	}
@@ -122,24 +156,32 @@ public class VideoCaptureProbe extends ImpulseProbe implements PassiveProbe, Hig
 	protected void onEnable() {
 		super.onEnable();
 		mNameGenerator = new SystemUniqueTimestampNameGenerator(getContext());
+		mFolderPath = Environment.getExternalStorageDirectory().getAbsolutePath() 
+            + "/" + folderName;
+        File folder = new File(mFolderPath);
+        if (!folder.exists()) {
+          folder.mkdirs();
+        } else if (!folder.isDirectory()) {
+          folder.delete();
+          folder.mkdirs();
+        }
+        mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+        mParams = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT);
 	}
 	
 	@Override
 	protected void onStart() {
 		super.onStart();
-        mFileName = folderPath + "/" + mNameGenerator.generateName(fileNameBase) + ".mp4";
-        Log.d(LogUtil.TAG, "Image capture: start");
+        Log.d(LogUtil.TAG, "Video capture: start");
         
         mSurfaceView = new SurfaceView(getContext());
         mHolder = mSurfaceView.getHolder();
         mHolder.addCallback(this);
         
-        mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-        mParams = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,
-        		WindowManager.LayoutParams.WRAP_CONTENT,
-        		WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-        		WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-        		PixelFormat.TRANSLUCENT);
         mWindowManager.addView(mSurfaceView, mParams);
         
         mSurfaceView.setZOrderOnTop(false);
@@ -152,22 +194,44 @@ public class VideoCaptureProbe extends ImpulseProbe implements PassiveProbe, Hig
 		
 	}
 	
-	private void startRecording() {
+	private boolean startRecording() {
 		mRecorder = new MediaRecorder();
 		mRecorder.setCamera(mCamera);
-		mRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-		mRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-		mRecorder.setProfile(CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_LOW));
+				
+		CamcorderProfile camProfile;
+        int videoQuality = getConfiguredProfile();
+		if (CamcorderProfile.hasProfile(mCameraId, videoQuality)) {
+		    Log.d(LogUtil.TAG, "using camcorder profile: " + videoProfile);
+		    camProfile = CamcorderProfile.get(mCameraId, videoQuality);
+		} else {
+		    Log.d(LogUtil.TAG, "profile unavailable, using: " + "LOW");
+		    camProfile = CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_LOW);
+		    timeLapse = false;
+		}
+
+        mRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+		if (!timeLapse)
+		    mRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+		
+		mRecorder.setProfile(camProfile);
+        if (timeLapse) 
+            mRecorder.setCaptureRate(captureRate);
+		
+		mFileName = mFolderPath + "/" + mNameGenerator.generateName(fileNameBase);
+		mFileName += getFileFormat(camProfile.fileFormat); 
 		mRecorder.setOutputFile(mFileName);
+		
 		mRecorder.setOrientationHint(computePictureRotation(mCameraAngle, selectedCamera));
 		try {
 			mRecorder.prepare();
+	        mRecorder.start();
 		} catch (Exception e) {
 			e.printStackTrace();
 			Log.e(LogUtil.TAG, "Video capture: error in preparing mediaRecorder");
 			stop();
+			return false;
 		}
-		mRecorder.start();
+        return true;
 	}
 	
 	private void stopRecording() {
@@ -175,62 +239,87 @@ public class VideoCaptureProbe extends ImpulseProbe implements PassiveProbe, Hig
         mRecorder.reset();
         mRecorder.release();
         mRecorder = null;
-        Log.e(LogUtil.TAG, "Recording video: stop");
 		mWindowManager.removeView(mSurfaceView);
+		Log.e(LogUtil.TAG, "Recording video: stop");
+		
 		JsonObject data = new JsonObject();
 		data.addProperty(FILENAME, mFileName);
 		sendData(data);
+	}
+	
+	private void abortRecording() {
+	  Log.e(LogUtil.TAG, "Recording video: abort");
+	  if (mCamera != null) {
+	      mCamera.stopPreview();
+          mCamera.release();
+          mCamera = null;
+	  }
+	  if (mHolder != null) {
+          mHolder.removeCallback(this);
+      }
+	  if (mWindowManager != null) {
+	      mWindowManager.removeView(mSurfaceView);
+	  } 
+	    
 	}
 
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) {
-		Log.d(LogUtil.TAG, "Image capture: surfaceChanged");
+		Log.d(LogUtil.TAG, "Video capture: surfaceChanged");
 		mParameters = mCamera.getParameters();
 		configureCameraParameters(mParameters);
 		
 		mCamera.startPreview();
 		// to allow time for camera initiation on certain devices
 		try {
-			Thread.sleep(cameraOpenDelay);
+			Thread.sleep(TimeUtil.secondsToMillis(cameraOpenDelay));
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 
-		mCountDown = new RecordingCountDown(recordingLength, 1000);
+		mCountDown = new RecordingCountDown(TimeUtil.secondsToMillis(recordingLength), 1000);
 		Log.e(LogUtil.TAG, "Recording video: start");
 		mCamera.unlock();
-		startRecording();
-		mCountDown.start();
+		if (startRecording())
+		    mCountDown.start();
+		else {
+		    abortRecording();
+		}
 	}
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
-		Log.d(LogUtil.TAG, "Image capture: surfaceCreated");
-        safeCameraOpen();
-        try {
-           mCamera.setPreviewDisplay(mHolder);
-
-        } catch (IOException exception) {
-            mCamera.release();
-            mCamera = null;
-            Log.e(LogUtil.TAG, "Image capture: error");
+		Log.d(LogUtil.TAG, "Video capture: surfaceCreated");
+        if (safeCameraOpen()) {
+            try {
+                mCamera.setPreviewDisplay(mHolder);
+            } catch (IOException exception) {
+                mCamera.release();
+                mCamera = null;
+                Log.e(LogUtil.TAG, "Video capture: error");
+            }  
+        } else {
+            abortRecording();
         }
 	}
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
-		Log.d(LogUtil.TAG, "Image capture: surfaceDestroyed");
+		Log.d(LogUtil.TAG, "Video capture: surfaceDestroyed");
 		mCamera.stopPreview();
 		mCamera.release();
 		mCamera = null;
 	}
 	
-	private void safeCameraOpen() {
+	private boolean safeCameraOpen() {
 		mCamera = openSelectedCamera(selectedCamera);
 		if (mCamera == null) {
-			Log.e(LogUtil.TAG, "ImageCapture: failed to access camera");
+			Log.e(LogUtil.TAG, "Video capture: failed to access camera");
 			stop();
+			return false;
+		} else {
+		    return true;
 		}
 	}
 	
@@ -303,5 +392,48 @@ public class VideoCaptureProbe extends ImpulseProbe implements PassiveProbe, Hig
     		return (180 + cameraAngle) % 360;
     	}
     	return cameraAngle;
+    }    
+    
+    public int getConfiguredProfile() {
+        if (timeLapse) {
+            String profileName = "QUALITY_TIME_LAPSE_" + videoProfile;
+            switch (CameraProfile.valueOf(profileName)){
+                case QUALITY_TIME_LAPSE_LOW: return CamcorderProfile.QUALITY_TIME_LAPSE_LOW; 
+                case QUALITY_TIME_LAPSE_HIGH: return CamcorderProfile.QUALITY_TIME_LAPSE_HIGH;
+                case QUALITY_TIME_LAPSE_QCIF: return CamcorderProfile.QUALITY_TIME_LAPSE_QCIF;
+                case QUALITY_TIME_LAPSE_CIF: return CamcorderProfile.QUALITY_TIME_LAPSE_CIF;
+                case QUALITY_TIME_LAPSE_480P: return CamcorderProfile.QUALITY_TIME_LAPSE_480P;
+                case QUALITY_TIME_LAPSE_720P: return CamcorderProfile.QUALITY_TIME_LAPSE_720P;
+                case QUALITY_TIME_LAPSE_1080P: return CamcorderProfile.QUALITY_TIME_LAPSE_1080P;
+                case QUALITY_TIME_LAPSE_QVGA: return CamcorderProfile.QUALITY_TIME_LAPSE_QVGA;
+                default: return CamcorderProfile.QUALITY_TIME_LAPSE_LOW;
+            }
+        } else {
+            String profileName = "QUALITY_" + videoProfile;
+            switch (CameraProfile.valueOf(profileName)){
+                case QUALITY_LOW: return CamcorderProfile.QUALITY_LOW; 
+                case QUALITY_HIGH: return CamcorderProfile.QUALITY_HIGH;
+                case QUALITY_QCIF: return CamcorderProfile.QUALITY_QCIF;
+                case QUALITY_CIF: return CamcorderProfile.QUALITY_CIF;
+                case QUALITY_480P: return CamcorderProfile.QUALITY_480P;
+                case QUALITY_720P: return CamcorderProfile.QUALITY_720P;
+                case QUALITY_1080P: return CamcorderProfile.QUALITY_1080P;
+                case QUALITY_QVGA: return CamcorderProfile.QUALITY_QVGA;
+                default: return CamcorderProfile.QUALITY_LOW; 
+            }
+        }
     }
+    
+    private String getFileFormat(int fileFormat){
+        switch(fileFormat){
+            case OutputFormat.MPEG_4:
+                return ".mp4";
+            case OutputFormat.THREE_GPP:
+                return ".3gp";
+            case OutputFormat.DEFAULT:
+                return ".mp4";
+            default:
+                return ".mp4";
+      }  
+     }
 }
