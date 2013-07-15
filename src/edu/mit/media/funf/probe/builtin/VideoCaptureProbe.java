@@ -245,6 +245,7 @@ public class VideoCaptureProbe extends ImpulseProbe implements PassiveProbe, Hig
 		JsonObject data = new JsonObject();
 		data.addProperty(FILENAME, mFileName);
 		sendData(data);
+		stop();
 	}
 	
 	private void abortRecording() {
