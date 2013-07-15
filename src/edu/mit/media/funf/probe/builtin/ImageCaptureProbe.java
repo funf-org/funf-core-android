@@ -176,7 +176,6 @@ public class ImageCaptureProbe extends ImpulseProbe implements PassiveProbe, Hig
     }
 
     protected void finishCapture() {
-        Log.d(LogUtil.TAG, "ImageCaptureProbe: image capture finish");
         try {
             File file = new File(mFileName);
             if (file.exists()) 
@@ -189,16 +188,15 @@ public class ImageCaptureProbe extends ImpulseProbe implements PassiveProbe, Hig
             out.flush();
             out.close();
 
+            Log.d(LogUtil.TAG, "ImageCaptureProbe: image capture finish");
             JsonObject data = new JsonObject();
             data.addProperty(FILENAME, mFileName);
             sendData(data);
             mWindowManager.removeView(mSurfaceView);
-
-            Log.d(LogUtil.TAG, "Image capture: finish");
             stop();
         } catch (Exception e) {
-            e.printStackTrace();
-            Log.e(LogUtil.TAG, "Image capture: error");
+            Log.e(LogUtil.TAG, "ImageCaptureProbe: image capture error");
+            Log.e(LogUtil.TAG, e.getLocalizedMessage());
         }
     }
     
