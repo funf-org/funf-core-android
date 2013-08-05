@@ -65,6 +65,7 @@ import com.google.gson.TypeAdapterFactory;
 
 import edu.mit.media.funf.Schedule.BasicSchedule;
 import edu.mit.media.funf.Schedule.DefaultSchedule;
+import edu.mit.media.funf.action.Action;
 import edu.mit.media.funf.config.ConfigUpdater;
 import edu.mit.media.funf.config.ConfigurableTypeAdapterFactory;
 import edu.mit.media.funf.config.ContextInjectorTypeAdapaterFactory;
@@ -88,6 +89,7 @@ import edu.mit.media.funf.storage.FileArchive;
 import edu.mit.media.funf.storage.HttpArchive;
 import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.trigger.Trigger;
 import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.StringUtil;
 
@@ -394,6 +396,8 @@ public class FunfManager extends Service {
 	public static GsonBuilder getGsonBuilder(Context context) {
 		return new GsonBuilder()
 		.registerTypeAdapterFactory(getProbeFactory(context))
+		.registerTypeAdapterFactory(getTriggerFactory(context))
+		.registerTypeAdapterFactory(getActionFactory(context))
 		.registerTypeAdapterFactory(getPipelineFactory(context))
 		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<Schedule>(context, Schedule.class, BasicSchedule.class))
 		.registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<ConfigUpdater>(context, ConfigUpdater.class, HttpConfigUpdater.class))
@@ -450,10 +454,40 @@ public class FunfManager extends Service {
 		return PROBE_FACTORY;
 	}
 	
-	// triggers
-	// FunfManager should allow you to register for triggers
-	// Scheduler will register for triggers
+	public SingletonTypeAdapterFactory getTriggerFactory() {
+        return getTriggerFactory(this);
+    }
 	
+	private static SingletonTypeAdapterFactory TRIGGER_FACTORY;
+    public static SingletonTypeAdapterFactory getTriggerFactory(Context context) {
+        if (TRIGGER_FACTORY == null) {
+            TRIGGER_FACTORY = new SingletonTypeAdapterFactory(
+                    new DefaultRuntimeTypeAdapterFactory<Trigger>(
+                            context, 
+                            Trigger.class, 
+                            null, 
+                            new ContextInjectorTypeAdapaterFactory(context, new ConfigurableTypeAdapterFactory())));
+        }
+        return TRIGGER_FACTORY;
+    }
+    
+    public SingletonTypeAdapterFactory getActionFactory() {
+        return getActionFactory(this);
+    }
+    
+    private static SingletonTypeAdapterFactory ACTION_FACTORY;
+    public static SingletonTypeAdapterFactory getActionFactory(Context context) {
+        if (ACTION_FACTORY == null) {
+            ACTION_FACTORY = new SingletonTypeAdapterFactory(
+                    new DefaultRuntimeTypeAdapterFactory<Action>(
+                            context, 
+                            Action.class, 
+                            null, 
+                            new ContextInjectorTypeAdapaterFactory(context, new ConfigurableTypeAdapterFactory())));
+        }
+        return ACTION_FACTORY;
+    }
+	    
 	public void registerPipeline(String name, Pipeline pipeline) {
 		synchronized (pipelines) {
 		  Log.d(LogUtil.TAG, "Registering pipeline: " + name);
