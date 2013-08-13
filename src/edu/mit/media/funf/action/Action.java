@@ -26,101 +26,31 @@
 package edu.mit.media.funf.action;
 
 import java.lang.Runnable;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
-import edu.mit.media.funf.config.Configurable;
-import edu.mit.media.funf.pipeline.TriggerActionPipeline;
-import edu.mit.media.funf.trigger.Trigger;
+import edu.mit.media.funf.json.IJsonObject;
 
 public class Action implements Runnable {
-
-    @Configurable
-    private String label;
-    
-    @Configurable
-    private Set<String> triggers;
-    
-    private TriggerActionPipeline pipeline;
-    
+        
     Action() {
     }
     
-    public void setPipeline(TriggerActionPipeline pipeline) {
-        this.pipeline = pipeline;
-    }
-    
-    protected TriggerActionPipeline getPipeline() {
-        return pipeline;
-    }
-    
-    public String getLabel() {
-        return label;
-    }
-    
-    public void setLabel(String label) {
-        this.label = label;
-    }
-    
-    public Set<String> getTriggerLabels() {
-        return triggers;
+    public interface DataAcceptingAction {
+        
+        public void setDataSource(IJsonObject dataSource);
+        
+        public void setData(IJsonObject data);
     }
     
     @Override
     public final void run() {
         execute();
-        activateTriggers();
     }
     
     /**
      * Override this function to include the action-specific code.
      */
     protected void execute() {
-     // Perform action here
+        // Perform action here
     }
     
-    /*****************************************
-     * Registered Triggers
-     *****************************************/
-    private Set<Trigger> registeredTriggers = Collections.synchronizedSet(new HashSet<Trigger>());
-
-    /**
-     * Returns the set of registered actions. Make sure to synchronize on this
-     * object, if you plan to modify it or iterate over it.
-     */
-    public Set<Trigger> getRegisteredTriggers() {
-        return registeredTriggers;
-    }
-
-    public void registerTrigger(Trigger... triggers) {
-        if (triggers != null) {
-            for (Trigger trigger : triggers) {
-                registeredTriggers.add(trigger);
-            }
-        }
-    }
-
-    public void unregisterTrigger(Trigger... triggers) {
-        if (triggers != null) {
-            for (Trigger trigger : triggers) {
-                registeredTriggers.remove(trigger);
-            }
-        }
-    }
-
-    public void unregisterAllTriggers() {
-        Trigger[] triggers = null;
-        synchronized (registeredTriggers) {
-            triggers = new Trigger[registeredTriggers.size()];
-            registeredTriggers.toArray(triggers);
-        }
-        unregisterTrigger(triggers);
-    }
-
-    protected void activateTriggers() {
-        for (Trigger trigger : registeredTriggers) {
-            trigger.start();
-        }
-    }
 }
