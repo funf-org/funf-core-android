@@ -27,23 +27,41 @@ package edu.mit.media.funf.action;
 
 import java.lang.Runnable;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import edu.mit.media.funf.json.IJsonObject;
 
 public class Action implements Runnable {
         
+    private Handler handler;
+    
     Action() {
     }
     
-    public interface DataAcceptingAction {
-        
-        public void setDataSource(IJsonObject dataSource);
-        
-        public void setData(IJsonObject data);
+    Action(Handler handler) {
+        this();
+        this.handler = handler;
+    }
+    
+    public Handler getHandler() {
+        return handler;
+    }
+    
+    public void setHandler(Handler handler) {
+        this.handler = handler;
     }
     
     @Override
     public final void run() {
+        if (Looper.myLooper() != getHandler().getLooper()) {
+            getHandler().post(this);
+        }
         execute();
+    }
+    
+    public final void runInHandler() {
+        getHandler().post(this);
     }
     
     /**

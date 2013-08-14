@@ -27,23 +27,51 @@ package edu.mit.media.funf.filter;
 
 import java.util.Calendar;
 
+import com.google.gson.JsonElement;
+
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.IJsonObject;
+import edu.mit.media.funf.probe.Probe.DataListener;
 
-public class TimeOfDayFilter extends Filter {
+public class TimeOfDayFilter implements DataListener {
 
     @Configurable
-    private int start = 0600; // in 24-hour clock format 
+    private String start = "06:00"; // 24-hour time in HH:mm format 
     
     @Configurable
-    private int end = 1800; // in 24-hour clock format
+    private String end = "18:00"; // 24-hour time in HH:mm format
     
-    protected void filterData(IJsonObject dataSourceConfig, IJsonObject data) {
-        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        int min = Calendar.getInstance().get(Calendar.MINUTE);
+    private Calendar calendar;
+    
+    private final DataListener listener;
+    
+    TimeOfDayFilter(DataListener listener) {
+        this.listener = listener;
+        calendar = Calendar.getInstance();
+    }
+        
+    private int parseFormattedTime(String time) {
+        String[] split = time.split(":");
+        int hour = Integer.parseInt(split[0]);
+        int min = Integer.parseInt(split[1]);
+        return hour*100 + min;
+    }
+
+    @Override
+    public void onDataReceived(IJsonObject dataSourceConfig, IJsonObject data) {
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int min = calendar.get(Calendar.MINUTE);
         int currentTime = hour*100 + min;
-        if (start <= currentTime && currentTime < end) {
-            sendData(dataSourceConfig, data);
+        int startTime = parseFormattedTime(start);
+        int endTime = parseFormattedTime(end);
+        if (startTime <= currentTime && currentTime < endTime) {
+            listener.onDataReceived(dataSourceConfig, data);
         }
+    }
+
+    @Override
+    public void onDataCompleted(IJsonObject dataSourceConfig, JsonElement checkpoint) {
+        listener.onDataCompleted(dataSourceConfig, checkpoint);
     }
 }

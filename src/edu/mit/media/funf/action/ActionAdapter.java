@@ -25,63 +25,22 @@
  */
 package edu.mit.media.funf.action;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gson.JsonElement;
 
-import edu.mit.media.funf.action.Action.DataAcceptingAction;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 
-import android.os.Handler;
-
 public class ActionAdapter implements DataListener {
     
-    private Handler actionHandler;
-    
-    private List<Action> actions;
-    
-    ActionAdapter() {
-        actions = new ArrayList<Action>();
-    }
-    
-    ActionAdapter(Handler handler) {
-        this();
-        this.actionHandler = handler;
-    }
-    
-    public Handler getHandler() {
-        return actionHandler;
-    }
-    
-    public void setHandler(Handler handler) {
-        this.actionHandler = handler;
-    }
-    
-    public void registerAction(Action action) {
-        actions.add(action);
-    }
-
-    public void unregisterAction(Action action) {
-        if (actions.contains(action)) {
-            actions.remove(action);
-        }
-    }
-    
-    protected void executeActions(IJsonObject dataSourceConfig, IJsonObject data) {
-        for (Action action: actions) {
-            if (action instanceof DataAcceptingAction) {
-                ((DataAcceptingAction)action).setDataSource(dataSourceConfig);
-                ((DataAcceptingAction)action).setData(data);   
-            }
-            getHandler().post(action);
-        }
+    private final Action delegateAction;
+        
+    ActionAdapter(Action action) {
+        this.delegateAction = action;
     }
     
     @Override
     public void onDataReceived(IJsonObject dataSourceConfig, IJsonObject data) {
-        executeActions(dataSourceConfig, data);
+        delegateAction.runInHandler();
     }
 
     @Override

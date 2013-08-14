@@ -27,10 +27,13 @@ package edu.mit.media.funf.filter;
 
 import java.util.Random;
 
+import com.google.gson.JsonElement;
+
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.IJsonObject;
+import edu.mit.media.funf.probe.Probe.DataListener;
 
-public class ProbabilisticFilter extends Filter {
+public class ProbabilisticFilter implements DataListener {
 
     @Configurable
     private Double probability = 0.5; // should be between 0.0 and 1.0
@@ -38,21 +41,28 @@ public class ProbabilisticFilter extends Filter {
     @Configurable
     private Long seed = null;
     
+    private final DataListener listener;
+    
     private Random generator;
     
-    ProbabilisticFilter() {
-        super();
+    ProbabilisticFilter(DataListener listener) {
+        this.listener = listener;
         if (seed == null)
-            seed = 123456789L; // arbitrary seed
+            seed = System.currentTimeMillis();
         generator = new Random(seed);
     }
 
     @Override
-    protected void filterData(IJsonObject dataSourceConfig, IJsonObject data) {
+    public void onDataReceived(IJsonObject dataSourceConfig, IJsonObject data) {
         Double random = generator.nextDouble();
-        if (random <= probability) {
-            sendData(dataSourceConfig, data);
+        if (random < probability) {
+            listener.onDataReceived(dataSourceConfig, data);
         }
+    }
+
+    @Override
+    public void onDataCompleted(IJsonObject dataSourceConfig, JsonElement checkpoint) {
+        listener.onDataCompleted(dataSourceConfig, checkpoint);
     }
 
 }
