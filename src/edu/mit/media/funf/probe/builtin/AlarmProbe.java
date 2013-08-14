@@ -27,7 +27,10 @@ package edu.mit.media.funf.probe.builtin;
 
 import com.google.gson.JsonObject;
 
+import edu.mit.media.funf.FunfManager;
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.json.IJsonObject;
+import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.PassiveProbe;
 import edu.mit.media.funf.time.TimeUtil;
@@ -43,45 +46,50 @@ import android.util.Log;
 public class AlarmProbe extends Base implements PassiveProbe {
 
     @Configurable
-    private int interval = 300;
+    private int interval = 0;
     
     @Configurable
-    private int delay = 10;
+    private boolean exact = true;
     
-    PendingIntent pendingIntent;
-    AlarmManager alarmManager;
-    BroadcastReceiver receiver = new BroadcastReceiver() {
+    @Configurable
+    private int offset = 0;
+    
+    Runnable operation = new Runnable() {
         @Override
-        public void onReceive(Context c, Intent i) {
-            start();
+        public void run() {
+            Log.d(LogUtil.TAG, "alarm!");
+            // Notify listeners of alarm event.
+            JsonObject data = new JsonObject();
+            sendData(data);
         }
     };
-
-    protected void onEnable() {
-        String intentString = getClass().getName();
-        Long intervalMillis = TimeUtil.secondsToMillis(interval);
-        Long delayMillis = TimeUtil.secondsToMillis(delay);
-        
-        getContext().registerReceiver(receiver, new IntentFilter(intentString));
-        pendingIntent = PendingIntent.getBroadcast(getContext(), 0, 
-                new Intent(intentString), PendingIntent.FLAG_UPDATE_CURRENT);
-        alarmManager = (AlarmManager)(getContext().getSystemService(Context.ALARM_SERVICE));
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, delayMillis, intervalMillis, pendingIntent);
-        Log.d(LogUtil.TAG, "alarm set");
+    
+    FunfManager manager;
+    
+    public void setManager(FunfManager manager) {
+        this.manager = manager;
     }
 
-    protected void onStart() {
-        Log.d(LogUtil.TAG, "alarm!");
-        // Notify listeners of alarm event.
-        JsonObject data = new JsonObject();
-        sendData(data);
-        stop();
+    protected void onEnable() {
+        Long intervalMillis = TimeUtil.secondsToMillis(interval);
+        Long delayMillis = TimeUtil.secondsToMillis(offset);
+        if (manager != null) {
+            manager.registerAlarm(delayMillis, intervalMillis, exact, this, operation);
+            Log.d(LogUtil.TAG, "alarm set");
+        }
+        
     }
     
     protected void onDisable() {
-        alarmManager.cancel(pendingIntent);
-        getContext().unregisterReceiver(receiver);
-        Log.d(LogUtil.TAG, "alarm reset");
+        if (manager != null) {
+            manager.unregisterAlarm(this);
+            Log.d(LogUtil.TAG, "alarm reset");   
+        }
+    }
+    
+    @Override
+    protected boolean isWakeLockedWhileRunning() {
+        return false;
     }
     
 }
