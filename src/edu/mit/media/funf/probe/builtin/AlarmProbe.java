@@ -43,53 +43,54 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
-public class AlarmProbe extends Base implements PassiveProbe {
+public class AlarmProbe extends Base implements PassiveProbe, Runnable {
 
     @Configurable
-    private int interval = 0;
-    
+    private Long interval = null;
+
     @Configurable
-    private boolean exact = true;
-    
+    private boolean exact = false;
+
     @Configurable
-    private int offset = 0;
-    
-    Runnable operation = new Runnable() {
-        @Override
-        public void run() {
-            Log.d(LogUtil.TAG, "alarm!");
-            // Notify listeners of alarm event.
-            JsonObject data = new JsonObject();
-            sendData(data);
-        }
-    };
-    
-    FunfManager manager;
-    
-    public void setManager(FunfManager manager) {
-        this.manager = manager;
+    private Long offset = null;
+
+    @Override
+    public void run() {
+        Log.d(LogUtil.TAG, "alarm!");
+        // Notify listeners of alarm event.
+        JsonObject data = new JsonObject();
+        sendData(data);
     }
 
     protected void onEnable() {
-        Long intervalMillis = TimeUtil.secondsToMillis(interval);
-        Long delayMillis = TimeUtil.secondsToMillis(offset);
-        if (manager != null) {
-            manager.registerAlarm(delayMillis, intervalMillis, exact, this, operation);
-            Log.d(LogUtil.TAG, "alarm set");
+        String probeConfig = JsonUtils.immutable(getGson().toJsonTree(this)).toString();
+        Long intervalMillis = interval == null ? null : TimeUtil.secondsToMillis(interval);
+        if (exact) {
+            Long offsetMillis = offset == null ? null : TimeUtil.secondsToMillis(offset);
+            Long currentMillis = System.currentTimeMillis();
+            if (intervalMillis != null && offsetMillis != null && intervalMillis != 0) {
+                Long startMillis = currentMillis - (currentMillis % intervalMillis)
+                        + (offsetMillis % intervalMillis) + intervalMillis;
+                FunfManager.registerAlarm(getContext(), probeConfig, startMillis, intervalMillis, exact);    
+            } else {
+                FunfManager.registerAlarm(getContext(), probeConfig, currentMillis, intervalMillis, exact);
+            }   
+        } else {
+            FunfManager.registerAlarm(getContext(), probeConfig, 0L, intervalMillis, exact);
         }
         
+        Log.d(LogUtil.TAG, "alarm set");
     }
-    
+
     protected void onDisable() {
-        if (manager != null) {
-            manager.unregisterAlarm(this);
-            Log.d(LogUtil.TAG, "alarm reset");   
-        }
+        String probeConfig = JsonUtils.immutable(getGson().toJsonTree(this)).toString();
+        FunfManager.unregisterAlarm(getContext(), probeConfig);
+        Log.d(LogUtil.TAG, "alarm reset");   
     }
-    
+
     @Override
     protected boolean isWakeLockedWhileRunning() {
         return false;
     }
-    
+
 }
