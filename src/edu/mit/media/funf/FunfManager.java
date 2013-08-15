@@ -121,7 +121,7 @@ public class FunfManager extends Service {
     private Map<String,Pipeline> pipelines;
     private Map<String,Pipeline> disabledPipelines;
     private Set<String> disabledPipelineNames;
-    private Map<IJsonObject,List<DataRequestInfo>> dataRequests; 	
+    //private Map<IJsonObject,List<DataRequestInfo>> dataRequests; 	
     private class DataRequestInfo {
         private DataListener listener;
         private Schedule schedule;
@@ -135,7 +135,7 @@ public class FunfManager extends Service {
             if (probe instanceof ContinuableProbe && previousState == State.RUNNING) {
                 JsonElement checkpoint = ((ContinuableProbe)probe).getCheckpoint();
                 IJsonObject config = (IJsonObject)JsonUtils.immutable(gson.toJsonTree(probe));
-                for (DataRequestInfo requestInfo : dataRequests.get(config)) {
+                for (DataRequestInfo requestInfo : activeRequests.get(config)) {
                     requestInfo.checkpoint = checkpoint;
                 }
             }
@@ -147,17 +147,16 @@ public class FunfManager extends Service {
     // Maybe instances of probes are different from other, and are created in manager
 
     private Scheduler scheduler;
-    private AlarmManager alarmManager;
 
     @Override
     public void onCreate() {
         super.onCreate();
         this.parser = new JsonParser();
         this.scheduler = new Scheduler();
-        this.alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         this.handler = new Handler();
         getGson(); // Sets gson
-        this.dataRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
+        this.activeRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
+        this.listenersByLabel = new HashMap<String, DataListener>();
         this.prefs = getSharedPreferences(getClass().getName(), MODE_PRIVATE);
         this.pipelines = new HashMap<String, Pipeline>();
         this.disabledPipelines = new HashMap<String, Pipeline>();
@@ -362,8 +361,9 @@ public class FunfManager extends Service {
             } else if (ALARM_TYPE.equals(type)) {
                 // Handle registered alarms
                 String probeConfig = getComponentName(componentUri);
-                if (alarmReceivers.containsKey(probeConfig)) {
-                    handler.post(alarmReceivers.get(probeConfig));
+                final Probe probe = getGson().fromJson(probeConfig, Probe.class); 
+                if (probe instanceof Runnable) {
+                    handler.post((Runnable)probe);
                 }
             }
 
@@ -526,6 +526,178 @@ public class FunfManager extends Service {
         }
     }
 
+    private String getPipelineName(Pipeline pipeline) {
+        for (Map.Entry<String, Pipeline> entry : pipelines.entrySet()) {
+            if (entry.getValue() == pipeline) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public void registerPipelineAction(Pipeline pipeline, String action, Schedule schedule) {
+        String name = getPipelineName(pipeline);
+        if (name != null) {
+            scheduler.set(PIPELINE_TYPE, getComponenentUri(name, action), schedule);
+        }
+    }
+
+    public void unregisterPipelineAction(Pipeline pipeline, String action) {
+        String name = getPipelineName(pipeline);
+        if (name != null) {
+            scheduler.cancel(PIPELINE_TYPE, getComponenentUri(name, action));
+        }
+    }
+
+    public class LocalBinder extends Binder {
+        public FunfManager getManager() {
+            return FunfManager.this;
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return new LocalBinder();
+    }
+
+    public static void registerAlarm(Context context, String probeConfig, Long start, Long interval, boolean exact) {
+        AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+        
+        Intent intent = getFunfIntent(context, ALARM_TYPE, probeConfig, "");
+        PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        if (interval == null || interval == 0) {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, start, pendingIntent);
+        } else {
+            if (exact) {
+                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, start, interval, pendingIntent);
+            } else {
+                alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, start, interval, pendingIntent);
+            }
+        }
+    }
+
+    public static void unregisterAlarm(Context context, String probeConfig) {
+        Intent intent = getFunfIntent(context, ALARM_TYPE, probeConfig, "");
+        PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
+        if (pendingIntent != null) {
+            pendingIntent.cancel();
+        }
+    }
+
+    private Map<String, DataListener> listenersByLabel; // list of listeners indexed by label (so that Action objects can refer to them)
+    private Map<IJsonObject, List<DataRequestInfo>> activeRequests; // list of listeners that are currently registered to a probe
+    
+    public void addListenerByLabel(String label, DataListener listener) {
+        listenersByLabel.put(label, listener);
+    }
+    
+    public void removeListenerByLabel(String label) {
+        listenersByLabel.remove(label);
+    }
+    
+    public void registerProbeListener(String listenerLabel, IJsonObject probe) {
+        if (listenersByLabel.containsKey(listenerLabel)) {
+            registerProbeListener(listenersByLabel.get(listenerLabel), probe);
+        }
+    }
+    
+    public void registerProbeListener(DataListener listener, IJsonObject probeConfig) {
+        synchronized(activeRequests) {
+            List<DataRequestInfo> dataRequests = activeRequests.get(probeConfig);
+            if (dataRequests != null) {
+                for (DataRequestInfo request: dataRequests) {
+                    if (request.listener == listener) { // listener is already active for this probe
+                        return;
+                    }
+                }
+            } else {
+                activeRequests.put(probeConfig, new ArrayList<DataRequestInfo>());
+                dataRequests = activeRequests.get(probeConfig);
+            }
+            Probe probe = getGson().fromJson(probeConfig, Probe.class);
+            probe.registerListener(listener);
+            probe.addStateListener(probeStateListener);  // need to ensure that stateListener is registered only once per probe
+            DataRequestInfo newDataRequest = new DataRequestInfo();
+            newDataRequest.lastSatisfied = null;
+            newDataRequest.listener = listener;
+            newDataRequest.schedule = null;
+            dataRequests.add(newDataRequest);    
+        }
+    }
+    
+    public void unregisterProbeListener(String listenerLabel, IJsonObject probe) {
+        if (listenersByLabel.containsKey(listenerLabel)) {
+            unregisterProbeListener(listenersByLabel.get(listenerLabel), probe);
+        }
+    }
+
+    public void unregisterProbeListener(DataListener listener, IJsonObject probeConfig) {
+        synchronized(activeRequests) {
+            List<DataRequestInfo> dataRequests = activeRequests.get(probeConfig);
+            Probe probe = getGson().fromJson(probeConfig, Probe.class);
+            if (probe != null && dataRequests != null) {
+                for (int i = 0; i < dataRequests.size(); i++) {
+                    if (dataRequests.get(i).listener == listener) {
+                        dataRequests.remove(i);
+                        if (probe instanceof ContinuousProbe) {
+                            ((ContinuousProbe)probe).unregisterListener(listener);
+                        }
+                        if (probe instanceof PassiveProbe) {
+                            ((PassiveProbe)probe).unregisterPassiveListener(listener);
+                        }
+                        break; // Should only have one request for this listener and probe
+                    }
+                }
+            }   
+        }
+    }
+
+    /////////////////////////////////////////////
+    // Reserve action for later inter-funf communication
+    // Use type to differentiate between probe/pipeline
+    // funf:<componenent_name>#<action>
+
+    private static final String 
+    FUNF_SCHEME = "funf";
+
+
+    // TODO: should these public?  May be confusing for people just using the library
+    private static Uri getComponenentUri(String component, String action) {
+        return new Uri.Builder()
+        .scheme(FUNF_SCHEME)
+        .path(component) // Automatically prepends slash
+        .fragment(action)
+        .build();
+    }
+
+    private static String getComponentName(Uri componentUri) {
+        return componentUri.getPath().substring(1); // Remove automatically prepended slash from beginning
+    }
+
+    private static String getAction(Uri componentUri) {
+        return componentUri.getFragment();
+    }
+
+    private static Intent getFunfIntent(Context context, String type, String component, String action) {
+        return getFunfIntent(context, type, getComponenentUri(component, action));
+    }
+
+    private static Intent getFunfIntent(Context context, String type, Uri componentUri) {
+        Intent intent = new Intent();
+        intent.setClass(context, FunfManager.class);
+        intent.setPackage(context.getPackageName());
+        intent.setAction(ACTION_INTERNAL);
+        intent.setDataAndType(componentUri, type);
+        return intent;
+    }
+
+    //////////////////////////////////////////////////////
+    /////                    NOTE!                    //// 
+    //// Code below this point is out of use and will ////
+    //// be scrapped soon.                            ////
+    //////////////////////////////////////////////////////
+    
     public void requestData(DataListener listener, JsonElement probeConfig) {
         requestData(listener, (JsonElement)probeConfig, null);
     }
@@ -582,30 +754,7 @@ public class FunfManager extends Service {
         unrequestData(listener, completeProbeConfig);
         rescheduleProbe(completeProbeConfig);
     }
-
-    private String getPipelineName(Pipeline pipeline) {
-        for (Map.Entry<String, Pipeline> entry : pipelines.entrySet()) {
-            if (entry.getValue() == pipeline) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
-
-    public void registerPipelineAction(Pipeline pipeline, String action, Schedule schedule) {
-        String name = getPipelineName(pipeline);
-        if (name != null) {
-            scheduler.set(PIPELINE_TYPE, getComponenentUri(name, action), schedule);
-        }
-    }
-
-    public void unregisterPipelineAction(Pipeline pipeline, String action) {
-        String name = getPipelineName(pipeline);
-        if (name != null) {
-            scheduler.cancel(PIPELINE_TYPE, getComponenentUri(name, action));
-        }
-    }
-
+    
     /**
      * This version does not reschedule.
      * @param listener
@@ -678,100 +827,13 @@ public class FunfManager extends Service {
             }
         }
     }
-
-    public class LocalBinder extends Binder {
-        public FunfManager getManager() {
-            return FunfManager.this;
-        }
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return new LocalBinder();
-    }
-
-    private Map<String, Runnable> alarmReceivers = Collections.synchronizedMap(new HashMap<String, Runnable>());
-
-    public void registerAlarm(Long delay, Long interval, boolean strict, Probe receiver, Runnable operation) {
-        String probeConfig = JsonUtils.immutable(gson.toJsonTree(receiver)).toString();
-        alarmReceivers.put(probeConfig, operation);
-
-        Intent intent = getFunfIntent(this, ALARM_TYPE, probeConfig, "");
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        if (interval == null || interval == 0) {
-            alarmManager.set(AlarmManager.RTC_WAKEUP, delay, pendingIntent);
-        } else {
-            if (strict) {
-                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, delay, interval, pendingIntent);
-            } else {
-                alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, delay, interval, pendingIntent);
-            }
-        }
-    }
-
-    public void unregisterAlarm(Probe receiver) {
-        String probeConfig = JsonUtils.immutable(gson.toJsonTree(receiver)).toString();
-        if (alarmReceivers.containsKey(probeConfig)) {
-            Intent intent = getFunfIntent(this, ALARM_TYPE, probeConfig, "");
-            PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_NO_CREATE);
-            if (pendingIntent != null) {
-                pendingIntent.cancel();
-            }
-            alarmReceivers.remove(probeConfig);
-        }
-    }
     
-
-    /////////////////////////////////////////////
-    // Reserve action for later inter-funf communication
-    // Use type to differentiate between probe/pipeline
-    // funf:<componenent_name>#<action>
-
-    private static final String 
-    FUNF_SCHEME = "funf";
-
-
-    // TODO: should these public?  May be confusing for people just using the library
-    private static Uri getComponenentUri(String component, String action) {
-        return new Uri.Builder()
-        .scheme(FUNF_SCHEME)
-        .path(component) // Automatically prepends slash
-        .fragment(action)
-        .build();
-    }
-
-    private static String getComponentName(Uri componentUri) {
-        return componentUri.getPath().substring(1); // Remove automatically prepended slash from beginning
-    }
-
-    private static String getAction(Uri componentUri) {
-        return componentUri.getFragment();
-    }
-
-    private static Intent getFunfIntent(Context context, String type, String component, String action) {
-        return getFunfIntent(context, type, getComponenentUri(component, action));
-    }
-
-    private static Intent getFunfIntent(Context context, String type, Uri componentUri) {
-        Intent intent = new Intent();
-        intent.setClass(context, FunfManager.class);
-        intent.setPackage(context.getPackageName());
-        intent.setAction(ACTION_INTERNAL);
-        intent.setDataAndType(componentUri, type);
-        return intent;
-    }
-
-
     private void cancelProbe(String probeConfig) {
         scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_REGISTER));
         scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_UNREGISTER));
         scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_REGISTER_PASSIVE));
         scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_UNREGISTER_PASSIVE));
     }
-
-    ////////////////////////////////////////////////////
-
 
     private Scheduler getScheduler() {
         return scheduler;
