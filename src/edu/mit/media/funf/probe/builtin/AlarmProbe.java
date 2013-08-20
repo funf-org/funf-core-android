@@ -28,22 +28,18 @@ package edu.mit.media.funf.probe.builtin;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.FunfManager;
+import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.config.Configurable;
-import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.probe.Probe.Base;
-import edu.mit.media.funf.probe.Probe.PassiveProbe;
+import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LogUtil;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.util.Log;
 
-public class AlarmProbe extends Base implements PassiveProbe, Runnable {
+@DisplayName("Alarm Probe")
+@Schedule.DefaultSchedule(interval=120, duration=15)
+public class AlarmProbe extends Base implements Runnable {
 
     @Configurable
     private Long interval = null;
@@ -59,16 +55,17 @@ public class AlarmProbe extends Base implements PassiveProbe, Runnable {
         Log.d(LogUtil.TAG, "alarm!");
         // Notify listeners of alarm event.
         JsonObject data = new JsonObject();
+        data.addProperty("interval", interval.toString());
         sendData(data);
     }
 
-    protected void onEnable() {
+    protected void onStart() {
         String probeConfig = JsonUtils.immutable(getGson().toJsonTree(this)).toString();
-        Long intervalMillis = interval == null ? null : TimeUtil.secondsToMillis(interval);
+        Long intervalMillis = (interval == null || interval < 0) ? 0 : TimeUtil.secondsToMillis(interval);
+        Long currentMillis = System.currentTimeMillis();
         if (exact) {
-            Long offsetMillis = offset == null ? null : TimeUtil.secondsToMillis(offset);
-            Long currentMillis = System.currentTimeMillis();
-            if (intervalMillis != null && offsetMillis != null && intervalMillis != 0) {
+            Long offsetMillis = (offset == null) ? currentMillis : TimeUtil.secondsToMillis(offset);
+            if (intervalMillis != 0) {
                 Long startMillis = currentMillis - (currentMillis % intervalMillis)
                         + (offsetMillis % intervalMillis) + intervalMillis;
                 FunfManager.registerAlarm(getContext(), probeConfig, startMillis, intervalMillis, exact);    
@@ -76,13 +73,13 @@ public class AlarmProbe extends Base implements PassiveProbe, Runnable {
                 FunfManager.registerAlarm(getContext(), probeConfig, currentMillis, intervalMillis, exact);
             }   
         } else {
-            FunfManager.registerAlarm(getContext(), probeConfig, 0L, intervalMillis, exact);
+            FunfManager.registerAlarm(getContext(), probeConfig, currentMillis, intervalMillis, exact);
         }
         
         Log.d(LogUtil.TAG, "alarm set");
     }
 
-    protected void onDisable() {
+    protected void onStop() {
         String probeConfig = JsonUtils.immutable(getGson().toJsonTree(this)).toString();
         FunfManager.unregisterAlarm(getContext(), probeConfig);
         Log.d(LogUtil.TAG, "alarm reset");   
@@ -90,7 +87,7 @@ public class AlarmProbe extends Base implements PassiveProbe, Runnable {
 
     @Override
     protected boolean isWakeLockedWhileRunning() {
-        return false;
+        return true;
     }
 
 }
