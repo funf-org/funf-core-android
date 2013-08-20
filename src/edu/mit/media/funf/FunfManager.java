@@ -90,7 +90,6 @@ import edu.mit.media.funf.storage.FileArchive;
 import edu.mit.media.funf.storage.HttpArchive;
 import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.trigger.Trigger;
 import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.StringUtil;
 
@@ -121,42 +120,13 @@ public class FunfManager extends Service {
     private Map<String,Pipeline> pipelines;
     private Map<String,Pipeline> disabledPipelines;
     private Set<String> disabledPipelineNames;
-    //private Map<IJsonObject,List<DataRequestInfo>> dataRequests; 	
-    private class DataRequestInfo {
-        private DataListener listener;
-        private Schedule schedule;
-        private BigDecimal lastSatisfied;
-        private JsonElement checkpoint;
-    }
-
-    private StateListener probeStateListener = new StateListener() {
-        @Override
-        public void onStateChanged(Probe probe, State previousState) {
-            if (probe instanceof ContinuableProbe && previousState == State.RUNNING) {
-                JsonElement checkpoint = ((ContinuableProbe)probe).getCheckpoint();
-                IJsonObject config = (IJsonObject)JsonUtils.immutable(gson.toJsonTree(probe));
-                for (DataRequestInfo requestInfo : activeRequests.get(config)) {
-                    requestInfo.checkpoint = checkpoint;
-                }
-            }
-        }
-    };
-
-    // TODO: triggers
-
-    // Maybe instances of probes are different from other, and are created in manager
-
-    private Scheduler scheduler;
 
     @Override
     public void onCreate() {
         super.onCreate();
         this.parser = new JsonParser();
-        this.scheduler = new Scheduler();
         this.handler = new Handler();
         getGson(); // Sets gson
-        this.activeRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
-        this.listenersByLabel = new HashMap<String, DataListener>();
         this.prefs = getSharedPreferences(getClass().getName(), MODE_PRIVATE);
         this.pipelines = new HashMap<String, Pipeline>();
         this.disabledPipelines = new HashMap<String, Pipeline>();
@@ -259,7 +229,7 @@ public class FunfManager extends Service {
         // TODO: make sure to destroy all probes
         for (Object probeObject : getProbeFactory().getCached()) {
             String componentString = JsonUtils.immutable(gson.toJsonTree(probeObject)).toString();
-            cancelProbe(componentString);
+            //cancelProbe(componentString);
             ((Probe)probeObject).destroy();
         }
         getProbeFactory().clearCache();
@@ -273,84 +243,7 @@ public class FunfManager extends Service {
         } else if (ACTION_INTERNAL.equals(action)) {
             String type = intent.getType();
             Uri componentUri = intent.getData();
-            if (PROBE_TYPE.equals(type)) {
-                // Handle probe action
-                IJsonObject probeConfig = (IJsonObject)JsonUtils.immutable(parser.parse(getComponentName(componentUri)));
-                String probeAction = getAction(componentUri);
-
-                BigDecimal now = TimeUtil.getTimestamp();
-                final Probe probe = getGson().fromJson(probeConfig, Probe.class); 
-                List<DataRequestInfo> requests = dataRequests.get(probeConfig);
-
-                // TODO: Need to allow for some listeners to be registered and unregistered on different schedules
-                if (probe != null) {
-                    if (PROBE_ACTION_REGISTER.equals(probeAction)) {
-                        if (requests != null) {
-                            List<DataListener> listenersThatNeedData = new ArrayList<Probe.DataListener>();
-                            List<DataRequestInfo> infoForListenersThatNeedData = new ArrayList<FunfManager.DataRequestInfo>();
-                            for (DataRequestInfo requestInfo : requests) {
-                                BigDecimal interval = requestInfo.schedule.getInterval();
-                                // Compare date last satisfied to schedule interval
-                                if (requestInfo.lastSatisfied == null || now.subtract(requestInfo.lastSatisfied).compareTo(interval) >= 0) {
-                                    listenersThatNeedData.add(requestInfo.listener);
-                                    infoForListenersThatNeedData.add(requestInfo);
-                                }
-                            }
-
-
-                            final DataListener[] listenerArray = new DataListener[listenersThatNeedData.size()];
-                            listenersThatNeedData.toArray(listenerArray);
-                            if (listenerArray.length > 0) {
-                                if (probe instanceof ContinuableProbe) {
-                                    // TODO: how do we take care of multiple registrants with different checkpoints
-                                    ((ContinuableProbe)probe).setCheckpoint(requests.get(0).checkpoint);
-                                }
-                                probe.registerListener(listenerArray);
-                            }
-
-                            Log.d(TAG, "Request: " + probe.getClass().getName());
-
-                            // Schedule unregister if continuous
-                            // TODO: do different durations for each schedule
-                            if (probe instanceof ContinuousProbe) {
-                                Schedule mergedSchedule = getMergedSchedule(infoForListenersThatNeedData);
-                                if (mergedSchedule != null) {
-                                    long duration = TimeUtil.secondsToMillis(mergedSchedule.getDuration());
-                                    Log.d(TAG, "DURATION: " + duration);
-                                    if (duration > 0) {
-                                        handler.postDelayed(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                ((ContinuousProbe) probe).unregisterListener(listenerArray);
-                                            }
-                                        }, TimeUtil.secondsToMillis(mergedSchedule.getDuration()));
-                                    }
-                                }
-                            }
-                        }
-                    } else if (PROBE_ACTION_UNREGISTER.equals(probeAction) && probe instanceof ContinuousProbe) {
-                        for (DataRequestInfo requestInfo : requests) {
-                            ((ContinuousProbe)probe).unregisterListener(requestInfo.listener);
-                        }
-                    } else if (PROBE_ACTION_REGISTER_PASSIVE.equals(probeAction) && probe instanceof PassiveProbe) {
-                        if (requests != null) {
-                            for (DataRequestInfo requestInfo : requests) {
-                                if (requestInfo.schedule.isOpportunistic()) {
-                                    ((PassiveProbe)probe).registerPassiveListener(requestInfo.listener);
-                                }
-                            }
-                        }
-                    } else if (PROBE_ACTION_UNREGISTER_PASSIVE.equals(probeAction) && probe instanceof PassiveProbe) {
-                        if (requests != null) {
-                            for (DataRequestInfo requestInfo : requests) {
-                                ((PassiveProbe)probe).unregisterPassiveListener(requestInfo.listener);
-                            }
-                        }
-                    }
-                }
-
-                // TODO: Calculate new schedule for probe
-            } else if (PIPELINE_TYPE.equals(type)) {
+            if (PIPELINE_TYPE.equals(type)) {
                 // Handle pipeline action
                 String pipelineName = getComponentName(componentUri);
                 String pipelineAction = getAction(componentUri);
@@ -535,20 +428,6 @@ public class FunfManager extends Service {
         return null;
     }
 
-    public void registerPipelineAction(Pipeline pipeline, String action, Schedule schedule) {
-        String name = getPipelineName(pipeline);
-        if (name != null) {
-            scheduler.set(PIPELINE_TYPE, getComponenentUri(name, action), schedule);
-        }
-    }
-
-    public void unregisterPipelineAction(Pipeline pipeline, String action) {
-        String name = getPipelineName(pipeline);
-        if (name != null) {
-            scheduler.cancel(PIPELINE_TYPE, getComponenentUri(name, action));
-        }
-    }
-
     public class LocalBinder extends Binder {
         public FunfManager getManager() {
             return FunfManager.this;
@@ -565,8 +444,11 @@ public class FunfManager extends Service {
         
         Intent intent = getFunfIntent(context, ALARM_TYPE, probeConfig, "");
         PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        
+        if (start == null)
+            start = 0L;
 
-        if (interval == null || interval == 0) {
+        if (interval == null || interval <= 0) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, start, pendingIntent);
         } else {
             if (exact) {
@@ -583,75 +465,7 @@ public class FunfManager extends Service {
         if (pendingIntent != null) {
             pendingIntent.cancel();
         }
-    }
-
-    private Map<String, DataListener> listenersByLabel; // list of listeners indexed by label (so that Action objects can refer to them)
-    private Map<IJsonObject, List<DataRequestInfo>> activeRequests; // list of listeners that are currently registered to a probe
-    
-    public void addListenerByLabel(String label, DataListener listener) {
-        listenersByLabel.put(label, listener);
-    }
-    
-    public void removeListenerByLabel(String label) {
-        listenersByLabel.remove(label);
-    }
-    
-    public void registerProbeListener(String listenerLabel, IJsonObject probe) {
-        if (listenersByLabel.containsKey(listenerLabel)) {
-            registerProbeListener(listenersByLabel.get(listenerLabel), probe);
-        }
-    }
-    
-    public void registerProbeListener(DataListener listener, IJsonObject probeConfig) {
-        synchronized(activeRequests) {
-            List<DataRequestInfo> dataRequests = activeRequests.get(probeConfig);
-            if (dataRequests != null) {
-                for (DataRequestInfo request: dataRequests) {
-                    if (request.listener == listener) { // listener is already active for this probe
-                        return;
-                    }
-                }
-            } else {
-                activeRequests.put(probeConfig, new ArrayList<DataRequestInfo>());
-                dataRequests = activeRequests.get(probeConfig);
-            }
-            Probe probe = getGson().fromJson(probeConfig, Probe.class);
-            probe.registerListener(listener);
-            probe.addStateListener(probeStateListener);  // need to ensure that stateListener is registered only once per probe
-            DataRequestInfo newDataRequest = new DataRequestInfo();
-            newDataRequest.lastSatisfied = null;
-            newDataRequest.listener = listener;
-            newDataRequest.schedule = null;
-            dataRequests.add(newDataRequest);    
-        }
-    }
-    
-    public void unregisterProbeListener(String listenerLabel, IJsonObject probe) {
-        if (listenersByLabel.containsKey(listenerLabel)) {
-            unregisterProbeListener(listenersByLabel.get(listenerLabel), probe);
-        }
-    }
-
-    public void unregisterProbeListener(DataListener listener, IJsonObject probeConfig) {
-        synchronized(activeRequests) {
-            List<DataRequestInfo> dataRequests = activeRequests.get(probeConfig);
-            Probe probe = getGson().fromJson(probeConfig, Probe.class);
-            if (probe != null && dataRequests != null) {
-                for (int i = 0; i < dataRequests.size(); i++) {
-                    if (dataRequests.get(i).listener == listener) {
-                        dataRequests.remove(i);
-                        if (probe instanceof ContinuousProbe) {
-                            ((ContinuousProbe)probe).unregisterListener(listener);
-                        }
-                        if (probe instanceof PassiveProbe) {
-                            ((PassiveProbe)probe).unregisterPassiveListener(listener);
-                        }
-                        break; // Should only have one request for this listener and probe
-                    }
-                }
-            }   
-        }
-    }
+    }    
 
     /////////////////////////////////////////////
     // Reserve action for later inter-funf communication
@@ -690,247 +504,5 @@ public class FunfManager extends Service {
         intent.setAction(ACTION_INTERNAL);
         intent.setDataAndType(componentUri, type);
         return intent;
-    }
-
-    //////////////////////////////////////////////////////
-    /////                    NOTE!                    //// 
-    //// Code below this point is out of use and will ////
-    //// be scrapped soon.                            ////
-    //////////////////////////////////////////////////////
-    
-    public void requestData(DataListener listener, JsonElement probeConfig) {
-        requestData(listener, (JsonElement)probeConfig, null);
-    }
-
-    public void requestData(DataListener listener, JsonElement probeConfig, Schedule schedule) {
-        if (probeConfig == null) {
-            throw new IllegalArgumentException("Probe config cannot be null");
-        }
-        // Use schedule in probeConfig @schedule annotation
-        Probe probe = gson.fromJson(probeConfig, Probe.class);
-        probe.addStateListener(probeStateListener);
-        if (schedule == null) {
-            DefaultSchedule defaultSchedule = probe.getClass().getAnnotation(DefaultSchedule.class);
-            JsonObject scheduleObject = defaultSchedule == null ? new JsonObject() : gson.toJsonTree(defaultSchedule, DefaultSchedule.class).getAsJsonObject();
-            if (probeConfig.isJsonObject() && probeConfig.getAsJsonObject().has(PipelineFactory.SCHEDULE)) {
-                JsonUtils.deepCopyOnto(probeConfig.getAsJsonObject().get(PipelineFactory.SCHEDULE).getAsJsonObject(), scheduleObject, true);
-            }
-            schedule = gson.fromJson(scheduleObject, Schedule.class);
-        }
-        IJsonObject completeProbeConfig = (IJsonObject)JsonUtils.immutable(gson.toJsonTree(probe));  // Make sure probe config is complete and consistent
-        requestData(listener, completeProbeConfig, schedule);
-    }
-
-    private void requestData(DataListener listener, IJsonObject completeProbeConfig, Schedule schedule) {
-        if (listener == null) {
-            throw new IllegalArgumentException("Listener cannot be null");
-        }
-        if (completeProbeConfig == null) {
-            throw new IllegalArgumentException("Probe config cannot be null");
-        }
-        DataRequestInfo newDataRequest = new DataRequestInfo();
-        newDataRequest.lastSatisfied = null;
-        newDataRequest.listener = listener;
-        newDataRequest.schedule = schedule;
-        synchronized (dataRequests) {
-            List<DataRequestInfo> requests = dataRequests.get(completeProbeConfig);
-            if (requests == null) {
-                requests = new ArrayList<FunfManager.DataRequestInfo>();
-                dataRequests.put(completeProbeConfig, requests);
-            }
-            unrequestData(listener, completeProbeConfig);
-            requests.add(newDataRequest);
-        }
-        rescheduleProbe(completeProbeConfig);
-    }
-
-    public void unrequestAllData(DataListener listener) {
-        unrequestData(listener, (IJsonObject)null);
-    }
-
-    public void unrequestData(DataListener listener, JsonElement probeConfig) {
-        Probe probe = gson.fromJson(probeConfig, Probe.class);
-        IJsonObject completeProbeConfig = (IJsonObject)JsonUtils.immutable(gson.toJsonTree(probe));  // Make sure probe config is complete and consistent
-        unrequestData(listener, completeProbeConfig);
-        rescheduleProbe(completeProbeConfig);
-    }
-    
-    /**
-     * This version does not reschedule.
-     * @param listener
-     * @param completeProbeConfig
-     */
-    private void unrequestData(DataListener listener, IJsonObject completeProbeConfig) {
-        synchronized (dataRequests) {
-            List<DataRequestInfo> requests = null;
-            if (completeProbeConfig == null) {
-                requests = new ArrayList<FunfManager.DataRequestInfo>();
-                for (List<DataRequestInfo> requestInfos : dataRequests.values()) {
-                    requests.addAll(requestInfos);
-                }
-            } else {
-                requests = dataRequests.get(completeProbeConfig);
-            }
-            Probe probe = gson.fromJson(completeProbeConfig, Probe.class);
-            for (int i = 0; i < requests.size(); i++) {
-                if (requests.get(i).listener == listener) {
-                    requests.remove(i);
-                    if (probe instanceof ContinuousProbe) {
-                        ((ContinuousProbe)probe).unregisterListener(listener);
-                    }
-                    if (probe instanceof PassiveProbe) {
-                        ((PassiveProbe)probe).unregisterPassiveListener(listener);
-                    }
-                    break; // Should only have one request for this listener and probe
-                }
-            }
-        }
-    }
-
-    private Schedule getMergedSchedule(List<DataRequestInfo> requests) {
-        BasicSchedule mergedSchedule = null;
-        for (DataRequestInfo request: requests) {
-            if (mergedSchedule == null) {
-                mergedSchedule = new BasicSchedule(request.schedule);
-            } else {
-                // Min interval
-                mergedSchedule.setInterval(mergedSchedule.getInterval().min(request.schedule.getInterval()));
-                // Max duration
-                mergedSchedule.setDuration(mergedSchedule.getDuration().max(request.schedule.getDuration()));
-                // Strict if one is strict
-                mergedSchedule.setStrict(mergedSchedule.isStrict() || request.schedule.isStrict());
-            }
-        }
-        return mergedSchedule;
-    }
-
-    private void rescheduleProbe(IJsonObject completeProbeConfig) {
-        synchronized (dataRequests) {
-            // Simple schedule merge for now
-            // TODO: make this more efficient
-            String componentString = completeProbeConfig.toString();
-            List<DataRequestInfo> requests = dataRequests.get(completeProbeConfig);
-            if (requests.isEmpty()) {
-                cancelProbe(componentString);
-            } else {
-                Schedule mergedSchedule = getMergedSchedule(requests);
-                for (DataRequestInfo request: requests) {
-                    // Schedule passive listening if opportunistic
-                    if (request.schedule.isOpportunistic()) {
-                        Probe probe = gson.fromJson(completeProbeConfig, Probe.class);
-                        if (probe instanceof PassiveProbe) {
-                            ((PassiveProbe)probe).registerPassiveListener(request.listener);
-                        }
-                    }
-                }
-                scheduler.set(PROBE_TYPE, getComponenentUri(componentString, PROBE_ACTION_REGISTER), mergedSchedule);
-            }
-        }
-    }
-    
-    private void cancelProbe(String probeConfig) {
-        scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_REGISTER));
-        scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_UNREGISTER));
-        scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_REGISTER_PASSIVE));
-        scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_UNREGISTER_PASSIVE));
-    }
-
-    private Scheduler getScheduler() {
-        return scheduler;
-    }
-
-    private class Scheduler {
-
-        private AlarmManager alarmManager;
-        private Context context;
-
-        // private Map<Pipeline,Config,Schedule>
-        // Need to be able to merge schedules for common types quickly, across pipelines
-        // private Map<Config,<Schedule,Pipeline>>
-
-        // Use factory to build data listeners from gson?
-        // Or just grab data listener from pipeline
-        // What about running other operations?  Should they all just have a run/start and maybe stop?
-
-        // IDEA:
-        // Send config back to pipeline, let it decide how to handle it.
-
-
-        public Scheduler() {
-            this.alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-            this.context = FunfManager.this;
-        }
-
-
-        public void cancel(String type, Uri componentAndAction) {
-            Intent intent = getFunfIntent(context, type, componentAndAction);
-            PendingIntent operation = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
-            if (operation != null) {
-                operation.cancel();
-            }
-        }
-
-        public void cancel(String type, String component, String action) {
-            cancel(type, getComponenentUri(component, action));
-        }
-
-        public void set(String type, String component, String action, Schedule schedule) {
-            set(type, getComponenentUri(component, action), schedule);
-        }
-
-        public void set(String type, Uri componentAndAction, Schedule schedule) {
-
-            // Creates pending intents that will call back into FunfManager
-            // Uses alarm manager to time them
-            Intent intent = getFunfIntent(context, type, componentAndAction);
-            PendingIntent operation = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-            // TODO: figure out how to do previous time for all components, including pipeline actions
-            Number previousTime = null;
-
-            // TODO: add random start for initial
-            // startTimeMillis += random;
-
-
-            BigDecimal startTime = schedule.getNextTime(previousTime);
-            if (startTime != null) {
-                long startTimeMillis = TimeUtil.secondsToMillis(startTime);
-                if (schedule.getInterval() == null || schedule.getInterval().intValue() == 0) {
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, startTimeMillis, operation);
-                } else {
-                    long intervalMillis = TimeUtil.secondsToMillis(schedule.getInterval());
-                    if (schedule.isStrict()) {
-                        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, startTimeMillis, intervalMillis, operation);
-                    } else {
-                        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, startTimeMillis, intervalMillis, operation);
-                    }
-                }
-            }
-
-        }
-
-        // TODO: Feature to wait a certain amount of seconds after boot to begin
-        // TODO: Feature to prevent too many things from running at once, w/ random backoff times
-
-
-        // All are in timestamp seconds
-        // PARAMS
-        // time (time to run, may not need this for now)
-        // strict (do we need wakeup as a separate parameter, or are all wakeup?)
-        // interval (period)
-        // duration (start to stop time)
-        // opportunistic (For probes, means use other probe being run as an excuse to run this one, not sure what it means for others, its possible this won't be part of scheduling)
-
-
-
-        // Schedule runnables
-        // Data request would be able to contain
-
-        // Pipeline could provide data listener for probes
-        // Pipeline could provide mechanism for creating objects to RUN!!!
-
-        // Configuration, is loaded into pipeline which creates the object to run
-        // This allows separate probes if required
-        // Allows creation of database services to be determined by pipeline
     }
 }
