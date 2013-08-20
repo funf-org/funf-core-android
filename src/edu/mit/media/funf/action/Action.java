@@ -27,21 +27,37 @@ package edu.mit.media.funf.action;
 
 import java.lang.Runnable;
 
+import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.time.TimeUtil;
+
 import android.os.Handler;
 import android.os.Looper;
 
-import edu.mit.media.funf.json.IJsonObject;
-
 public class Action implements Runnable {
         
+    /**
+     *  Delay in seconds after which this action should be run.
+     *  
+     *  Use this for short delays, for timing longer delays, consider
+     *  using AlarmProbe.
+     */
+    @Configurable
+    private int delay = 0; 
+    
+    private ActionGraph graph;
     private Handler handler;
     
     Action() {
     }
     
-    Action(Handler handler) {
+    public Action(ActionGraph graph) {
         this();
-        this.handler = handler;
+        this.graph = graph;
+        this.handler = graph.getHandler();
+    }
+    
+    protected ActionGraph getGraph() {
+        return graph;
     }
     
     public Handler getHandler() {
@@ -52,6 +68,14 @@ public class Action implements Runnable {
         this.handler = handler;
     }
     
+    public int getDelay() {
+        return delay;
+    }
+    
+    public void setDelay(int delay) {
+        this.delay = delay;
+    }
+    
     @Override
     public final void run() {
         if (Looper.myLooper() != getHandler().getLooper()) {
@@ -60,8 +84,12 @@ public class Action implements Runnable {
         execute();
     }
     
-    public final void runInHandler() {
-        getHandler().post(this);
+    public void runInHandler() {
+        if (delay > 0) {
+            getHandler().postDelayed(this, TimeUtil.secondsToMillis(delay));   
+        } else {
+            getHandler().post(this);
+        }
     }
     
     /**

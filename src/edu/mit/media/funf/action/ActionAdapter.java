@@ -34,7 +34,7 @@ public class ActionAdapter implements DataListener {
     
     private final Action delegateAction;
         
-    ActionAdapter(Action action) {
+    public ActionAdapter(Action action) {
         this.delegateAction = action;
     }
     
