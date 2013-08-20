@@ -45,7 +45,7 @@ public class ProbabilisticFilter implements DataListener {
     
     private Random generator;
     
-    ProbabilisticFilter(DataListener listener) {
+    public ProbabilisticFilter(DataListener listener) {
         this.listener = listener;
         if (seed == null)
             seed = System.currentTimeMillis();

@@ -45,11 +45,16 @@ public class TimeOfDayFilter implements DataListener {
     
     private final DataListener listener;
     
-    TimeOfDayFilter(DataListener listener) {
+    public TimeOfDayFilter(DataListener listener) {
         this.listener = listener;
         calendar = Calendar.getInstance();
     }
         
+    public void setTimeInterval(String start, String end) {
+        this.start = start;
+        this.end = end;
+    }
+    
     private int parseFormattedTime(String time) {
         String[] split = time.split(":");
         int hour = Integer.parseInt(split[0]);
