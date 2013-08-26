@@ -80,11 +80,12 @@ public class Action implements Runnable {
     public final void run() {
         if (Looper.myLooper() != getHandler().getLooper()) {
             getHandler().post(this);
+            return;
         }
         execute();
     }
     
-    public void runInHandler() {
+    public void queueInHandler() {
         if (delay > 0) {
             getHandler().postDelayed(this, TimeUtil.secondsToMillis(delay));   
         } else {

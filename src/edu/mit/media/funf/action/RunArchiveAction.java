@@ -41,9 +41,9 @@ public class RunArchiveAction extends Action {
     }
     
     @Override
-    public void runInHandler() {
+    public void queueInHandler() {
         ensureMyHandlerExists(); // run data archive on a dedicated thread
-        super.runInHandler();
+        super.queueInHandler();
     }
     
     private void ensureMyHandlerExists() {

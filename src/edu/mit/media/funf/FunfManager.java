@@ -23,16 +23,10 @@
  */
 package edu.mit.media.funf;
 
-import static edu.mit.media.funf.util.LogUtil.TAG;
-
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -74,22 +68,13 @@ import edu.mit.media.funf.config.DefaultRuntimeTypeAdapterFactory;
 import edu.mit.media.funf.config.DefaultScheduleSerializer;
 import edu.mit.media.funf.config.HttpConfigUpdater;
 import edu.mit.media.funf.config.SingletonTypeAdapterFactory;
-import edu.mit.media.funf.json.IJsonObject;
-import edu.mit.media.funf.json.JsonUtils;
 import edu.mit.media.funf.pipeline.Pipeline;
 import edu.mit.media.funf.pipeline.PipelineFactory;
 import edu.mit.media.funf.probe.Probe;
-import edu.mit.media.funf.probe.Probe.ContinuableProbe;
-import edu.mit.media.funf.probe.Probe.ContinuousProbe;
-import edu.mit.media.funf.probe.Probe.DataListener;
-import edu.mit.media.funf.probe.Probe.PassiveProbe;
-import edu.mit.media.funf.probe.Probe.State;
-import edu.mit.media.funf.probe.Probe.StateListener;
 import edu.mit.media.funf.storage.DefaultArchive;
 import edu.mit.media.funf.storage.FileArchive;
 import edu.mit.media.funf.storage.HttpArchive;
 import edu.mit.media.funf.storage.RemoteFileArchive;
-import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.StringUtil;
 
@@ -99,23 +84,14 @@ public class FunfManager extends Service {
     ACTION_KEEP_ALIVE = "funf.keepalive",
     ACTION_INTERNAL = "funf.internal";
 
-    private static final String 
-    PROBE_TYPE = "funf/probe",
+    private static final String
     PIPELINE_TYPE = "funf/pipeline",
     ALARM_TYPE = "funf/alarm";
 
     private static final String 
     DISABLED_PIPELINE_LIST = "__DISABLED__";
 
-    private static final String 
-    PROBE_ACTION_REGISTER = "register",
-    PROBE_ACTION_UNREGISTER = "unregister",
-    PROBE_ACTION_REGISTER_PASSIVE = "register-passive",
-    PROBE_ACTION_UNREGISTER_PASSIVE = "unregister-passive";
-
-
     private Handler handler;
-    private JsonParser parser;
     private SharedPreferences prefs;
     private Map<String,Pipeline> pipelines;
     private Map<String,Pipeline> disabledPipelines;
@@ -124,7 +100,6 @@ public class FunfManager extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        this.parser = new JsonParser();
         this.handler = new Handler();
         getGson(); // Sets gson
         this.prefs = getSharedPreferences(getClass().getName(), MODE_PRIVATE);
@@ -228,7 +203,7 @@ public class FunfManager extends Service {
 
         // TODO: make sure to destroy all probes
         for (Object probeObject : getProbeFactory().getCached()) {
-            String componentString = JsonUtils.immutable(gson.toJsonTree(probeObject)).toString();
+            //String componentString = JsonUtils.immutable(gson.toJsonTree(probeObject)).toString();
             //cancelProbe(componentString);
             ((Probe)probeObject).destroy();
         }
@@ -477,7 +452,7 @@ public class FunfManager extends Service {
 
 
     // TODO: should these public?  May be confusing for people just using the library
-    private static Uri getComponenentUri(String component, String action) {
+    private static Uri getComponentUri(String component, String action) {
         return new Uri.Builder()
         .scheme(FUNF_SCHEME)
         .path(component) // Automatically prepends slash
@@ -494,7 +469,7 @@ public class FunfManager extends Service {
     }
 
     private static Intent getFunfIntent(Context context, String type, String component, String action) {
-        return getFunfIntent(context, type, getComponenentUri(component, action));
+        return getFunfIntent(context, type, getComponentUri(component, action));
     }
 
     private static Intent getFunfIntent(Context context, String type, Uri componentUri) {

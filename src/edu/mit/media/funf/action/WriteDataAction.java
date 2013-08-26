@@ -55,7 +55,7 @@ public class WriteDataAction extends Action implements DataListener {
     public void onDataReceived(IJsonObject probeConfig, IJsonObject data) {
         this.key = probeConfig.get(RuntimeTypeAdapterFactory.TYPE).toString();
         this.data = data;
-        runInHandler();
+        queueInHandler();
     }
 
     @Override
@@ -65,9 +65,9 @@ public class WriteDataAction extends Action implements DataListener {
     }
     
     @Override
-    public void runInHandler() {
+    public void queueInHandler() {
         ensureMyHandlerExists(); // run data write on a dedicated thread
-        super.runInHandler();
+        super.queueInHandler();
     }
     
     private void ensureMyHandlerExists() {

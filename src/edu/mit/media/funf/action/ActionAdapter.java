@@ -40,7 +40,7 @@ public class ActionAdapter implements DataListener {
     
     @Override
     public void onDataReceived(IJsonObject dataSourceConfig, IJsonObject data) {
-        delegateAction.runInHandler();
+        delegateAction.queueInHandler();
     }
 
     @Override
