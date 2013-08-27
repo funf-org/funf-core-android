@@ -39,22 +39,23 @@ public class ProbabilisticFilter implements DataListener {
     private Double probability = 0.5; // should be between 0.0 and 1.0
     
     @Configurable
+    private DataListener listener;
+        
+    private Random generator;
     private Long seed = null;
     
-    private final DataListener listener;
-    
-    private Random generator;
+    ProbabilisticFilter() {
+    }
     
     public ProbabilisticFilter(DataListener listener) {
         this.listener = listener;
-        if (seed == null)
-            seed = System.currentTimeMillis();
+        seed = System.currentTimeMillis();
         generator = new Random(seed);
     }
 
     @Override
     public void onDataReceived(IJsonObject dataSourceConfig, IJsonObject data) {
-        Double random = generator.nextDouble();
+        double random = generator.nextDouble();
         if (random < probability) {
             listener.onDataReceived(dataSourceConfig, data);
         }

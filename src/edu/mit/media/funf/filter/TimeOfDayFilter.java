@@ -27,23 +27,36 @@ package edu.mit.media.funf.filter;
 
 import java.util.Calendar;
 
+import android.util.Log;
+
 import com.google.gson.JsonElement;
 
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
+import edu.mit.media.funf.util.LogUtil;
 
 public class TimeOfDayFilter implements DataListener {
 
     @Configurable
-    private String start = "06:00"; // 24-hour time in HH:mm format 
+    private String start = "00:00"; // 24-hour time in HH:mm format 
     
     @Configurable
-    private String end = "18:00"; // 24-hour time in HH:mm format
+    private String end = "23:59"; // 24-hour time in HH:mm format
+    
+    @Configurable
+    private DataListener listener;
     
     private Calendar calendar;
     
-    private final DataListener listener;
+    private int startTime = 0;
+    private int endTime = 0;
+    private boolean isParsingDone = false;
+    
+    private boolean isDataReceived = false;
+        
+    TimeOfDayFilter() {
+    }
     
     public TimeOfDayFilter(DataListener listener) {
         this.listener = listener;
@@ -53,30 +66,48 @@ public class TimeOfDayFilter implements DataListener {
     public void setTimeInterval(String start, String end) {
         this.start = start;
         this.end = end;
+        isParsingDone = false;
     }
     
     private int parseFormattedTime(String time) {
         String[] split = time.split(":");
-        int hour = Integer.parseInt(split[0]);
-        int min = Integer.parseInt(split[1]);
-        return hour*100 + min;
+        try {
+            int hour = Integer.parseInt(split[0]);
+            int min = Integer.parseInt(split[1]);
+            return hour*60 + min;   
+        } catch (Exception e) {
+            Log.e(LogUtil.TAG, "TimeOfDayFilter: Error in parsing time: " + time);
+            return 0;
+        }
+    }
+    
+    private int getCurrentTime() {
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int min = calendar.get(Calendar.MINUTE);
+        return hour*60 + min;
     }
 
     @Override
     public void onDataReceived(IJsonObject dataSourceConfig, IJsonObject data) {
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int min = calendar.get(Calendar.MINUTE);
-        int currentTime = hour*100 + min;
-        int startTime = parseFormattedTime(start);
-        int endTime = parseFormattedTime(end);
+        int currentTime = getCurrentTime();
+        if (!isParsingDone) {
+            startTime = parseFormattedTime(start);
+            endTime = parseFormattedTime(end);
+            isParsingDone = true;
+                
+        }
         if (startTime <= currentTime && currentTime < endTime) {
             listener.onDataReceived(dataSourceConfig, data);
+            isDataReceived = true;
         }
     }
 
     @Override
     public void onDataCompleted(IJsonObject dataSourceConfig, JsonElement checkpoint) {
-        listener.onDataCompleted(dataSourceConfig, checkpoint);
+        if (isDataReceived) {
+            listener.onDataCompleted(dataSourceConfig, checkpoint);   
+            isDataReceived = false;
+        }
     }
 }
