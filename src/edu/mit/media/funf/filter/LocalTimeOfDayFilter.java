@@ -36,7 +36,7 @@ import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.util.LogUtil;
 
-public class TimeOfDayFilter implements DataListener {
+public class LocalTimeOfDayFilter implements DataListener {
 
     @Configurable
     private String start = "00:00"; // 24-hour time in HH:mm format 
@@ -55,10 +55,10 @@ public class TimeOfDayFilter implements DataListener {
     
     private boolean isDataReceived = false;
         
-    TimeOfDayFilter() {
+    LocalTimeOfDayFilter() {
     }
     
-    public TimeOfDayFilter(DataListener listener) {
+    public LocalTimeOfDayFilter(DataListener listener) {
         this.listener = listener;
         calendar = Calendar.getInstance();
     }
