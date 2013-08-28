@@ -42,14 +42,13 @@ public class ProbabilisticFilter implements DataListener {
     private DataListener listener;
         
     private Random generator;
-    private Long seed = null;
     
     ProbabilisticFilter() {
     }
     
     public ProbabilisticFilter(DataListener listener) {
         this.listener = listener;
-        seed = System.currentTimeMillis();
+        long seed = System.currentTimeMillis();
         generator = new Random(seed);
     }
 

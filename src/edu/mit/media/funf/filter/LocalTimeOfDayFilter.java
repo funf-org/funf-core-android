@@ -25,6 +25,7 @@
  */
 package edu.mit.media.funf.filter;
 
+import java.text.ParseException;
 import java.util.Calendar;
 
 import android.util.Log;
@@ -38,11 +39,17 @@ import edu.mit.media.funf.util.LogUtil;
 
 public class LocalTimeOfDayFilter implements DataListener {
 
+    /**
+     * 24-hour time in HH:mm format
+     */
     @Configurable
-    private String start = "00:00"; // 24-hour time in HH:mm format 
+    private String start = "00:00";  
     
+    /**
+     * 24-hour time in HH:mm format
+     */
     @Configurable
-    private String end = "23:59"; // 24-hour time in HH:mm format
+    private String end = "24:00"; 
     
     @Configurable
     private DataListener listener;
@@ -69,16 +76,11 @@ public class LocalTimeOfDayFilter implements DataListener {
         isParsingDone = false;
     }
     
-    private int parseFormattedTime(String time) {
+    private int parseFormattedTime(String time) throws ParseException {
         String[] split = time.split(":");
-        try {
-            int hour = Integer.parseInt(split[0]);
-            int min = Integer.parseInt(split[1]);
-            return hour*60 + min;   
-        } catch (Exception e) {
-            Log.e(LogUtil.TAG, "TimeOfDayFilter: Error in parsing time: " + time);
-            return 0;
-        }
+        int hour = Integer.parseInt(split[0]);
+        int min = Integer.parseInt(split[1]);
+        return hour*60 + min;   
     }
     
     private int getCurrentTime() {
@@ -92,10 +94,21 @@ public class LocalTimeOfDayFilter implements DataListener {
     public void onDataReceived(IJsonObject dataSourceConfig, IJsonObject data) {
         int currentTime = getCurrentTime();
         if (!isParsingDone) {
-            startTime = parseFormattedTime(start);
-            endTime = parseFormattedTime(end);
+            try {
+                startTime = parseFormattedTime(start);
+            } catch (ParseException e) {
+                Log.e(LogUtil.TAG, "LocalTimeOfDayFilter: Error in parsing start time " + start);
+                Log.e(LogUtil.TAG, "LocalTimeOfDayFilter: Reverting to default start time 00:00");
+                startTime = 0;
+            }
+            try {
+                endTime = parseFormattedTime(end);
+            } catch (ParseException e) {
+                Log.e(LogUtil.TAG, "LocalTimeOfDayFilter: Error in parsing end time " + end);
+                Log.e(LogUtil.TAG, "LocalTimeOfDayFilter: Reverting to default end time 24:00");
+                endTime = 24*60;
+            }
             isParsingDone = true;
-                
         }
         if (startTime <= currentTime && currentTime < endTime) {
             listener.onDataReceived(dataSourceConfig, data);
