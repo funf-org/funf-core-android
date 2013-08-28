@@ -33,10 +33,31 @@ import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 
+/**
+ * Filters in data randomly, with a uniform probability equal to
+ * the configured "probability" variable.
+ * 
+ * Filters can be registered as a DataListener to any data source,
+ * for eg. probes or other filters. Filters listen for data from
+ * the source, and if certain specified conditions are met, 
+ * forward the data to their own Data Listener.
+ * 
+ * For the ProbabilisticFilter, the "probability" variable
+ * must be set to the required probability, in the range [0,1].
+ * 
+ * Values less than 0 will be considered as 0, and greater than 1
+ * will be considered as 1.
+ *
+ */
 public class ProbabilisticFilter implements DataListener {
 
+    /**
+     * Probability with which the filter should forward data.
+     * Values less than 0 will be considered as 0, and greater than 1
+     * will be considered as 1.
+     */
     @Configurable
-    private Double probability = 0.5; // should be between 0.0 and 1.0
+    private double probability = 0.5; 
     
     @Configurable
     private DataListener listener;

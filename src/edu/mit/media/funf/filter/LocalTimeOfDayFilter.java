@@ -25,7 +25,6 @@
  */
 package edu.mit.media.funf.filter;
 
-import java.text.ParseException;
 import java.util.Calendar;
 
 import android.util.Log;
@@ -37,19 +36,41 @@ import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.util.LogUtil;
 
+/**
+ * Filters in data only when the device local time is between the
+ * configured start and end times.
+ * 
+ * Filters can be registered as a DataListener to any data source,
+ * for eg. probes or other filters. Filters listen for data from
+ * the source, and if certain specified conditions are met, 
+ * forward the data to their own Data Listener.
+ * 
+ * For the LocalTimeOfDayFilter, the "start" and "end" variables
+ * must be set to the start and end time of the day (in 24-hour 
+ * clock format) between which this filter should let the data
+ * through.
+ * 
+ * If the "start" and/or "end" values are invalid, the default 
+ * values DEFAULT_START and/or DEFAULT_END will be considered
+ * for filtering.
+ *
+ */
 public class LocalTimeOfDayFilter implements DataListener {
 
-    /**
-     * 24-hour time in HH:mm format
-     */
-    @Configurable
-    private String start = "00:00";  
+    private static final String DEFAULT_START = "00:00";
+    private static final String DEFAULT_END = "24:00";
     
     /**
      * 24-hour time in HH:mm format
      */
     @Configurable
-    private String end = "24:00"; 
+    private String start = DEFAULT_START;  
+    
+    /**
+     * 24-hour time in HH:mm format
+     */
+    @Configurable
+    private String end = DEFAULT_END; 
     
     @Configurable
     private DataListener listener;
@@ -76,10 +97,12 @@ public class LocalTimeOfDayFilter implements DataListener {
         isParsingDone = false;
     }
     
-    private int parseFormattedTime(String time) throws ParseException {
+    private static int parseFormattedTime(String time) throws Exception {
         String[] split = time.split(":");
         int hour = Integer.parseInt(split[0]);
         int min = Integer.parseInt(split[1]);
+        if (hour < 0 || hour > 24 || min < 0 || min >= 60)
+            throw new Exception();
         return hour*60 + min;   
     }
     
@@ -96,14 +119,14 @@ public class LocalTimeOfDayFilter implements DataListener {
         if (!isParsingDone) {
             try {
                 startTime = parseFormattedTime(start);
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 Log.e(LogUtil.TAG, "LocalTimeOfDayFilter: Error in parsing start time " + start);
                 Log.e(LogUtil.TAG, "LocalTimeOfDayFilter: Reverting to default start time 00:00");
                 startTime = 0;
             }
             try {
                 endTime = parseFormattedTime(end);
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 Log.e(LogUtil.TAG, "LocalTimeOfDayFilter: Error in parsing end time " + end);
                 Log.e(LogUtil.TAG, "LocalTimeOfDayFilter: Reverting to default end time 24:00");
                 endTime = 24*60;
