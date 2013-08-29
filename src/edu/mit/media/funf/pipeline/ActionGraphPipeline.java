@@ -83,6 +83,48 @@ public class ActionGraphPipeline implements Pipeline, ActionGraph {
     protected ConfigUpdater update = null;
 
     private UploadService uploader;
+    
+    /**
+     * Data sources indexed by label (so that Action objects can refer to them)
+     * 
+     * Currently, probes are the only supported data source. This map holds a 
+     * reference to the immutable configs of probes, which can be used to access
+     * the Probe object via the Gson probe factory in FunfManager (See getProbeFactory())
+     * 
+     * TODO: Add support for different data sources by defining a DataSource interface
+     * that is implemented by Probes and any other data source.
+     */
+    @Configurable
+    protected Map<String, IJsonObject> dataSources;
+    
+    /**
+     * Data listeners indexed by label (so that Action objects can refer to them)
+     */
+    @Configurable
+    protected Map<String, DataListener> dataListeners; 
+    
+    /**
+     * This map stores the list of data listeners that must be registered to
+     * each data source at pipeline start-up.
+     * 
+     * The data sources and listeners are referred to by their string labels
+     * and the actual objects must be present in the "dataSources" and "dataListeners"
+     * maps respectively.
+     * 
+     * Use this map to specify the data requests necessary to kick-start the pipeline
+     * into action. Data requests can be subsequently added/removed through the use of
+     * appropriate Action objects.
+     */
+    @Configurable
+    protected Map<String, List<String>> initDataRequests;
+    
+    /**
+     * List of data listeners that are currently registered to a data source.
+     * 
+     * At any time during the operation of the pipeline, this map stores the list
+     * of data requests that are "active" at that point.
+     */
+    private Map<IJsonObject, List<DataRequestInfo>> activeDataRequests; 
 
     private boolean enabled;
     private FunfManager manager;
@@ -101,41 +143,61 @@ public class ActionGraphPipeline implements Pipeline, ActionGraph {
             if (probe instanceof ContinuableProbe && previousState == State.RUNNING) {
                 JsonElement checkpoint = ((ContinuableProbe)probe).getCheckpoint();
                 IJsonObject config = (IJsonObject)JsonUtils.immutable(getFunfManager().getGson().toJsonTree(probe));
-                for (DataRequestInfo requestInfo : activeRequests.get(config)) {
+                for (DataRequestInfo requestInfo : activeDataRequests.get(config)) {
                     requestInfo.checkpoint = checkpoint;
                 }
             }
         }
     };
-
-    private Map<String, DataListener> listenersByLabel; // list of listeners indexed by label (so that Action objects can refer to them)
-    private Map<IJsonObject, List<DataRequestInfo>> activeRequests; // list of listeners that are currently registered to a probe
-
-    public void addListenerByLabel(String label, DataListener listener) {
-        listenersByLabel.put(label, listener);
-    }
-
-    public void removeListenerByLabel(String label) {
-        listenersByLabel.remove(label);
-    }
-
-    public void registerProbeListener(String listenerLabel, String probeConfig) {
+    
+    public IJsonObject getImmutableProbeConfig(String probeConfig) {
         Probe probe = getFunfManager().getGson().fromJson(probeConfig, Probe.class);
         IJsonObject probeJson = (IJsonObject)JsonUtils.immutable(
                 getFunfManager().getGson().toJsonTree(probe));
-        registerProbeListener(listenerLabel, probeJson);
+        return probeJson;
     }
     
-    public void registerProbeListener(String listenerLabel, IJsonObject probeConfig) {
-        if (listenersByLabel.containsKey(listenerLabel)) {
-            registerProbeListener(listenersByLabel.get(listenerLabel), probeConfig);
-            Log.d(LogUtil.TAG, listenerLabel);
+    public void addListenerByLabel(String label, DataListener listener) {
+        dataListeners.put(label, listener);
+    }
+
+    public DataListener getListenerByLabel(String label) {
+        return dataListeners.get(label);
+    }
+    
+    public void removeListenerByLabel(String label) {
+        dataListeners.remove(label);
+    }
+    
+    public void addSourceByLabel(String label, IJsonObject probeConfig) {
+        dataSources.put(label, probeConfig);
+    }
+    
+    public IJsonObject getSourceByLabel(String label) {
+        return dataSources.get(label);
+    }
+    
+    public void removeSourceByLabel(String label) {
+        dataSources.remove(label);
+    }
+    
+    public void registerDataRequest(String listenerLabel, String sourceLabel) {
+        IJsonObject probeJson = getSourceByLabel(sourceLabel);
+        if (probeJson != null) {
+            registerDataRequest(listenerLabel, probeJson);
+        }
+    }
+    
+    public void registerDataRequest(String listenerLabel, IJsonObject probeConfig) {
+        DataListener listener = dataListeners.get(listenerLabel);
+        if (listener != null) {
+            registerDataRequest(listener, probeConfig);
         }
     }
 
-    public void registerProbeListener(DataListener listener, IJsonObject probeConfig) {
-        synchronized(activeRequests) {
-            List<DataRequestInfo> dataRequests = activeRequests.get(probeConfig);
+    public void registerDataRequest(DataListener listener, IJsonObject probeConfig) {
+        synchronized(activeDataRequests) {
+            List<DataRequestInfo> dataRequests = activeDataRequests.get(probeConfig);
             if (dataRequests != null) {
                 for (DataRequestInfo request: dataRequests) {
                     if (request.listener == listener) { // listener is already active for this probe
@@ -143,8 +205,8 @@ public class ActionGraphPipeline implements Pipeline, ActionGraph {
                     }
                 }
             } else {
-                activeRequests.put(probeConfig, new ArrayList<DataRequestInfo>());
-                dataRequests = activeRequests.get(probeConfig);
+                activeDataRequests.put(probeConfig, new ArrayList<DataRequestInfo>());
+                dataRequests = activeDataRequests.get(probeConfig);
             }
             Probe probe = getFunfManager().getGson().fromJson(probeConfig, Probe.class);
             probe.registerListener(listener);
@@ -156,22 +218,23 @@ public class ActionGraphPipeline implements Pipeline, ActionGraph {
         }
     }
 
-    public void unregisterProbeListener(String listenerLabel, String probeConfig) {
-        Probe probe = getFunfManager().getGson().fromJson(probeConfig, Probe.class);
-        IJsonObject probeJson = (IJsonObject)JsonUtils.immutable(
-                getFunfManager().getGson().toJsonTree(probe));
-        unregisterProbeListener(listenerLabel, probeJson);
+    public void unregisterDataRequest(String listenerLabel, String sourceLabel) {
+        IJsonObject probeJson = dataSources.get(sourceLabel);
+        if (probeJson != null) {
+            unregisterDataRequest(listenerLabel, probeJson);
+        }
     }
-    
-    public void unregisterProbeListener(String listenerLabel, IJsonObject probeConfig) {
-        if (listenersByLabel.containsKey(listenerLabel)) {
-            unregisterProbeListener(listenersByLabel.get(listenerLabel), probeConfig);
+        
+    public void unregisterDataRequest(String listenerLabel, IJsonObject probeConfig) {
+        DataListener listener = dataListeners.get(listenerLabel);
+        if (listener != null) {
+            unregisterDataRequest(listener, probeConfig);
         }
     }
 
-    public void unregisterProbeListener(DataListener listener, IJsonObject probeConfig) {
-        synchronized(activeRequests) {
-            List<DataRequestInfo> dataRequests = activeRequests.get(probeConfig);
+    public void unregisterDataRequest(DataListener listener, IJsonObject probeConfig) {
+        synchronized(activeDataRequests) {
+            List<DataRequestInfo> dataRequests = activeDataRequests.get(probeConfig);
             Probe probe = getFunfManager().getGson().fromJson(probeConfig, Probe.class);
             if (probe != null && dataRequests != null) {
                 for (int i = 0; i < dataRequests.size(); i++) {
@@ -190,42 +253,67 @@ public class ActionGraphPipeline implements Pipeline, ActionGraph {
         }
     }
 
-    private void setupActionGraph() {
+    protected void setupActionGraph() {
         if (enabled == false) {
-            activeRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
-            listenersByLabel = new HashMap<String, DataListener>();
+//            dataListeners = new HashMap<String, DataListener>();
+//            dataSources = new HashMap<String, IJsonObject>();
+//            initDataRequests = new HashMap<String, List<String>>();
+//            activeDataRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
+//            
+//            // Hardcoded setup for now
+//            // TODO: setup graph via config file and TypeAdapters
+//            
+//            addSourceByLabel("accelAlarm", getImmutableProbeConfig( 
+//                    "{ \"@type\": \"edu.mit.media.funf.probe.builtin.AlarmProbe\"," +
+//            		"  \"interval\": 60," +
+//                    "  \"exact\": false" +
+//            		"}"));
+//            addSourceByLabel("accelProbe", getImmutableProbeConfig(
+//                    "edu.mit.media.funf.probe.builtin.AccelerometerSensorProbe"));
+//            addSourceByLabel("archiveAlarm", getImmutableProbeConfig( 
+//                    "{ \"@type\": \"edu.mit.media.funf.probe.builtin.AlarmProbe\"," +
+//                    "  \"interval\": 200," +
+//                    "  \"exact\": false" +
+//                    "}"));
+//            
+//            addListenerByLabel("write", (DataListener)new WriteDataAction(this, databaseHelper));
+//            
+//            Action startAccel = new ProbeAction(this, "accelProbe", "write", ProbeAction.REGISTER_LISTENER);
+//            Action stopAccel = new ProbeAction(this, "accelProbe", "write", ProbeAction.UNREGISTER_LISTENER);
+//            stopAccel.setDelay(10);
+//            
+//            addListenerByLabel("start", (DataListener)new ActionAdapter(startAccel));
+//            addListenerByLabel("stop", (DataListener)new ActionAdapter(stopAccel));
+//            
+//            addListenerByLabel("archive", (DataListener)new ActionAdapter(
+//                    new RunArchiveAction(this, getArchive(), databaseHelper)));
+//            
+//            registerDataRequest("start", "accelAlarm");
+//            registerDataRequest("stop", "accelAlarm");
+//            registerDataRequest("archive", "archiveAlarm");
             
-            // Hardcoded setup for now
-            // TODO: setup graph via config file and TypeAdapters
+            activeDataRequests = new HashMap<IJsonObject, List<DataRequestInfo>>();
             
-            String accelAlarmConfig = 
-                    "{ \"@type\": \"edu.mit.media.funf.probe.builtin.AlarmProbe\"," +
-            		"  \"interval\": 60," +
-                    "  \"exact\": false" +
-            		"}";
-            String accelProbeConfig = "edu.mit.media.funf.probe.builtin.AccelerometerSensorProbe";
-            String archiveAlarmConfig = 
-                    "{ \"@type\": \"edu.mit.media.funf.probe.builtin.AlarmProbe\"," +
-                    "  \"interval\": 200," +
-                    "  \"exact\": false" +
-                    "}";
+            // Register listeners for standard actions if they were not created in
+            // the config file.
+            if (getListenerByLabel("write") == null)
+                addListenerByLabel("write", (DataListener)new WriteDataAction(this, databaseHelper));
             
-            Action writeData = new WriteDataAction(this, databaseHelper);
-            addListenerByLabel("write", (DataListener)writeData);
+            if (getListenerByLabel("archive") == null)
+                addListenerByLabel("archive", (DataListener)new ActionAdapter(
+                        new RunArchiveAction(this, getArchive(), databaseHelper)));
             
-            Action startAccel = new ProbeAction(this, accelProbeConfig, "write", ProbeAction.REGISTER_LISTENER);
-            Action stopAccel = new ProbeAction(this, accelProbeConfig, "write", ProbeAction.UNREGISTER_LISTENER);
-            stopAccel.setDelay(10);
-            
-            addListenerByLabel("start", (DataListener)new ActionAdapter(startAccel));
-            addListenerByLabel("stop", (DataListener)new ActionAdapter(stopAccel));
-            
-            Action archiveData = new RunArchiveAction(this, getArchive(), databaseHelper);
-            addListenerByLabel("archive", (DataListener)new ActionAdapter(archiveData));
-            
-            registerProbeListener("start", accelAlarmConfig);
-            registerProbeListener("stop", accelAlarmConfig);
-            registerProbeListener("archive", archiveAlarmConfig);
+            // Register the initial data requests to kick-start the ActionGraph.
+            for (Map.Entry<String, List<String>> requests: initDataRequests.entrySet()) {
+                String sourceLabel = requests.getKey();
+                if (getSourceByLabel(sourceLabel) != null) {
+                    for (String listenerLabel: requests.getValue()) {
+                        if (getListenerByLabel(listenerLabel) != null) {
+                            registerDataRequest(listenerLabel, sourceLabel);
+                        }
+                    }
+                }
+            }
             
             enabled = true;
             Log.d(LogUtil.TAG, "action graph created");
@@ -234,8 +322,8 @@ public class ActionGraphPipeline implements Pipeline, ActionGraph {
 
     private void destroyActionGraph() {
         if (enabled == true) {
-            synchronized(activeRequests) {
-                for (Map.Entry<IJsonObject, List<DataRequestInfo>> entry : activeRequests.entrySet()) {
+            synchronized(activeDataRequests) {
+                for (Map.Entry<IJsonObject, List<DataRequestInfo>> entry : activeDataRequests.entrySet()) {
                     List<DataRequestInfo> dataRequests = entry.getValue();
                     Probe probe = getFunfManager().getGson().fromJson(entry.getKey(), Probe.class);
                     for (int i = 0; i < dataRequests.size(); i++) {
@@ -248,11 +336,11 @@ public class ActionGraphPipeline implements Pipeline, ActionGraph {
                         }
                     }
                 }
-                activeRequests.clear();
+                activeDataRequests.clear();
             }
             
-            synchronized(listenersByLabel) {
-                listenersByLabel.clear();
+            synchronized(dataListeners) {
+                dataListeners.clear();
             }
             enabled = false;
         }
