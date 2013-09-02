@@ -39,18 +39,45 @@ import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LogUtil;
 import android.util.Log;
 
+/**
+ * There are three kinds of schedules possible with this AlarmProbe:
+ * 
+ *     1. interval > 0, offset >= 0:
+ *          This schedules the alarm to go off at every "interval" seconds,
+ *          starting from the Unix timestamp referred to by "offset" (in seconds).
+ *          If "offset" is in the past, the start time is set as the immediate next
+ *          time in the future that occurs in the sequence starting at "offset"
+ *          and having a period of "interval" seconds.
+ *     2. interval > 0, offset = null or < 0:
+ *          This schedules the alarm to go off at every "interval" seconds,
+ *          starting from the instant when this function is executed.
+ *     3. interval = null or <= 0, offset >= 0:
+ *          This schedules a one-time alarm to go off at the Unix timestamp
+ *          referred by "offset" (in seconds).
+ * 
+ * For types 1 and 2, the flag "exact" determines whether the alarm will go off exactly
+ * or approximately at the specified times (inexact alarms use less battery power)
+ * For type 3, the value of "exact" is immaterial; the alarm will go off exactly at
+ * the specified time.
+ */
 @DisplayName("Alarm Probe")
 @Schedule.DefaultSchedule(interval=Probe.DEFAULT_PERIOD, duration=ContinuousProbe.DEFAULT_DURATION)
-public class AlarmProbe extends Base implements Runnable {
+public class AlarmProbe extends Base implements ContinuousProbe, Runnable {
 
+    /**
+     * In seconds. Only positive values considered as valid.
+     */
     @Configurable
-    private Long interval = null; // In seconds. Only positive values considered as valid.
+    private Long interval = null;
 
     @Configurable
     private boolean exact = false;
 
+    /**
+     * In seconds. Only non-negative values considered as valid.
+     */
     @Configurable
-    private Long offset = null; // In seconds. Only non-negative values considered as valid. 
+    private Long offset = null; 
 
     @Override
     public void run() {
@@ -60,29 +87,9 @@ public class AlarmProbe extends Base implements Runnable {
         sendData(data);
     }
 
-    /**
-     * There are three kinds of schedules possible with this AlarmProbe:
-     * 
-     *     1. interval > 0, offset >= 0:
-     *          This schedules the alarm to go off at every "interval" seconds,
-     *          starting from the Unix timestamp referred to by "offset" (in seconds).
-     *          If "offset" is in the past, the start time is set as the immediate next
-     *          time in the future that occurs in the sequence starting at "offset"
-     *          and having a period of "interval" seconds.
-     *     2. interval > 0, offset = null or < 0:
-     *          This schedules the alarm to go off at every "interval" seconds,
-     *          starting from the instant when this function is executed.
-     *     3. interval = null or <= 0, offset >= 0:
-     *          This schedules a one-time alarm to go off at the Unix timestamp
-     *          referred by "offset" (in seconds).
-     * 
-     * For types 1 and 2, the flag "exact" determines whether the alarm will go off exactly
-     * or approximately at the specified times (inexact alarms use less battery power)
-     * For type 3, the value of "exact" is immaterial; the alarm will go off exactly at
-     * the specified time.
-     */
     protected void onStart() {
         String probeConfig = JsonUtils.immutable(getGson().toJsonTree(this)).toString();
+        Log.d(LogUtil.TAG, probeConfig);
         long intervalMillis = (interval == null || interval < 0) ? 0 : TimeUtil.secondsToMillis(interval);
         long offsetMillis = (offset == null || offset < 0) ? -1 : TimeUtil.secondsToMillis(offset);
         long currentMillis = System.currentTimeMillis();
