@@ -67,10 +67,13 @@ import edu.mit.media.funf.config.ContextInjectorTypeAdapaterFactory;
 import edu.mit.media.funf.config.DefaultRuntimeTypeAdapterFactory;
 import edu.mit.media.funf.config.DefaultScheduleSerializer;
 import edu.mit.media.funf.config.HttpConfigUpdater;
+import edu.mit.media.funf.config.ListenerInjectorTypeAdapterFactory;
 import edu.mit.media.funf.config.SingletonTypeAdapterFactory;
+import edu.mit.media.funf.datasource.StartableDataSource;
 import edu.mit.media.funf.pipeline.Pipeline;
 import edu.mit.media.funf.pipeline.PipelineFactory;
 import edu.mit.media.funf.probe.Probe;
+import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.storage.DefaultArchive;
 import edu.mit.media.funf.storage.FileArchive;
 import edu.mit.media.funf.storage.HttpArchive;
@@ -276,10 +279,12 @@ public class FunfManager extends Service {
         .registerTypeAdapterFactory(getProbeFactory(context))
         .registerTypeAdapterFactory(getActionFactory(context))
         .registerTypeAdapterFactory(getPipelineFactory(context))
+        .registerTypeAdapterFactory(getDataSourceFactory(context))
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<Schedule>(context, Schedule.class, BasicSchedule.class))
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<ConfigUpdater>(context, ConfigUpdater.class, HttpConfigUpdater.class))
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<FileArchive>(context, FileArchive.class, DefaultArchive.class))
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<RemoteFileArchive>(context, RemoteFileArchive.class, HttpArchive.class))
+        .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<DataListener>(context, DataListener.class, null))
         .registerTypeAdapter(DefaultSchedule.class, new DefaultScheduleSerializer())
         .registerTypeAdapter(Class.class, new JsonSerializer<Class<?>>() {
 
@@ -331,21 +336,37 @@ public class FunfManager extends Service {
         return PROBE_FACTORY;
     }
 
-    public SingletonTypeAdapterFactory getActionFactory() {
+    public DefaultRuntimeTypeAdapterFactory<Action> getActionFactory() {
         return getActionFactory(this);
     }
 
-    private static SingletonTypeAdapterFactory ACTION_FACTORY;
-    public static SingletonTypeAdapterFactory getActionFactory(Context context) {
+    private static DefaultRuntimeTypeAdapterFactory<Action> ACTION_FACTORY;
+    public static DefaultRuntimeTypeAdapterFactory<Action> getActionFactory(Context context) {
         if (ACTION_FACTORY == null) {
-            ACTION_FACTORY = new SingletonTypeAdapterFactory(
-                    new DefaultRuntimeTypeAdapterFactory<Action>(
+            ACTION_FACTORY = new DefaultRuntimeTypeAdapterFactory<Action>(
                             context, 
                             Action.class, 
                             null, 
-                            new ContextInjectorTypeAdapaterFactory(context, new ConfigurableTypeAdapterFactory())));
+                            new ContextInjectorTypeAdapaterFactory(context, new ConfigurableTypeAdapterFactory()));
         }
         return ACTION_FACTORY;
+    }
+    
+    public ListenerInjectorTypeAdapterFactory getDataSourceFactory() {
+        return getDataSourceFactory(this);
+    }
+
+    private static ListenerInjectorTypeAdapterFactory DATASOURCE_FACTORY;
+    public static ListenerInjectorTypeAdapterFactory getDataSourceFactory(Context context) {
+        if (DATASOURCE_FACTORY == null) {
+            DATASOURCE_FACTORY = new ListenerInjectorTypeAdapterFactory(
+                    new DefaultRuntimeTypeAdapterFactory<StartableDataSource>(
+                            context, 
+                            StartableDataSource.class, 
+                            null, 
+                            new ContextInjectorTypeAdapaterFactory(context, new ConfigurableTypeAdapterFactory())));
+        }
+        return DATASOURCE_FACTORY;
     }
 
     public void registerPipeline(String name, Pipeline pipeline) {
