@@ -27,57 +27,32 @@ package edu.mit.media.funf.action;
 
 import java.lang.Runnable;
 
-import edu.mit.media.funf.config.Configurable;
-import edu.mit.media.funf.time.TimeUtil;
-
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 
 public class Action implements Runnable {
-        
-    /**
-     *  Delay in seconds after which this action should be run.
-     *  
-     *  Use this for short delays, for timing longer delays, consider
-     *  using AlarmProbe.
-     */
-    @Configurable
-    private int delay = 0; 
     
-    private ActionGraph graph;
-    private Handler handler;
+    private Looper looper = null;
+    private Handler handler = null;
     
     Action() {
     }
-    
-    public Action(ActionGraph graph) {
-        this();
-        this.graph = graph;
-        this.handler = graph.getHandler();
-    }
-    
-    protected ActionGraph getGraph() {
-        return graph;
-    }
-    
-    public Handler getHandler() {
+        
+    protected Handler getHandler() {
         return handler;
     }
     
     public void setHandler(Handler handler) {
+        if (this.handler != null) {
+            exitHandler();
+        }
         this.handler = handler;
-    }
-    
-    public int getDelay() {
-        return delay;
-    }
-    
-    public void setDelay(int delay) {
-        this.delay = delay;
     }
     
     @Override
     public final void run() {
+        ensureHandlerExists();
         if (Looper.myLooper() != getHandler().getLooper()) {
             getHandler().post(this);
             return;
@@ -85,19 +60,36 @@ public class Action implements Runnable {
         execute();
     }
     
-    public void queueInHandler() {
-        if (delay > 0) {
-            getHandler().postDelayed(this, TimeUtil.secondsToMillis(delay));   
-        } else {
-            getHandler().post(this);
-        }
-    }
-    
     /**
      * Override this function to include the action-specific code.
      */
     protected void execute() {
         // Perform action here
+    }
+    
+    protected void ensureHandlerExists() {
+        if (handler == null) {
+            synchronized (this) {
+                if (looper == null) {
+                    HandlerThread thread = new HandlerThread("Action[" + getClass().getName() + "]");
+                    thread.start();
+                    looper = thread.getLooper();
+                    handler = new Handler(looper);
+                }
+            }
+        }
+    }
+    
+    protected void exitHandler() {
+        if (handler != null) {
+            synchronized (this) {
+                if (looper != null) {
+                    looper.quit();
+                    looper = null;
+                    handler = null;                    
+                }
+            }
+        }   
     }
     
 }

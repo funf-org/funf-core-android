@@ -27,20 +27,32 @@ package edu.mit.media.funf.action;
 
 import com.google.gson.JsonElement;
 
+import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.datasource.StartableDataSource.SchedulingAction;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 
 public class ActionAdapter implements DataListener {
     
-    private final Action delegateAction;
+    @Configurable
+    private Action delegate = null;
         
+    ActionAdapter() {
+    }
+    
     public ActionAdapter(Action action) {
-        this.delegateAction = action;
+        this.delegate = action;
+    }
+    
+    public ActionAdapter(SchedulingAction action) {
+        this.delegate = (Action)action;
     }
     
     @Override
     public void onDataReceived(IJsonObject dataSourceConfig, IJsonObject data) {
-        delegateAction.queueInHandler();
+        if (delegate != null) {
+            delegate.run();
+        }
     }
 
     @Override

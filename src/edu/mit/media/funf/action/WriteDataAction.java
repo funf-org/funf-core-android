@@ -4,13 +4,11 @@ import android.content.ContentValues;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.util.Log;
 
 import com.google.gson.JsonElement;
 
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.config.RuntimeTypeAdapterFactory;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
@@ -20,20 +18,17 @@ import edu.mit.media.funf.util.LogUtil;
 
 public class WriteDataAction extends Action implements DataListener {
 
+    @Configurable
     private SQLiteOpenHelper dbHelper = null;
+        
+    WriteDataAction() {
+    }
     
-    private String key = null;
-    private IJsonObject data = null;
-    
-    private Looper looper = null;
-    private Handler myHandler = null; // run this action on a dedicated thread
-    
-    public WriteDataAction(ActionGraph graph, SQLiteOpenHelper dbHelper) {
-        super(graph);
+    public WriteDataAction(SQLiteOpenHelper dbHelper) {
         this.dbHelper = dbHelper;
     }
     
-    protected void execute() {
+    protected void execute(String key, IJsonObject data) {
         if (key == null || data == null)
             return;
         
@@ -53,47 +48,21 @@ public class WriteDataAction extends Action implements DataListener {
     
     @Override
     public void onDataReceived(IJsonObject probeConfig, IJsonObject data) {
-        this.key = probeConfig.get(RuntimeTypeAdapterFactory.TYPE).toString();
-        this.data = data;
-        queueInHandler();
+        final String key = probeConfig.get(RuntimeTypeAdapterFactory.TYPE).toString();
+        final IJsonObject finalData = data;
+        ensureHandlerExists();
+        getHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                execute(key, finalData);
+            }
+        });
     }
 
     @Override
     public void onDataCompleted(IJsonObject probeConfig, JsonElement checkpoint) {
+        String key = probeConfig.get(RuntimeTypeAdapterFactory.TYPE).toString();
         Log.d(LogUtil.TAG, "finished writing probe data " + key);
-        exitMyHandler(); // free system resources as data stream has completed.
+        setHandler(null); // free system resources as data stream has completed.
     }
-    
-    @Override
-    public void queueInHandler() {
-        ensureMyHandlerExists(); // run data write on a dedicated thread
-        super.queueInHandler();
-    }
-    
-    private void ensureMyHandlerExists() {
-        if (looper == null) {
-            synchronized (this) {
-                if (looper == null) {
-                    HandlerThread thread = new HandlerThread("Action[" + getClass().getName() + "]");
-                    thread.start();
-                    looper = thread.getLooper();
-                    myHandler = new Handler(looper);
-                    setHandler(myHandler);
-                }
-            }
-        }
-    }
-    
-    private void exitMyHandler() {
-        if (looper != null) {
-            synchronized (this) {
-                if (looper != null) {
-                    looper.quit();
-                    looper = null;
-                    myHandler = null;                    
-                }
-            }
-        }   
-    }
-
 }
