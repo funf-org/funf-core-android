@@ -27,11 +27,14 @@ package edu.mit.media.funf.filter;
 
 import java.util.Random;
 
+import android.util.Log;
+
 import com.google.gson.JsonElement;
 
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
+import edu.mit.media.funf.util.LogUtil;
 
 /**
  * Passes on data randomly, with a uniform probability equal to
@@ -76,6 +79,7 @@ public class ProbabilisticFilter implements DataListener {
     @Override
     public void onDataReceived(IJsonObject dataSourceConfig, IJsonObject data) {
         double random = generator.nextDouble();
+        Log.d(LogUtil.TAG, "generated probability: " + random);
         if (random < probability) {
             listener.onDataReceived(dataSourceConfig, data);
         }
