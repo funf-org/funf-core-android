@@ -69,6 +69,22 @@ public class ConfigRewriteUtil {
 
     public static JsonParser parser = new JsonParser();
     
+    /**
+     * Rewrite the given config json. The config can be specified in a compact
+     * format using annotations (see wiki for details). This function expands 
+     * each annotation to obtain a config file format that is easily parsable
+     * by gson TypeAdapters.
+     * 
+     * The following annotations are replaced recursively (one at a time, and 
+     * strictly in this order):
+     * 
+     * "@schedule", "@filters", "@actions", "@probe"
+     * 
+     * To see the details of how each annotation is rewritten, see the specific
+     * functions, for eg. rewriteScheduleAnnotation().
+     * 
+     * @param base
+     */
     public static void rewrite(JsonObject base) {
         recursiveReplace(base, SCHEDULE);
         recursiveReplace(base, FILTERS);
@@ -76,11 +92,33 @@ public class ConfigRewriteUtil {
         recursiveReplace(base, PROBE);
     }
     
+    /**
+     * Performs a recursive check for the given annotation in the given base object.
+     * 
+     * If an object is found to contain the annotation, the appropriate rewrite 
+     * function is called on that object, by using rewriteFnSelector().
+     * 
+     * In case of nested annotations, the innermost ones will be replaced first,
+     * followed by outer ones.
+     * 
+     * @param base
+     * @param annotation
+     */
     public static void recursiveReplace(JsonObject base, String annotation) {
         if (base == null) {
             return;
         }
         
+        // Due to the difficulty in doing in-place modification of JsonObject or 
+        // JsonArray, the recursive search is performed in such a way that
+        // a reference to the parent object of the JsonObject containing
+        // the given annotation is always available.
+        // If such a JsonObject is found, it is passed to the appropriate rewrite 
+        // function, which returns a new transformed JsonObject. 
+        // The old object is replaced by the new one by modifying the reference to 
+        // it in the parent JsonObject.
+        // In case of JsonArray, we cannot modify individual elements, so a new array 
+        // is created from scratch, and the old array is replaced by it.
         for (Map.Entry<String, JsonElement> entry: base.entrySet()) {
             if (entry.getValue().isJsonArray()) {
                 JsonArray newArray = new JsonArray();
@@ -173,15 +211,28 @@ public class ConfigRewriteUtil {
         if (baseObj == null)
             return null;
 
+        // The CompositeDataSource which will be returned from this rewrite.
         JsonObject dataSourceObj = new JsonObject();
         dataSourceObj.addProperty(TYPE, COMPOSITE_DS);
 
         JsonObject scheduleObj = (JsonObject)baseObj.remove(SCHEDULE);
 
+        // If scheduleObj is already a CompositeDataSource, it implies that
+        // there was a nested @schedule annotation which has already been
+        // taken care of by an earlier call to this function. In that case
+        // the scheduleObj will simply be taken as a nested "source" of
+        // the current CompositeDataSource.
         if (!isDataSourceObject(scheduleObj)) {
+            // If it is not a data source, then the "@probe" annotation in the 
+            // scheduleObj will be parsed as a data source by rewriteProbeAnnotation().
+            // For compatibility, "@type" annotations indicating probes are
+            // converted to "@probe" annotations.
+            // For compatibility, if neither "@type" or "@probe" annotations
+            // exist, an "AlarmProbe" is added (as that signifies the default behavior
+            // of the earlier scheduling system).
             if (scheduleObj.has(TYPE)) {
                 renameJsonObjectKey(scheduleObj, TYPE, PROBE);
-            } else {
+            } else if (!scheduleObj.has(PROBE)){
                 scheduleObj.addProperty(PROBE, ALARM_PROBE);
             }
         }
@@ -199,14 +250,26 @@ public class ConfigRewriteUtil {
             filtersEl = scheduleObj.remove(FILTERS);
         }
 
+        // If baseObj is itself a schedule object (i.e this is a nested schedule), 
+        // a "@trigger" annotation would provide the action to be performed by
+        // the outer schedule object. This must be kept separate from other members
+        // of baseObj.
         JsonObject triggerObj = null;
-        // if baseObj is itself a schedule object (nested schedule), then 
-        // the @trigger in the base object must be kept separate from the
-        // other members which relate to probe action.
         if (baseObj.has(TRIGGER)) {
             triggerObj = baseObj.remove(TRIGGER).getAsJsonObject();
         }
         
+        // To select the action to be performed whenever this schedule object fires:
+        // 1. First check if the baseObj is really a probe or a data source. If
+        //    it is empty except for the "@schedule" tag, then don't register any action.
+        //    (Happens in the direct "schedules" member.)
+        // 2. If it is not empty, then check if a "@trigger" annotation exists, which denotes
+        //    a user-specified custom action to be registered whenever scheduler fires.
+        // 3. If no "@trigger" exists, then select a default Action. If "duration" was 
+        //    specified in the schedule object, add a RegisterDurationAction to run 
+        //    the dependent data source for that duration.
+        // 4. If no duration was specified, add a StartDataSourceAction to simply start
+        //    the dependent data source whenever this schedule object fires.
         JsonObject actionObj = null;
         if (baseObj.has(PROBE) || baseObj.has(TYPE)) {
             if (!isDataSourceObject(baseObj)) {
@@ -237,18 +300,51 @@ public class ConfigRewriteUtil {
         return dataSourceObj;
     }
 
+    /**
+     * Rewrites the filter array denoted by "@filters" to a "filters" member
+     * with nested filters, in the order of their appearance in the array.
+     * 
+     * If the baseObj is not a CompositeDataSource, converts it into one, and
+     * pushing the "@probe" annotation (if it exists) to the "source" field.
+     * 
+     * If the entire filter class name is not specified, it will be prefixed by
+     * FILTER_PREFIX.
+     * 
+     * eg.
+     * { "@probe": ".ActivityProbe",
+     *   "sensorDelay": "FASTEST",
+     *   "@filters": [{ "@type": ".KeyValueFilter", "matches": { "motionState": "Driving" } },
+     *                { "@type": ".ProbabilityFilter", "probability": 0.5 } ] 
+     * }
+     * 
+     * will be rewritten to
+     * 
+     * { "@type": "edu.mit.media.funf.datasource.CompositeDataSource",
+     *   "source": { "@probe": ".ActivityProbe", "sensorDelay": "FASTEST" },
+     *   "filters": { "@type": "edu.mit.media.funf.filter.KeyValueFilter", 
+     *                "matches": { "motionState": "Driving" }
+     *                "listener": { "@type": "edu.mit.media.funf.filter.ProbabilityFilter", 
+     *                              "probability": 0.5 } }  
+     * }
+     * 
+     * @param baseObj
+     */
     public static JsonObject rewriteFiltersAnnotation(JsonObject baseObj) {
         if (baseObj == null)
             return null;
         
+        // Add the filter class name prefix if not specified.
         JsonArray filtersArr = baseObj.remove(FILTERS).getAsJsonArray();
         for (JsonElement filter: filtersArr) {
             if (filter.isJsonObject())
                 addTypePrefix(filter.getAsJsonObject(), FILTER_PREFIX);
         }
         
+        // Insert the filters array denoted by "@filters" to the existing
+        // "filters" field.
         insertFilters(baseObj, filtersArr);
 
+        // If the baseObj is not a data source, convert it into CompositeDataSource.
         if (!isDataSourceObject(baseObj)) {
             JsonObject dataSourceObj = new JsonObject();
             dataSourceObj.addProperty(TYPE, COMPOSITE_DS);
@@ -256,6 +352,9 @@ public class ConfigRewriteUtil {
             if (baseObj.has(ACTION)) {
                 dataSourceObj.add(ACTION, baseObj.remove(ACTION));
             }
+            
+            // The remaining fields of baseObj should be "@probe" annotation and 
+            // probe parameters.
             dataSourceObj.add(SOURCE_FIELD_NAME, baseObj);
             return dataSourceObj;
         } else {
@@ -263,13 +362,28 @@ public class ConfigRewriteUtil {
         }
     }
     
+    /**
+     * Rewrites "@action" annotation as an Action object, and adds it to the 
+     * end of the "filters" chain.
+     * 
+     * If the specified Action does not implement the DataListener interface,
+     * it is wrapped by an ActionAdapter. 
+     * 
+     * If the entire action class name is not specified, it will be prefixed by
+     * ACTION_PREFIX.
+     * 
+     * @param baseObj
+     */
     public static JsonObject rewriteActionAnnotation(JsonObject baseObj) {
         if (baseObj == null)
             return null;
         
+        // Add prefix if entire class name is not specified.
         JsonObject actionObj = baseObj.remove(ACTION).getAsJsonObject();
         addTypePrefix(actionObj, ACTION_PREFIX);
         
+        // Check if the specified Action type implements the DataListener
+        // interface.
         String actionType = actionObj.get(TYPE).getAsString();
         boolean isDataListener = false;
         try {
@@ -284,6 +398,8 @@ public class ConfigRewriteUtil {
             e.printStackTrace();
         }
         
+        // Wrap the Action with an ActionAdapter if it does not
+        // implement the DataListener interface.
         JsonArray actionArr = new JsonArray();
         if (!isDataListener) {
             JsonObject actionAdapter = new JsonObject();
@@ -293,12 +409,18 @@ public class ConfigRewriteUtil {
         } else {
             actionArr.add(actionObj);
         }
+        
+        // Insert the Action to the end of the "filters" chain.
         insertFilters(baseObj, actionArr);
 
+        // If the baseObj is not a data source, convert it into CompositeDataSource.
         if (!isDataSourceObject(baseObj)) {
             JsonObject dataSourceObj = new JsonObject();
             dataSourceObj.addProperty(TYPE, COMPOSITE_DS);
             dataSourceObj.add(FILTERS_FIELD_NAME, baseObj.remove(FILTERS_FIELD_NAME));
+            
+            // The remaining fields of baseObj should be "@probe" annotation and 
+            // probe parameters.
             dataSourceObj.add(SOURCE_FIELD_NAME, baseObj);
             return dataSourceObj;
         } else {
@@ -307,11 +429,12 @@ public class ConfigRewriteUtil {
     }
         
     /**
-     * If the given JsonObject contains a member named "@probe", rewrites
-     * the object as a ProbeDataSource consisting of the given probe.
+     * If the given JsonObject contains a member named "@probe", rewrite the object 
+     * as a ProbeDataSource consisting of the given probe. The remaining members of
+     * the baseObj should be parameters of the specified probe.
      * 
-     * For builtin probes, the class name can be shortened to
-     * the classname preceded by a ".", i.e. ".SampleProbe".
+     * If the entire probe class name is not specified, it will be prefixed by
+     * PROBE_PREFIX.
      * 
      * eg.
      * { "@probe": ".AlarmProbe", "interval": 300, "exact": false, "offset": 12345 }
@@ -345,6 +468,13 @@ public class ConfigRewriteUtil {
         }
     }
     
+    /**
+     * Check if the "@type" member of the given object is one of PROBE_DS 
+     * or COMPOSITE_DS.
+     * 
+     * @param object
+     * @return
+     */
     public static boolean isDataSourceObject(JsonObject object) {
         if (object.has(TYPE)) {
             String type = object.get(TYPE).getAsString();
@@ -355,7 +485,19 @@ public class ConfigRewriteUtil {
         return false;
     }
     
+    /**
+     * Insert the given filters array to the end of the filters chain in
+     * the "filters" member of given baseObj.
+     * 
+     * The array of filters is converted into nested filters, with each 
+     * subsequent filter added as a listener of the previous filter, in the
+     * order of presence in the given array.
+     *  
+     * @param baseObj
+     * @param filters
+     */
     public static void insertFilters(JsonObject baseObj, JsonArray filters) {
+        // Convert the filters array into nested filter objects.
         JsonObject newFilters = null;
         boolean isFirst = true;
         JsonObject nextFilter = null;
@@ -371,6 +513,8 @@ public class ConfigRewriteUtil {
             }
         }
 
+        // If the "filters" field already exists in the baseObj, iterate to the 
+        // end of the chain and add the newFilters object.
         if (baseObj.has(FILTERS_FIELD_NAME)) {
             JsonObject currFilters = baseObj.remove(FILTERS_FIELD_NAME).getAsJsonObject();
             JsonObject iterFilter = currFilters;
@@ -384,6 +528,13 @@ public class ConfigRewriteUtil {
         }        
     }
 
+    /**
+     * If the "@type" member of the given object is an incomplete type,
+     * i.e. it starts with a ".", then add the given prefix to that type. 
+     * 
+     * @param object
+     * @param prefix
+     */
     public static void addTypePrefix(JsonObject object, String prefix) {
         if (object.has(TYPE)) {
             String type = object.get(TYPE).getAsString();
