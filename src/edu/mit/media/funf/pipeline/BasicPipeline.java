@@ -26,6 +26,7 @@
 package edu.mit.media.funf.pipeline;
 
 import java.util.List;
+import java.util.Map;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -39,6 +40,8 @@ import com.google.gson.JsonElement;
 import edu.mit.media.funf.FunfManager;
 import edu.mit.media.funf.action.ActionAdapter;
 import edu.mit.media.funf.action.RunArchiveAction;
+import edu.mit.media.funf.action.RunUpdateAction;
+import edu.mit.media.funf.action.RunUploadAction;
 import edu.mit.media.funf.action.WriteDataAction;
 import edu.mit.media.funf.config.ConfigUpdater;
 import edu.mit.media.funf.config.Configurable;
@@ -74,8 +77,11 @@ public class BasicPipeline implements Pipeline {
     
     @Configurable
     protected List<StartableDataSource> data = null;
-
-    private UploadService uploader;
+    
+    @Configurable
+    protected Map<String, StartableDataSource> schedules = null;
+    
+    private UploadService uploader;    
     
     private boolean enabled;
     private FunfManager manager;
@@ -112,10 +118,32 @@ public class BasicPipeline implements Pipeline {
         if (enabled == false) {
             
             DataListener databaseListener = (DataListener)new WriteDataAction(databaseHelper);
-            DataListener archiveListener = (DataListener)new ActionAdapter(new RunArchiveAction(archive, databaseHelper));
             
             for (StartableDataSource dataSource: data) {
                 dataSource.setListener(databaseListener);
+            }
+            
+            if (schedules != null) {
+                if (schedules.containsKey("archive")) {
+                    DataListener archiveListener = (DataListener)new ActionAdapter(
+                            new RunArchiveAction(archive, databaseHelper));
+                    schedules.get("archive").setListener(archiveListener);
+                    schedules.get("archive").start();
+                }
+                
+                if (schedules.containsKey("upload")) {
+                    DataListener uploadListener = (DataListener)new ActionAdapter(
+                            new RunUploadAction(archive, upload, uploader));
+                    schedules.get("upload").setListener(uploadListener);
+                    schedules.get("upload").start();
+                }
+                
+                if (schedules.containsKey("update")) {
+                    DataListener updateListener = (DataListener)new ActionAdapter(
+                            new RunUpdateAction(name, getFunfManager(), update));
+                    schedules.get("update").setListener(updateListener);
+                    schedules.get("update").start();
+                }
             }
             
             for (StartableDataSource dataSource: data) {
@@ -166,6 +194,9 @@ public class BasicPipeline implements Pipeline {
 
     @Override
     public void onDestroy() {
+        if (uploader != null) {
+            uploader.stop();
+        }
         handler.post(new Runnable() {
             @Override
             public void run() {
