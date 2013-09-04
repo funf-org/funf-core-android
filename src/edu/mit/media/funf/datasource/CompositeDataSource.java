@@ -31,10 +31,10 @@ import edu.mit.media.funf.probe.Probe.DataListener;
 public class CompositeDataSource extends StartableDataSource {
 
     @Configurable
-    protected StartableDataSource source;
+    protected StartableDataSource source = null;
     
     @Configurable
-    protected DataListener filters;
+    protected DataListener filters = null;
             
     @Configurable
     private boolean isEnabled = false;
@@ -44,6 +44,9 @@ public class CompositeDataSource extends StartableDataSource {
     
     protected void ensureIsEnabled() {
         if (!isEnabled) {
+            if (filters == null) {
+                filters = delegator;
+            }
             source.setListener(filters);    
             isEnabled = true;
         }
