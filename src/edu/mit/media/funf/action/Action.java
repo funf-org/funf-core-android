@@ -52,10 +52,12 @@ public class Action implements Runnable {
     
     @Override
     public final void run() {
-        ensureHandlerExists();
-        if (Looper.myLooper() != getHandler().getLooper()) {
-            getHandler().post(this);
-            return;
+        if (isLongRunningAction()) {
+            ensureHandlerExists();
+            if (Looper.myLooper() != getHandler().getLooper()) {
+                getHandler().post(this);
+                return;
+            }
         }
         execute();
     }
@@ -65,6 +67,10 @@ public class Action implements Runnable {
      */
     protected void execute() {
         // Perform action here
+    }
+    
+    protected boolean isLongRunningAction() {
+        return false;
     }
     
     protected void ensureHandlerExists() {

@@ -39,4 +39,8 @@ public class RunArchiveAction extends Action {
         Log.d(LogUtil.TAG, "archived!");
         setHandler(null); // free system resources
     }
+    
+    protected boolean isLongRunningAction() {
+        return true;
+    }
 }

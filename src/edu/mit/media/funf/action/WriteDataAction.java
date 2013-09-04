@@ -65,4 +65,8 @@ public class WriteDataAction extends Action implements DataListener {
         Log.d(LogUtil.TAG, "finished writing probe data " + key);
         setHandler(null); // free system resources as data stream has completed.
     }
+    
+    protected boolean isLongRunningAction() {
+        return true;
+    }
 }
