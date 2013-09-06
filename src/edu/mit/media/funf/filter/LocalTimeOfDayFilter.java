@@ -32,6 +32,7 @@ import android.util.Log;
 import com.google.gson.JsonElement;
 
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.datasource.DataSource;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.util.LogUtil;
@@ -55,7 +56,7 @@ import edu.mit.media.funf.util.LogUtil;
  * filtering.
  *
  */
-public class LocalTimeOfDayFilter implements DataListener {
+public class LocalTimeOfDayFilter implements DataListener, DataSource {
 
     public static final String DEFAULT_START = "00:00";
     public static final String DEFAULT_END = "24:00";
@@ -148,5 +149,10 @@ public class LocalTimeOfDayFilter implements DataListener {
             listener.onDataCompleted(dataSourceConfig, checkpoint);   
             isDataReceived = false;
         }
+    }
+
+    @Override
+    public void setListener(DataListener listener) {
+        this.listener = listener;
     }
 }

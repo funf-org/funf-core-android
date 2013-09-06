@@ -30,10 +30,11 @@ import java.util.Map;
 import com.google.gson.JsonElement;
 
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.datasource.DataSource;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 
-public class KeyValueFilter implements DataListener {
+public class KeyValueFilter implements DataListener, DataSource {
     
     @Configurable
     private DataListener listener;
@@ -69,6 +70,11 @@ public class KeyValueFilter implements DataListener {
     @Override
     public void onDataCompleted(IJsonObject probeConfig, JsonElement checkpoint) {
         listener.onDataCompleted(probeConfig, checkpoint);
+    }
+
+    @Override
+    public void setListener(DataListener listener) {
+        this.listener = listener;
     }
 
 }

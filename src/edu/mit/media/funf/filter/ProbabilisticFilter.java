@@ -32,6 +32,7 @@ import android.util.Log;
 import com.google.gson.JsonElement;
 
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.datasource.DataSource;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.util.LogUtil;
@@ -52,7 +53,7 @@ import edu.mit.media.funf.util.LogUtil;
  * will be considered as 1.
  *
  */
-public class ProbabilisticFilter implements DataListener {
+public class ProbabilisticFilter implements DataListener, DataSource {
 
     /**
      * Probability with which the filter should forward data.
@@ -88,6 +89,11 @@ public class ProbabilisticFilter implements DataListener {
     @Override
     public void onDataCompleted(IJsonObject dataSourceConfig, JsonElement checkpoint) {
         listener.onDataCompleted(dataSourceConfig, checkpoint);
+    }
+
+    @Override
+    public void setListener(DataListener listener) {
+        this.listener = listener;
     }
 
 }

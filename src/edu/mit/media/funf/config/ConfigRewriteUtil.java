@@ -32,6 +32,27 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import edu.mit.media.funf.action.Action;
+import edu.mit.media.funf.action.ActionAdapter;
+import edu.mit.media.funf.action.RegisterDurationAction;
+import edu.mit.media.funf.action.StartDataSourceAction;
+import edu.mit.media.funf.action.StopDataSourceAction;
+import edu.mit.media.funf.datasource.CompositeDataSource;
+import edu.mit.media.funf.datasource.DataSource;
+import edu.mit.media.funf.datasource.ProbeDataSource;
+import edu.mit.media.funf.filter.CompositeFilter;
+import edu.mit.media.funf.filter.ProbabilisticFilter;
+import edu.mit.media.funf.probe.Probe.DataListener;
+import edu.mit.media.funf.probe.builtin.AlarmProbe;
+
+/**
+ * Rewrites the given config JsonObject by transforming the special annotations
+ * (starting with "@") to expanded json that is directly readable by the GSON 
+ * TypeAdapterFactory code.
+ * 
+ * See the rewrite() function for details of the config file transformation.
+ *
+ */
 public class ConfigRewriteUtil {
 
     public static final String SCHEDULES_FIELD_NAME = "schedules";
@@ -39,33 +60,32 @@ public class ConfigRewriteUtil {
     public static final String SOURCE_FIELD_NAME = "source";
     public static final String DURATION_FIELD_NAME = "duration";
     public static final String DELEGATE_FIELD_NAME = "delegate";
-    public static final String FILTERS_FIELD_NAME = "filters";
+    public static final String FILTER_FIELD_NAME = "filter";
     public static final String LISTENER_FIELD_NAME = "listener";
 
     public static final String TYPE = "@type";
     public static final String SCHEDULE = "@schedule";
     public static final String PROBE = "@probe";
-    public static final String FILTERS = "@filters";
+    public static final String FILTER = "@filter";
     public static final String ACTION = "@action";
     public static final String TRIGGER = "@trigger";
     
     public static final String CLASSNAME_PREFIX = "edu.mit.media.funf";
     
-    public static final String PROBE_PREFIX = CLASSNAME_PREFIX + ".probe.builtin";
-    public static final String FILTER_PREFIX = CLASSNAME_PREFIX + ".filter";
-    public static final String ACTION_PREFIX = CLASSNAME_PREFIX + ".action";
+    public static final String PROBE_PREFIX = AlarmProbe.class.getPackage().getName();
+    public static final String FILTER_PREFIX = ProbabilisticFilter.class.getPackage().getName();
+    public static final String ACTION_PREFIX = Action.class.getPackage().getName();
     
-    public static final String PROBE_DS = CLASSNAME_PREFIX + ".datasource.ProbeDataSource";
-    public static final String COMPOSITE_DS = CLASSNAME_PREFIX + ".datasource.CompositeDataSource";
-    
-    public static final String DATA_LISTENER = CLASSNAME_PREFIX + ".probe.DataListener";
-    
-    public static final String ALARM_PROBE = PROBE_PREFIX + ".AlarmProbe";
-    
-    public static final String ACTION_ADAPTER = ACTION_PREFIX + ".ActionAdapter";
-    public static final String REGISTER_DURATION_ACTION = ACTION_PREFIX + ".RegisterDurationAction";
-    public static final String START_DS_ACTION = ACTION_PREFIX + ".StartDataSourceAction";
-    public static final String STOP_DS_ACTION = ACTION_PREFIX + ".StopDataSourceAction";
+    public static final String DATA_LISTENER = DataListener.class.getName();
+    public static final String DATA_SOURCE = DataSource.class.getName();
+    public static final String PROBE_DS = ProbeDataSource.class.getName();
+    public static final String COMPOSITE_DS = CompositeDataSource.class.getName();
+    public static final String ALARM_PROBE = AlarmProbe.class.getName();
+    public static final String ACTION_ADAPTER = ActionAdapter.class.getName();
+    public static final String REGISTER_DURATION_ACTION = RegisterDurationAction.class.getName();
+    public static final String START_DS_ACTION = StartDataSourceAction.class.getName();
+    public static final String STOP_DS_ACTION = StopDataSourceAction.class.getName();
+    public static final String COMPOSITE_FILTER = CompositeFilter.class.getName();
 
     public static JsonParser parser = new JsonParser();
     
@@ -87,7 +107,7 @@ public class ConfigRewriteUtil {
      */
     public static void rewrite(JsonObject base) {
         recursiveReplace(base, SCHEDULE);
-        recursiveReplace(base, FILTERS);
+        recursiveReplace(base, FILTER);
         recursiveReplace(base, ACTION);
         recursiveReplace(base, PROBE);
     }
@@ -123,21 +143,18 @@ public class ConfigRewriteUtil {
             if (entry.getValue().isJsonArray()) {
                 JsonArray newArray = new JsonArray();
                 for (JsonElement arrayEl: entry.getValue().getAsJsonArray()) {
-                    boolean isReplaced = false;
+                    JsonElement elToAdd = arrayEl;
                     if (arrayEl.isJsonObject()) {
                         JsonObject arrayObj = arrayEl.getAsJsonObject();
                         recursiveReplace(arrayObj, annotation);
                         if (arrayObj.has(annotation)) {
                             JsonObject newObj = rewriteFnSelector(annotation, arrayObj);
                             if (newObj != null) {
-                                newArray.add(newObj);
-                                isReplaced = true;
+                                elToAdd = newObj;
                             }
                         }
                     }
-                    if (!isReplaced) {
-                        newArray.add(arrayEl);
-                    }
+                    newArray.add(elToAdd);
                 }
                 entry.setValue(newArray);
             } else if (entry.getValue().isJsonObject()) {
@@ -156,7 +173,7 @@ public class ConfigRewriteUtil {
         if (annotation != null && baseObj != null) {
             if (SCHEDULE.equals(annotation)) {
                 return rewriteScheduleAnnotation(baseObj);
-            } else if (FILTERS.equals(annotation)) {
+            } else if (FILTER.equals(annotation)) {
                 return rewriteFiltersAnnotation(baseObj);
             } else if (ACTION.equals(annotation)) {
                 return rewriteActionAnnotation(baseObj);
@@ -246,8 +263,8 @@ public class ConfigRewriteUtil {
         }
 
         JsonElement filtersEl = null;
-        if (scheduleObj.has(FILTERS)) {
-            filtersEl = scheduleObj.remove(FILTERS);
+        if (scheduleObj.has(FILTER)) {
+            filtersEl = scheduleObj.remove(FILTER);
         }
 
         // If baseObj is itself a schedule object (i.e this is a nested schedule), 
@@ -291,7 +308,7 @@ public class ConfigRewriteUtil {
 
         dataSourceObj.add(SOURCE_FIELD_NAME, scheduleObj);
         if (filtersEl != null)
-            dataSourceObj.add(FILTERS, filtersEl);
+            dataSourceObj.add(FILTER, filtersEl);
         if (actionObj != null)
             dataSourceObj.add(ACTION, actionObj);
         if (triggerObj != null)
@@ -333,22 +350,28 @@ public class ConfigRewriteUtil {
         if (baseObj == null)
             return null;
         
-        // Add the filter class name prefix if not specified.
-        JsonArray filtersArr = baseObj.remove(FILTERS).getAsJsonArray();
-        for (JsonElement filter: filtersArr) {
-            if (filter.isJsonObject())
-                addTypePrefix(filter.getAsJsonObject(), FILTER_PREFIX);
+        JsonElement filterEl = baseObj.remove(FILTER);
+        JsonObject filterObj = null;
+        if (filterEl.isJsonArray()) {
+            filterObj = new JsonObject();
+            filterObj.addProperty(TYPE, COMPOSITE_FILTER);
+            filterObj.add("filters", filterEl.getAsJsonArray());
+        } else {
+            filterObj = filterEl.getAsJsonObject();
         }
         
-        // Insert the filters array denoted by "@filters" to the existing
-        // "filters" field.
-        insertFilters(baseObj, filtersArr);
+        // Add the filter class name prefix if not specified.
+        addTypePrefix(filterObj.getAsJsonObject(), FILTER_PREFIX);
+        
+        // Insert the filter object denoted by "@filter" to the existing
+        // "filter" field.
+        insertFilter(baseObj, filterObj);
 
         // If the baseObj is not a data source, convert it into CompositeDataSource.
         if (!isDataSourceObject(baseObj)) {
             JsonObject dataSourceObj = new JsonObject();
             dataSourceObj.addProperty(TYPE, COMPOSITE_DS);
-            dataSourceObj.add(FILTERS_FIELD_NAME, baseObj.remove(FILTERS_FIELD_NAME));
+            dataSourceObj.add(FILTER_FIELD_NAME, baseObj.remove(FILTER_FIELD_NAME));
             if (baseObj.has(ACTION)) {
                 dataSourceObj.add(ACTION, baseObj.remove(ACTION));
             }
@@ -399,25 +422,22 @@ public class ConfigRewriteUtil {
         }
         
         // Wrap the Action with an ActionAdapter if it does not
-        // implement the DataListener interface.
-        JsonArray actionArr = new JsonArray();
+        // implement the DataListener interface and insert the 
+        // Action to the end of the "filter" chain.
         if (!isDataListener) {
             JsonObject actionAdapter = new JsonObject();
             actionAdapter.addProperty(TYPE, ACTION_ADAPTER);
             actionAdapter.add(DELEGATE_FIELD_NAME, actionObj);
-            actionArr.add(actionAdapter);
+            insertFilter(baseObj, actionAdapter);
         } else {
-            actionArr.add(actionObj);
+            insertFilter(baseObj, actionObj);
         }
         
-        // Insert the Action to the end of the "filters" chain.
-        insertFilters(baseObj, actionArr);
-
         // If the baseObj is not a data source, convert it into CompositeDataSource.
         if (!isDataSourceObject(baseObj)) {
             JsonObject dataSourceObj = new JsonObject();
             dataSourceObj.addProperty(TYPE, COMPOSITE_DS);
-            dataSourceObj.add(FILTERS_FIELD_NAME, baseObj.remove(FILTERS_FIELD_NAME));
+            dataSourceObj.add(FILTER_FIELD_NAME, baseObj.remove(FILTER_FIELD_NAME));
             
             // The remaining fields of baseObj should be "@probe" annotation and 
             // probe parameters.
@@ -478,16 +498,23 @@ public class ConfigRewriteUtil {
     public static boolean isDataSourceObject(JsonObject object) {
         if (object.has(TYPE)) {
             String type = object.get(TYPE).getAsString();
-            if (PROBE_DS.equals(type) || COMPOSITE_DS.equals(type)) {
-                return true;
+            try {
+                Class<?> runtimeClass = Class.forName(type);
+                for (Class<?> runtimeInterface: runtimeClass.getInterfaces()) {
+                    if (DATA_SOURCE.equals(runtimeInterface.getName())) {
+                        return true;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
         return false;
     }
     
     /**
-     * Insert the given filters array to the end of the filters chain in
-     * the "filters" member of given baseObj.
+     * Insert the given filter object to the end of the filters chain in
+     * the "filter" member of given baseObj.
      * 
      * The array of filters is converted into nested filters, with each 
      * subsequent filter added as a listener of the previous filter, in the
@@ -496,35 +523,19 @@ public class ConfigRewriteUtil {
      * @param baseObj
      * @param filters
      */
-    public static void insertFilters(JsonObject baseObj, JsonArray filters) {
-        // Convert the filters array into nested filter objects.
-        JsonObject newFilters = null;
-        boolean isFirst = true;
-        JsonObject nextFilter = null;
-        for (JsonElement arrEl: filters) {
-            if (isFirst) {
-                newFilters = arrEl.getAsJsonObject();
-                nextFilter = newFilters;
-                isFirst = false;
-            } else {
-                JsonObject arrObj = arrEl.getAsJsonObject();
-                nextFilter.add(LISTENER_FIELD_NAME, arrObj);
-                nextFilter = arrObj;
-            }
-        }
-
-        // If the "filters" field already exists in the baseObj, iterate to the 
+    public static void insertFilter(JsonObject baseObj, JsonObject filter) {
+        // If the "filter" field already exists in the baseObj, iterate to the 
         // end of the chain and add the newFilters object.
-        if (baseObj.has(FILTERS_FIELD_NAME)) {
-            JsonObject currFilters = baseObj.remove(FILTERS_FIELD_NAME).getAsJsonObject();
+        if (baseObj.has(FILTER_FIELD_NAME)) {
+            JsonObject currFilters = baseObj.remove(FILTER_FIELD_NAME).getAsJsonObject();
             JsonObject iterFilter = currFilters;
             while (iterFilter.has(LISTENER_FIELD_NAME)) {
                 iterFilter = currFilters.get(LISTENER_FIELD_NAME).getAsJsonObject();
             }
-            iterFilter.add(LISTENER_FIELD_NAME, newFilters);
-            baseObj.add(FILTERS_FIELD_NAME, currFilters);
+            iterFilter.add(LISTENER_FIELD_NAME, filter);
+            baseObj.add(FILTER_FIELD_NAME, currFilters);
         } else {
-            baseObj.add(FILTERS_FIELD_NAME, newFilters);
+            baseObj.add(FILTER_FIELD_NAME, filter);
         }        
     }
 
