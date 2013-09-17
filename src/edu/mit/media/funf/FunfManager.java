@@ -286,7 +286,6 @@ public class FunfManager extends Service {
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<FileArchive>(context, FileArchive.class, DefaultArchive.class))
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<RemoteFileArchive>(context, RemoteFileArchive.class, HttpArchive.class))
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<DataListener>(context, DataListener.class, null))
-        .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<Startable>(context, Startable.class, null))
         .registerTypeAdapter(DefaultSchedule.class, new DefaultScheduleSerializer())
         .registerTypeAdapter(Class.class, new JsonSerializer<Class<?>>() {
 
@@ -362,9 +361,9 @@ public class FunfManager extends Service {
     public static ListenerInjectorTypeAdapterFactory getDataSourceFactory(Context context) {
         if (DATASOURCE_FACTORY == null) {
             DATASOURCE_FACTORY = new ListenerInjectorTypeAdapterFactory(
-                    new DefaultRuntimeTypeAdapterFactory<StartableDataSource>(
+                    new DefaultRuntimeTypeAdapterFactory<Startable>(
                             context, 
-                            StartableDataSource.class, 
+                            Startable.class, 
                             null, 
                             new ContextInjectorTypeAdapaterFactory(context, new ConfigurableTypeAdapterFactory())));
         }

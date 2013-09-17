@@ -14,7 +14,7 @@ public class StartDataSourceAction extends Action implements TriggerAction {
     StartDataSourceAction() {
     }
 
-    public void setDelegate(Startable target) {
+    public void setTarget(Startable target) {
         this.target = target;
     }
     

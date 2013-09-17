@@ -14,7 +14,7 @@ public class StopDataSourceAction extends Action implements TriggerAction {
     StopDataSourceAction() {
     }
 
-    public void setDelegate(Startable target) {
+    public void setTarget(Startable target) {
         this.target = target;
     }
     

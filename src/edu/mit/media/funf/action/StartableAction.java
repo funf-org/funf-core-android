@@ -18,7 +18,7 @@ public class StartableAction extends Action implements TriggerAction {
     StartableAction() {
     }
 
-    public void setDelegate(Startable target) {
+    public void setTarget(Startable target) {
         this.target = target;
     }
     
@@ -26,6 +26,7 @@ public class StartableAction extends Action implements TriggerAction {
         if (target == null) 
             return;
         Log.d(LogUtil.TAG, "running action start");
+        Log.d(LogUtil.TAG, target.getClass().getName());
         target.start();
         if (duration != null && duration > 0.0) {
             getHandler().postDelayed(new Runnable() {

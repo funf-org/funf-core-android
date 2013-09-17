@@ -33,6 +33,6 @@ public interface Startable {
     
     public interface TriggerAction {
         
-        public void setDelegate(Startable delegate);
+        public void setTarget(Startable target);
     }
 }

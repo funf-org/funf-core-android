@@ -100,7 +100,7 @@ public class ListenerInjectorTypeAdapterFactory implements TypeAdapterFactory {
                 }
 
                 private void injectListener(Object value, DataListener listener) {
-                                        
+                    
                     try {
                         Field listenerField = AnnotationUtil.getField(ConfigRewriteUtil.LISTENER_FIELD_NAME, value.getClass());
                         if (listenerField != null && DataListener.class.isAssignableFrom(listenerField.getType())) {
