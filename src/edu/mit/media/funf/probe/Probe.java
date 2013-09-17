@@ -520,9 +520,11 @@ public interface Probe {
 		}
 
 		protected void sendData(final JsonObject data) {
-			if (data == null || looper == null) {
+			if (data == null) {
 				return;
-			} else if (Thread.currentThread() != looper.getThread()) {
+			}
+			ensureLooperThreadExists();
+			if (Thread.currentThread() != looper.getThread()) {
 				// Ensure the data send runs on the probe's thread
 				if (handler != null) {
 					Message dataMessage = handler.obtainMessage(SEND_DATA_MESSAGE, data);
