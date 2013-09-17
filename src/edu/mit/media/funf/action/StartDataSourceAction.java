@@ -1,27 +1,27 @@
 package edu.mit.media.funf.action;
 
 import edu.mit.media.funf.config.Configurable;
-import edu.mit.media.funf.datasource.StartableDataSource.SchedulingAction;
-import edu.mit.media.funf.datasource.StartableDataSource;
+import edu.mit.media.funf.datasource.Startable;
+import edu.mit.media.funf.datasource.Startable.TriggerAction;
 import edu.mit.media.funf.util.LogUtil;
 import android.util.Log;
 
-public class StartDataSourceAction extends Action implements SchedulingAction {
+public class StartDataSourceAction extends Action implements TriggerAction {
     
     @Configurable
-    private StartableDataSource delegate = null;
+    private Startable target = null;
     
     StartDataSourceAction() {
     }
 
-    public void setDelegate(StartableDataSource delegate) {
-        this.delegate = delegate;
+    public void setDelegate(Startable target) {
+        this.target = target;
     }
     
     protected void execute() {
-        if (delegate == null) 
+        if (target == null) 
             return;
         Log.d(LogUtil.TAG, "running probe action start");
-        delegate.start();
+        target.start();
     }
 }

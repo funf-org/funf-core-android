@@ -69,6 +69,7 @@ import edu.mit.media.funf.config.DefaultScheduleSerializer;
 import edu.mit.media.funf.config.HttpConfigUpdater;
 import edu.mit.media.funf.config.ListenerInjectorTypeAdapterFactory;
 import edu.mit.media.funf.config.SingletonTypeAdapterFactory;
+import edu.mit.media.funf.datasource.Startable;
 import edu.mit.media.funf.datasource.StartableDataSource;
 import edu.mit.media.funf.pipeline.Pipeline;
 import edu.mit.media.funf.pipeline.PipelineFactory;
@@ -285,6 +286,7 @@ public class FunfManager extends Service {
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<FileArchive>(context, FileArchive.class, DefaultArchive.class))
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<RemoteFileArchive>(context, RemoteFileArchive.class, HttpArchive.class))
         .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<DataListener>(context, DataListener.class, null))
+        .registerTypeAdapterFactory(new ConfigurableRuntimeTypeAdapterFactory<Startable>(context, Startable.class, null))
         .registerTypeAdapter(DefaultSchedule.class, new DefaultScheduleSerializer())
         .registerTypeAdapter(Class.class, new JsonSerializer<Class<?>>() {
 

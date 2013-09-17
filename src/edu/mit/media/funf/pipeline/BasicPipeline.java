@@ -33,7 +33,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.util.Log;
 
 import com.google.gson.JsonElement;
 
@@ -55,7 +54,6 @@ import edu.mit.media.funf.storage.FileArchive;
 import edu.mit.media.funf.storage.NameValueDatabaseHelper;
 import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.storage.UploadService;
-import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.StringUtil;
 
 public class BasicPipeline implements Pipeline {
@@ -151,7 +149,6 @@ public class BasicPipeline implements Pipeline {
             }
             
             enabled = true;
-            Log.d(LogUtil.TAG, "BasicPipeline enabled");
         }
     }
 

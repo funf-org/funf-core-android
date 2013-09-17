@@ -30,4 +30,9 @@ public interface Startable {
     public void start();
     
     public void stop();
+    
+    public interface TriggerAction {
+        
+        public void setDelegate(Startable delegate);
+    }
 }

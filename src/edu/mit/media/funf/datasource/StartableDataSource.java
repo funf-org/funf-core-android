@@ -31,11 +31,6 @@ import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 
 public class StartableDataSource implements Startable, DataSource {
-
-    public interface SchedulingAction {
-        
-        public void setDelegate(StartableDataSource delegate);
-    }
     
     public static enum State {
         OFF,

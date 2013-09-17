@@ -60,7 +60,7 @@ public class ConfigRewriteUtil {
     public static final String DATA_FIELD_NAME = "data";
     public static final String SOURCE_FIELD_NAME = "source";
     public static final String DURATION_FIELD_NAME = "duration";
-    public static final String DELEGATE_FIELD_NAME = "delegate";
+    public static final String TARGET_FIELD_NAME = "target";
     public static final String FILTER_FIELD_NAME = "filter";
     public static final String LISTENER_FIELD_NAME = "listener";
     public static final String DELEGATOR_FIELD_NAME = "delegator";
@@ -305,7 +305,7 @@ public class ConfigRewriteUtil {
                     actionObj.addProperty(TYPE, START_DS_ACTION);
                 }
             }
-            actionObj.add(DELEGATE_FIELD_NAME, baseObj);    
+            actionObj.add(TARGET_FIELD_NAME, baseObj);    
         }
 
         dataSourceObj.add(SOURCE_FIELD_NAME, scheduleObj);
@@ -435,7 +435,7 @@ public class ConfigRewriteUtil {
         if (!isDataListener) {
             JsonObject actionAdapter = new JsonObject();
             actionAdapter.addProperty(TYPE, ACTION_ADAPTER);
-            actionAdapter.add(DELEGATE_FIELD_NAME, actionObj);
+            actionAdapter.add(TARGET_FIELD_NAME, actionObj);
             insertFilter(baseObj, actionAdapter);
         } else {
             insertFilter(baseObj, actionObj);

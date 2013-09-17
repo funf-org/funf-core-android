@@ -89,7 +89,6 @@ public class AlarmProbe extends Base implements ContinuousProbe, Runnable {
 
     protected void onStart() {
         String probeConfig = JsonUtils.immutable(getGson().toJsonTree(this)).toString();
-        Log.d(LogUtil.TAG, probeConfig);
         long intervalMillis = (interval == null || interval < 0) ? 0 : TimeUtil.secondsToMillis(interval);
         long offsetMillis = (offset == null || offset < 0) ? -1 : TimeUtil.secondsToMillis(offset);
         long currentMillis = System.currentTimeMillis();

@@ -126,14 +126,14 @@ public class ListenerInjectorTypeAdapterFactory implements TypeAdapterFactory {
                     }
                     
                     try {
-                        Field delegateField = AnnotationUtil.getField(ConfigRewriteUtil.DELEGATE_FIELD_NAME, value.getClass());
-                        if (delegateField != null) {
-                            boolean isAccessible = delegateField.isAccessible();
-                            delegateField.setAccessible(true);
-                            Object existingDelegate = delegateField.get(value);
-                            if (existingDelegate != null)
-                                injectListener(existingDelegate, listener);
-                            delegateField.setAccessible(isAccessible);
+                        Field targetField = AnnotationUtil.getField(ConfigRewriteUtil.TARGET_FIELD_NAME, value.getClass());
+                        if (targetField != null) {
+                            boolean isAccessible = targetField.isAccessible();
+                            targetField.setAccessible(true);
+                            Object existingTarget = targetField.get(value);
+                            if (existingTarget != null)
+                                injectListener(existingTarget, listener);
+                            targetField.setAccessible(isAccessible);
                             return;
                         }
                     } catch (SecurityException e) {

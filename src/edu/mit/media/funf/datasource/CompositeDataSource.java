@@ -34,7 +34,7 @@ public class CompositeDataSource extends StartableDataSource {
     protected StartableDataSource source = null;
     
     @Configurable
-    protected DataListener filters = null;
+    protected DataListener filter = null;
             
     @Configurable
     private boolean isEnabled = false;
@@ -44,10 +44,10 @@ public class CompositeDataSource extends StartableDataSource {
     
     protected void ensureIsEnabled() {
         if (!isEnabled) {
-            if (filters == null) {
-                filters = delegator;
+            if (filter == null) {
+                filter = delegator;
             }
-            source.setListener(filters);    
+            source.setListener(filter);    
             isEnabled = true;
         }
     }
