@@ -45,11 +45,6 @@ import edu.mit.media.funf.util.AnnotationUtil;
 
 public class ListenerInjectorTypeAdapterFactory implements TypeAdapterFactory {
 
-    public static final String LISTENER_FIELD = "listener",
-            DELEGATE_FIELD = "delegate",
-            FILTERS_FIELD = "filters",
-            DELEGATOR_FIELD = "delegator";
-
     private TypeAdapterFactory delegate;
 
     public ListenerInjectorTypeAdapterFactory(TypeAdapterFactory delegate) {
@@ -74,8 +69,8 @@ public class ListenerInjectorTypeAdapterFactory implements TypeAdapterFactory {
                     T value = delegateAdapter.read(in);
                     if (value != null && value instanceof DataSource) {
                         try {
-                            Field filtersField = AnnotationUtil.getField(FILTERS_FIELD, value.getClass());
-                            Field delegatorField = AnnotationUtil.getField(DELEGATOR_FIELD, value.getClass());
+                            Field filtersField = AnnotationUtil.getField(ConfigRewriteUtil.FILTER_FIELD_NAME, value.getClass());
+                            Field delegatorField = AnnotationUtil.getField(ConfigRewriteUtil.DELEGATOR_FIELD_NAME, value.getClass());
                             boolean isDelegatorAccessible = delegatorField.isAccessible();
                             delegatorField.setAccessible(true);
                             DataListener delegator = (DataListener)delegatorField.get(value);
@@ -105,13 +100,9 @@ public class ListenerInjectorTypeAdapterFactory implements TypeAdapterFactory {
                 }
 
                 private void injectListener(Object value, DataListener listener) {
+                                        
                     try {
-                        if (value instanceof DataSource) {
-                            ((DataSource)value).setListener(listener);
-                            return;
-                        }
-                        
-                        Field listenerField = AnnotationUtil.getField(LISTENER_FIELD, value.getClass());
+                        Field listenerField = AnnotationUtil.getField(ConfigRewriteUtil.LISTENER_FIELD_NAME, value.getClass());
                         if (listenerField != null && DataListener.class.isAssignableFrom(listenerField.getType())) {
                             boolean isAccessible = listenerField.isAccessible();
                             listenerField.setAccessible(true);
@@ -123,8 +114,19 @@ public class ListenerInjectorTypeAdapterFactory implements TypeAdapterFactory {
                             listenerField.setAccessible(isAccessible);
                             return;
                         }
-
-                        Field delegateField = AnnotationUtil.getField(DELEGATE_FIELD, value.getClass());
+                    } catch (SecurityException e) {
+                        // Swallow
+                        Log.v(TAG, e.getMessage());
+                    } catch (IllegalArgumentException e) {
+                        // Swallow
+                        Log.v(TAG, e.getMessage());
+                    } catch (IllegalAccessException e) {
+                        // Swallow
+                        Log.v(TAG, e.getMessage());
+                    }
+                    
+                    try {
+                        Field delegateField = AnnotationUtil.getField(ConfigRewriteUtil.DELEGATE_FIELD_NAME, value.getClass());
                         if (delegateField != null) {
                             boolean isAccessible = delegateField.isAccessible();
                             delegateField.setAccessible(true);
@@ -143,6 +145,11 @@ public class ListenerInjectorTypeAdapterFactory implements TypeAdapterFactory {
                     } catch (IllegalAccessException e) {
                         // Swallow
                         Log.v(TAG, e.getMessage());
+                    }
+                    
+                    if (value instanceof DataSource) {
+                        ((DataSource)value).setListener(listener);
+                        return;
                     }
                 }
 

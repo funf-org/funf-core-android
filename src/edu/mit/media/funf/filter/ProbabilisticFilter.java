@@ -69,12 +69,13 @@ public class ProbabilisticFilter implements DataListener, DataSource {
     private Random generator;
     
     ProbabilisticFilter() {
+        long seed = System.currentTimeMillis();
+        generator = new Random(seed);
     }
     
     public ProbabilisticFilter(DataListener listener) {
+        this();
         this.listener = listener;
-        long seed = System.currentTimeMillis();
-        generator = new Random(seed);
     }
 
     @Override

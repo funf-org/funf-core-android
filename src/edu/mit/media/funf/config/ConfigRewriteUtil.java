@@ -32,9 +32,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import edu.mit.media.funf.FunfManager;
 import edu.mit.media.funf.action.Action;
 import edu.mit.media.funf.action.ActionAdapter;
-import edu.mit.media.funf.action.RegisterDurationAction;
+import edu.mit.media.funf.action.StartableAction;
 import edu.mit.media.funf.action.StartDataSourceAction;
 import edu.mit.media.funf.action.StopDataSourceAction;
 import edu.mit.media.funf.datasource.CompositeDataSource;
@@ -62,6 +63,7 @@ public class ConfigRewriteUtil {
     public static final String DELEGATE_FIELD_NAME = "delegate";
     public static final String FILTER_FIELD_NAME = "filter";
     public static final String LISTENER_FIELD_NAME = "listener";
+    public static final String DELEGATOR_FIELD_NAME = "delegator";
 
     public static final String TYPE = "@type";
     public static final String SCHEDULE = "@schedule";
@@ -70,7 +72,7 @@ public class ConfigRewriteUtil {
     public static final String ACTION = "@action";
     public static final String TRIGGER = "@trigger";
     
-    public static final String CLASSNAME_PREFIX = "edu.mit.media.funf";
+    public static final String CLASSNAME_PREFIX = FunfManager.class.getPackage().getName();
     
     public static final String PROBE_PREFIX = AlarmProbe.class.getPackage().getName();
     public static final String FILTER_PREFIX = ProbabilisticFilter.class.getPackage().getName();
@@ -82,7 +84,7 @@ public class ConfigRewriteUtil {
     public static final String COMPOSITE_DS = CompositeDataSource.class.getName();
     public static final String ALARM_PROBE = AlarmProbe.class.getName();
     public static final String ACTION_ADAPTER = ActionAdapter.class.getName();
-    public static final String REGISTER_DURATION_ACTION = RegisterDurationAction.class.getName();
+    public static final String STARTABLE_ACTION = StartableAction.class.getName();
     public static final String START_DS_ACTION = StartDataSourceAction.class.getName();
     public static final String STOP_DS_ACTION = StopDataSourceAction.class.getName();
     public static final String COMPOSITE_FILTER = CompositeFilter.class.getName();
@@ -254,12 +256,12 @@ public class ConfigRewriteUtil {
             }
         }
 
-        int duration = 0;
+        Double duration = 0.0;
         if (scheduleObj.has(PROBE) && 
                 ALARM_PROBE.equals(scheduleObj.get(PROBE).getAsString())) {
             renameJsonObjectKey(scheduleObj, "strict", "exact");
             if (scheduleObj.has(DURATION_FIELD_NAME))
-                duration = scheduleObj.remove(DURATION_FIELD_NAME).getAsInt();
+                duration = scheduleObj.remove(DURATION_FIELD_NAME).getAsDouble();
         }
 
         JsonElement filtersEl = null;
@@ -283,9 +285,9 @@ public class ConfigRewriteUtil {
         // 2. If it is not empty, then check if a "@trigger" annotation exists, which denotes
         //    a user-specified custom action to be registered whenever scheduler fires.
         // 3. If no "@trigger" exists, then select a default Action. If "duration" was 
-        //    specified in the schedule object, add a RegisterDurationAction to run 
+        //    specified in the schedule object, add a StartableAction to run 
         //    the dependent data source for that duration.
-        // 4. If no duration was specified, add a StartDataSourceAction to simply start
+        // 4. If no non-zero duration was specified, add a StartDataSourceAction to simply start
         //    the dependent data source whenever this schedule object fires.
         JsonObject actionObj = null;
         if (baseObj.has(PROBE) || baseObj.has(TYPE)) {
@@ -297,7 +299,7 @@ public class ConfigRewriteUtil {
             } else {
                 actionObj= new JsonObject();
                 if (duration > 0) {
-                    actionObj.addProperty(TYPE, REGISTER_DURATION_ACTION);
+                    actionObj.addProperty(TYPE, STARTABLE_ACTION);
                     actionObj.addProperty(DURATION_FIELD_NAME, duration);        
                 } else {
                     actionObj.addProperty(TYPE, START_DS_ACTION);
@@ -353,6 +355,12 @@ public class ConfigRewriteUtil {
         JsonElement filterEl = baseObj.remove(FILTER);
         JsonObject filterObj = null;
         if (filterEl.isJsonArray()) {
+            for (JsonElement filterIter: filterEl.getAsJsonArray()) {
+                if (filterIter.isJsonObject()) {
+                    // Add the filter class name prefix if not specified.
+                    addTypePrefix(filterIter.getAsJsonObject(), FILTER_PREFIX);
+                }
+            }
             filterObj = new JsonObject();
             filterObj.addProperty(TYPE, COMPOSITE_FILTER);
             filterObj.add("filters", filterEl.getAsJsonArray());
@@ -387,7 +395,7 @@ public class ConfigRewriteUtil {
     
     /**
      * Rewrites "@action" annotation as an Action object, and adds it to the 
-     * end of the "filters" chain.
+     * end of the "filter" chain.
      * 
      * If the specified Action does not implement the DataListener interface,
      * it is wrapped by an ActionAdapter. 
@@ -500,16 +508,24 @@ public class ConfigRewriteUtil {
             String type = object.get(TYPE).getAsString();
             try {
                 Class<?> runtimeClass = Class.forName(type);
-                for (Class<?> runtimeInterface: runtimeClass.getInterfaces()) {
-                    if (DATA_SOURCE.equals(runtimeInterface.getName())) {
-                        return true;
-                    }
-                }
+                return implementsInterface(runtimeClass, DATA_SOURCE);
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
         return false;
+    }
+    
+    private static boolean implementsInterface(Class<?> runtimeClass, String interfaceName) {
+        if (runtimeClass == null) 
+            return false;
+        for (Class<?> runtimeInterface: runtimeClass.getInterfaces()) {
+            if (interfaceName.equals(runtimeInterface.getName())) {
+                return true;
+            }
+        }
+        Class<?> parentClass = runtimeClass.getSuperclass();
+        return implementsInterface(parentClass, interfaceName);
     }
     
     /**
