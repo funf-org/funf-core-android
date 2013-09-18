@@ -7,6 +7,8 @@ import java.util.Queue;
 
 import android.test.AndroidTestCase;
 
+import edu.mit.media.funf.config.ConfigRewriteUtil;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
@@ -76,7 +78,7 @@ public class TestPipeline extends AndroidTestCase {
 	
 	public String SAMPLE_PIPELINE_CONFIG = "{" +
 			"\"@type\": \"" + SamplePipeline.class.getName() + "\"," +
-			"\"" + PipelineFactory.SCHEDULES_FIELD_NAME + "\": {" +
+			"\"" + ConfigRewriteUtil.SCHEDULES_FIELD_NAME + "\": {" +
 					"\"archive\": {" + 
 						"\"interval\": 1," + 
 						"\"opportunistic\": false" + 
