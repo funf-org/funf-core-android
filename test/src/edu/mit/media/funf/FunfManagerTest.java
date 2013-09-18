@@ -90,7 +90,8 @@ public class FunfManagerTest extends AndroidTestCase {
 			"}";
 	
 	public void testDataRequest() {
-		manager.requestData(listener, parser.parse(probeConfig));
+	    fail("Interface has changed.  Need to fix.");
+		//manager.requestData(listener, parser.parse(probeConfig));
 		IJsonObject data = null;
 		try {
 			data = listener.dataEvents.poll(10, TimeUnit.SECONDS);
@@ -100,7 +101,7 @@ public class FunfManagerTest extends AndroidTestCase {
 			fail("Should have returned data within time alloted");
 		}
 		
-		manager.unrequestData(listener, parser.parse(probeConfig));
+		//manager.unrequestData(listener, parser.parse(probeConfig));
 		IJsonObject complete = null;
 		try {
 			complete = listener.completeEvents.poll(10, TimeUnit.SECONDS);
