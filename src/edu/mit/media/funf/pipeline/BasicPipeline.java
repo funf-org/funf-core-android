@@ -56,8 +56,12 @@ import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.storage.UploadService;
 import edu.mit.media.funf.util.StringUtil;
 
-public class BasicPipeline implements Pipeline {
+public class BasicPipeline implements Pipeline, DataListener {
 
+    public static final String ACTION_ARCHIVE = "archive",
+            ACTION_UPLOAD = "upload",
+            ACTION_UPDATE = "update";
+    
     @Configurable
     protected String name = "actiongraph";
 
@@ -87,6 +91,11 @@ public class BasicPipeline implements Pipeline {
     private Looper looper;
     private Handler handler;
     
+    private WriteDataAction writeAction;
+    private RunArchiveAction archiveAction;
+    private RunUploadAction uploadAction;
+    private RunUpdateAction updateAction;
+    
 //    private class DataRequestInfo {
 //        private DataListener listener;
 //        private JsonElement checkpoint;
@@ -115,30 +124,25 @@ public class BasicPipeline implements Pipeline {
     protected void setupDataSources() {
         if (enabled == false) {
             
-            DataListener databaseListener = (DataListener)new WriteDataAction(databaseHelper);
-            
             for (StartableDataSource dataSource: data) {
-                dataSource.setListener(databaseListener);
+                dataSource.setListener((DataListener)writeAction);
             }
             
             if (schedules != null) {
                 if (schedules.containsKey("archive")) {
-                    DataListener archiveListener = (DataListener)new ActionAdapter(
-                            new RunArchiveAction(archive, databaseHelper));
+                    DataListener archiveListener = (DataListener)new ActionAdapter(archiveAction);
                     schedules.get("archive").setListener(archiveListener);
                     schedules.get("archive").start();
                 }
                 
                 if (schedules.containsKey("upload")) {
-                    DataListener uploadListener = (DataListener)new ActionAdapter(
-                            new RunUploadAction(archive, upload, uploader));
+                    DataListener uploadListener = (DataListener)new ActionAdapter(uploadAction);
                     schedules.get("upload").setListener(uploadListener);
                     schedules.get("upload").start();
                 }
                 
                 if (schedules.containsKey("update")) {
-                    DataListener updateListener = (DataListener)new ActionAdapter(
-                            new RunUpdateAction(name, getFunfManager(), update));
+                    DataListener updateListener = (DataListener)new ActionAdapter(updateAction);
                     schedules.get("update").setListener(updateListener);
                     schedules.get("update").start();
                 }
@@ -173,10 +177,21 @@ public class BasicPipeline implements Pipeline {
         }
         this.manager = manager;
         reloadDbHelper(manager);
+        
         HandlerThread thread = new HandlerThread(getClass().getName());
         thread.start();
         this.looper = thread.getLooper();
         this.handler = new Handler(looper);
+        
+        writeAction = new WriteDataAction(databaseHelper);
+        writeAction.setHandler(handler);
+        archiveAction = new RunArchiveAction(archive, databaseHelper);
+        archiveAction.setHandler(handler);
+        uploadAction = new RunUploadAction(archive, upload, uploader);
+        uploadAction.setHandler(handler);
+        updateAction = new RunUpdateAction(name, getFunfManager(), update);
+        updateAction.setHandler(handler);
+        
         handler.post(new Runnable() {
             @Override
             public void run() {
@@ -187,6 +202,14 @@ public class BasicPipeline implements Pipeline {
 
     @Override
     public void onRun(String action, JsonElement config) {
+        // Run on handler thread
+        if (ACTION_ARCHIVE.equals(action)) {
+            archiveAction.run();
+        } else if (ACTION_UPLOAD.equals(action)) {
+            uploadAction.run();
+        } else if (ACTION_UPDATE.equals(action)) {
+            updateAction.run();
+        }
     }
 
     @Override
@@ -206,6 +229,16 @@ public class BasicPipeline implements Pipeline {
     @Override
     public boolean isEnabled() {
         return enabled;
+    }
+    
+    @Override
+    public void onDataReceived(IJsonObject probeConfig, IJsonObject data) {
+      writeAction.onDataReceived(probeConfig, data);
+    }
+
+    @Override
+    public void onDataCompleted(IJsonObject probeConfig, JsonElement checkpoint) {
+      writeAction.onDataCompleted(probeConfig, checkpoint);
     }
 
     public Handler getHandler() {
