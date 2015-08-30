@@ -25,6 +25,9 @@ package edu.mit.media.funf;
 
 import static edu.mit.media.funf.util.LogUtil.TAG;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -210,7 +213,29 @@ public class FunfManager extends Service {
 	    registerPipeline(name, newPipeline); // Will unregister previous before running
 	  }
 	}
-	
+
+	public String getVersion() {
+		String version = "unknown";
+		BufferedReader reader = null;
+		try{
+			reader = new BufferedReader(new InputStreamReader(getAssets().open("build.info")));
+			version = reader.readLine().trim();
+		} catch (IOException e) {
+
+		}
+		finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+
+				}
+			}
+		}
+
+		return version;
+	}
+
 	public JsonObject getPipelineConfig(String name) {
 	  String configString = prefs.getString(name, null);
 	  Bundle metadata = getMetadata();
