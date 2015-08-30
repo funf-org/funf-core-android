@@ -41,7 +41,7 @@ def getVersionName = {->
 
         def stdout3 = new ByteArrayOutputStream()
         exec {
-            commandLine 'git', 'describe', '--tags', '--exact-match'
+            commandLine 'git', 'describe', '--tags', '--abbrev=0'
             standardOutput = stdout3
             errorOutput = new ByteArrayOutputStream()
             ignoreExitValue = true
