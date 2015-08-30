@@ -159,7 +159,13 @@ public class LocationProbe extends Base implements ContinuousProbe, PassiveProbe
             				|| name.equals("mLat2") 
             				|| name.equals("mLon1") 
             				|| name.equals("mLon2") 
-            				|| name.equals("mLon2") 
+            				|| name.equals("mLon2")
+							|| name.equals("mHasSpeed")
+							|| name.equals("mHasAccuracy")
+							|| name.equals("mHasAltitude")
+							|| name.equals("mHasBearing")
+							|| name.equals("mHasSpeed")
+							|| name.equals("mElapsedRealtimeNanos")
             				)
             		);
         }
