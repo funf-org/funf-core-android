@@ -25,14 +25,18 @@ package edu.mit.media.funf.storage;
 
 
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
+import java.util.zip.GZIPOutputStream;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
@@ -136,14 +140,14 @@ public interface FileCopier {
 			CipherOutputStream co = null;
 			try {
 				in = new FileInputStream(sourceFile);
-				out = new FileOutputStream(destinationFile); 
+				out = new FileOutputStream(destinationFile);
 				co = new CipherOutputStream(out, ecipher);
 				byte[] buf = new byte[128*4096]; 
-				int len = 0; 
-				while ((len = in.read(buf)) > 0) 
-				{ 
-					co.write(buf, 0, len); 
-				} 
+				int len = 0;
+				while ((len = in.read(buf)) > 0)
+				{
+					co.write(buf, 0, len);
+				}
 			} catch (FileNotFoundException e) {
 				Log.e(TAG, "File not found", e);
 				return false;
@@ -160,4 +164,139 @@ public interface FileCopier {
 		}
 		
 	}
+
+	public static class CompressedEncryptedFileCopier implements FileCopier {
+		public static final String TAG = CompressedEncryptedFileCopier.class.getName();
+		private final SecretKey key;
+		private final String transformation;
+
+		public CompressedEncryptedFileCopier(SecretKey key, String transformation) {
+			this.key = key;
+			this.transformation = transformation;
+		}
+
+		private Cipher cipher; // Cache
+		protected Cipher getCipher() {
+			if (cipher == null) {
+				synchronized (this) {
+					if (cipher == null) {
+						try {
+							cipher = Cipher.getInstance(transformation);
+							cipher.init(Cipher.ENCRYPT_MODE, key);
+						} catch (Exception e) {
+							Log.e(TAG, "Error creating cipher", e);
+						}
+					}
+				}
+			}
+			return cipher;
+		}
+
+		@Override
+		public boolean copy(File sourceFile, File destinationFile) {
+			Log.i(TAG, "compressing + encrypting + copying " + sourceFile.getPath() + " to " + destinationFile.getPath());
+
+			Cipher ecipher = getCipher();
+			if (ecipher == null) {
+				return false;
+			}
+
+			InputStream in = null;
+			OutputStream out = null;
+			GZIPOutputStream gzipOutputStream = null;
+			try {
+				in = new FileInputStream(sourceFile);
+				out = new ByteArrayOutputStream();
+				gzipOutputStream = new GZIPOutputStream(out);
+
+				byte[] buf = new byte[128*4096];
+				int len = 0;
+				while ((len = in.read(buf)) > 0) {
+					Log.i(TAG, "compressing...");
+					gzipOutputStream.write(buf, 0, len);
+				}
+
+			} catch (FileNotFoundException e) {
+				Log.e(TAG, "File not found", e);
+				return false;
+			} catch (IOException e) {
+				Log.e(TAG, "IOException", e);
+				return false;
+			} finally {
+				IOUtil.close(in);
+				IOUtil.close(gzipOutputStream);
+				IOUtil.close(out);
+			}
+
+			InputStream in2 = null;
+			OutputStream out2 = null;
+			CipherOutputStream co = null;
+			try {
+				in2 = new ByteArrayInputStream(((ByteArrayOutputStream)out).toByteArray());
+
+				out2 = new FileOutputStream(destinationFile);
+				co = new CipherOutputStream(out2, ecipher);
+				byte[] buf = new byte[128*4096];
+				int len = 0;
+				while ((len = in2.read(buf)) > 0)
+				{
+					co.write(buf, 0, len);
+				}
+			} catch (FileNotFoundException e) {
+				Log.e(TAG, "File not found", e);
+				return false;
+			} catch (IOException e) {
+				Log.e(TAG, "IOException", e);
+				return false;
+			} finally {
+				IOUtil.close(in2);
+				IOUtil.close(co);
+				IOUtil.close(out2);
+			}
+
+			Log.i(TAG, "done copy");
+			return true;
+		}
+	}
+
+	public static class CompressedFileCopier implements FileCopier {
+		public static final String TAG = CompressedEncryptedFileCopier.class.getName();
+
+		@Override
+		public boolean copy(File sourceFile, File destinationFile) {
+			Log.i(TAG, "compressing + copying " + sourceFile.getPath() + " to " + destinationFile.getPath());
+
+
+			InputStream in = null;
+			OutputStream out = null;
+			GZIPOutputStream gzipOutputStream = null;
+			try {
+				in = new FileInputStream(sourceFile);
+				out = new FileOutputStream(destinationFile);
+				gzipOutputStream = new GZIPOutputStream(out);
+
+				byte[] buf = new byte[128*4096];
+				int len = 0;
+				while ((len = in.read(buf)) > 0) {
+					Log.i(TAG, "compressing...");
+					gzipOutputStream.write(buf, 0, len);
+				}
+
+			} catch (FileNotFoundException e) {
+				Log.e(TAG, "File not found", e);
+				return false;
+			} catch (IOException e) {
+				Log.e(TAG, "IOException", e);
+				return false;
+			} finally {
+				IOUtil.close(in);
+				IOUtil.close(gzipOutputStream);
+				IOUtil.close(out);
+			}
+
+			Log.i(TAG, "done copy");
+			return true;
+		}
+	}
+
 }

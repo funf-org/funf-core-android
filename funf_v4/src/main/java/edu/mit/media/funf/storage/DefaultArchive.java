@@ -32,6 +32,8 @@ import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.PBEKeySpec;
 
 import android.content.Context;
+import android.util.Log;
+
 import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.security.Base64Coder;
@@ -67,6 +69,9 @@ public class DefaultArchive implements FileArchive {
 	
 	@Configurable
 	protected String key;
+
+	@Configurable
+	protected Boolean compress = false;
 	
     protected Context context;
 	
@@ -161,8 +166,8 @@ public class DefaultArchive implements FileArchive {
 					String rootSdCardPath = getPathOnSDCard();
 					FileArchive backupArchive = FileDirectoryArchive.getRollingFileArchive(new File(rootSdCardPath + "backup"));
 					FileArchive mainArchive = new CompositeFileArchive(
-							getTimestampedDbFileArchive(new File(rootSdCardPath + "archive"), context, key),
-							getTimestampedDbFileArchive(context.getDir("funf_" + getCleanedName() + "_archive", Context.MODE_PRIVATE), context, key)
+							getTimestampedDbFileArchive(new File(rootSdCardPath + "archive"), context, key, compress),
+							getTimestampedDbFileArchive(context.getDir("funf_" + getCleanedName() + "_archive", Context.MODE_PRIVATE), context, key, compress)
 							);
 					delegateArchive = new BackedUpArchive(mainArchive, backupArchive);
 				}
@@ -171,9 +176,15 @@ public class DefaultArchive implements FileArchive {
 		return delegateArchive;
 	}
 	
-	static FileDirectoryArchive getTimestampedDbFileArchive(File archiveDir, Context context, SecretKey encryptionKey) {
+	static FileDirectoryArchive getTimestampedDbFileArchive(File archiveDir, Context context, SecretKey encryptionKey, Boolean compress) {
 		NameGenerator nameGenerator = new CompositeNameGenerator(new SystemUniqueTimestampNameGenerator(context), new RequiredSuffixNameGenerator(".db"));
-		FileCopier copier = (encryptionKey == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(encryptionKey, DES_ENCRYPTION);
+		FileCopier copier = null;
+		if (compress) {
+			copier = (encryptionKey == null) ? new FileCopier.CompressedFileCopier() : new FileCopier.CompressedEncryptedFileCopier(encryptionKey, DES_ENCRYPTION);
+		} else {
+			copier = (encryptionKey == null) ? new FileCopier.SimpleFileCopier() : new FileCopier.EncryptedFileCopier(encryptionKey, DES_ENCRYPTION);
+		}
+
 		return new FileDirectoryArchive(archiveDir, nameGenerator, copier, new DirectoryCleaner.KeepAll());
 	}
 	
