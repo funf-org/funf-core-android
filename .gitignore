@@ -34,3 +34,4 @@ proguard/
 .DS_Store
 .idea
 *.iml
+build.info
