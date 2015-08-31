@@ -25,8 +25,6 @@ package edu.mit.media.funf.probe.builtin;
 
 
 
-import java.util.List;
-
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -37,11 +35,16 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.util.Log;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.util.List;
+
 import edu.mit.media.funf.Schedule;
+import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.Probe.DisplayName;
 import edu.mit.media.funf.probe.Probe.RequiredFeatures;
@@ -53,6 +56,9 @@ import edu.mit.media.funf.util.LogUtil;
 @RequiredFeatures("android.hardware.wifi")
 @DisplayName("Nearby Wifi Devices Probe")
 public class WifiProbe extends Base {
+
+    @Configurable
+    private boolean include_scan_started = true;
 
     public static final String TSF = "tsf";
   
@@ -68,7 +74,7 @@ public class WifiProbe extends Base {
 			if (WifiManager.SCAN_RESULTS_AVAILABLE_ACTION.equals(intent.getAction())) {
 				List<ScanResult> results = wifiManager.getScanResults();
 				if (results != null) {
-					Gson gson = getGson();
+					Gson gson = getGsonBuilder().addSerializationExclusionStrategy(new WifiExclusionStrategy()).create();
 					for (ScanResult result : results) {
 					  JsonObject data = gson.toJsonTree(result).getAsJsonObject();
 					  if (data.has(TIMESTAMP)) {
@@ -174,14 +180,28 @@ public class WifiProbe extends Base {
 			wifiLock = null;
 		}
 	}
-	
+
+    private JsonObject createScanStartedData() {
+        JsonObject data = new JsonObject();
+        data.addProperty("BSSID", "00:00:00:00:00:00");
+        data.addProperty("SSID", "DUMMY_SCAN_STARTED");
+        return data;
+
+    }
+
+    private void sendScanStartedData() {
+        JsonObject data = createScanStartedData();
+        sendData(data);
+    }
+
 	private void runScan() {
 		numberOfAttempts += 1; 
 		int state = wifiManager.getWifiState();
 		if (state == WifiManager.WIFI_STATE_ENABLED) {
 			boolean successfulStart = wifiManager.startScan();
-			if (successfulStart) {
+            if (successfulStart) {
 				Log.i(LogUtil.TAG, "WIFI scan started succesfully");
+                if (include_scan_started) sendScanStartedData();
 			} else {
 				Log.e(LogUtil.TAG, "WIFI scan failed.");
 			}
@@ -195,5 +215,20 @@ public class WifiProbe extends Base {
 			stop();
 		}
 		
+	}
+
+	public class WifiExclusionStrategy implements ExclusionStrategy {
+		public boolean shouldSkipClass(Class<?> cls) {
+			return false;
+		}
+		public boolean shouldSkipField(FieldAttributes f) {
+			String name = f.getName();
+			return (f.getDeclaringClass() == ScanResult.class &&
+					(name.equals("XXX")
+                        //here we can remove fields from the scan result if we want to
+					)
+			);
+		}
+
 	}
 }
