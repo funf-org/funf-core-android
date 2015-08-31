@@ -203,11 +203,13 @@ public interface FileCopier {
 
 			InputStream in = null;
 			OutputStream out = null;
+			CipherOutputStream co = null;
 			GZIPOutputStream gzipOutputStream = null;
 			try {
 				in = new FileInputStream(sourceFile);
-				out = new ByteArrayOutputStream();
-				gzipOutputStream = new GZIPOutputStream(out);
+				out = new FileOutputStream(destinationFile);
+				co = new CipherOutputStream(out, ecipher);
+				gzipOutputStream = new GZIPOutputStream(co);
 
 				byte[] buf = new byte[128*4096];
 				int len = 0;
@@ -215,6 +217,7 @@ public interface FileCopier {
 					Log.i(TAG, "compressing...");
 					gzipOutputStream.write(buf, 0, len);
 				}
+				gzipOutputStream.finish();
 
 			} catch (FileNotFoundException e) {
 				Log.e(TAG, "File not found", e);
@@ -224,34 +227,8 @@ public interface FileCopier {
 				return false;
 			} finally {
 				IOUtil.close(in);
-				IOUtil.close(gzipOutputStream);
-				IOUtil.close(out);
-			}
-
-			InputStream in2 = null;
-			OutputStream out2 = null;
-			CipherOutputStream co = null;
-			try {
-				in2 = new ByteArrayInputStream(((ByteArrayOutputStream)out).toByteArray());
-
-				out2 = new FileOutputStream(destinationFile);
-				co = new CipherOutputStream(out2, ecipher);
-				byte[] buf = new byte[128*4096];
-				int len = 0;
-				while ((len = in2.read(buf)) > 0)
-				{
-					co.write(buf, 0, len);
-				}
-			} catch (FileNotFoundException e) {
-				Log.e(TAG, "File not found", e);
-				return false;
-			} catch (IOException e) {
-				Log.e(TAG, "IOException", e);
-				return false;
-			} finally {
-				IOUtil.close(in2);
 				IOUtil.close(co);
-				IOUtil.close(out2);
+				IOUtil.close(out);
 			}
 
 			Log.i(TAG, "done copy");
@@ -260,7 +237,7 @@ public interface FileCopier {
 	}
 
 	public static class CompressedFileCopier implements FileCopier {
-		public static final String TAG = CompressedEncryptedFileCopier.class.getName();
+		public static final String TAG = CompressedFileCopier.class.getName();
 
 		@Override
 		public boolean copy(File sourceFile, File destinationFile) {
