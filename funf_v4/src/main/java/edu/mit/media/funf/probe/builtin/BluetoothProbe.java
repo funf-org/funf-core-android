@@ -50,7 +50,7 @@ import edu.mit.media.funf.time.TimeUtil;
 public class BluetoothProbe extends Base implements PassiveProbe {
 	
 	@Configurable
-	private BigDecimal maxScanTime = BigDecimal.valueOf(30.0);
+	private BigDecimal maxScanTime = BigDecimal.valueOf(60.0);
 	
 	private BluetoothAdapter adapter;	
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
