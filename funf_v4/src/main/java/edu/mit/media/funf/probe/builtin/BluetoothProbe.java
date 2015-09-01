@@ -34,6 +34,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
+
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.probe.Probe.Base;
@@ -51,6 +57,9 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 	
 	@Configurable
 	private BigDecimal maxScanTime = BigDecimal.valueOf(60.0);
+
+	@Configurable
+	private boolean include_scan_started = true;
 	
 	private BluetoothAdapter adapter;	
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -58,7 +67,8 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 		public void onReceive(Context context, Intent intent) {
 			final String action = intent.getAction();
 			if (action.equals(BluetoothDevice.ACTION_FOUND)) {
-				sendData(getGson().toJsonTree(intent.getExtras()).getAsJsonObject());
+				Gson gson = getGsonBuilder().addSerializationExclusionStrategy(new BluetoothExclusionStrategy()).create();
+				sendData(gson.toJsonTree(intent.getExtras()).getAsJsonObject());
 			} else if (action.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
 				stop();
 			}
@@ -78,11 +88,26 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 			}
 		}
 	};
+
+	private JsonObject createScanStartedData() {
+		JsonObject data = new JsonObject();
+		JsonObject addressData = new JsonObject();
+		addressData.addProperty("mAddress", "00:00:00:00:00:00");
+		data.add("android.bluetooth.device.extra.DEVICE", addressData);
+		data.addProperty("android.bluetooth.device.extra.NAME", "DUMMY_SCAN_STARTED");
+		return data;
+	}
+
+	private void sendScanStartedData() {
+		JsonObject data = createScanStartedData();
+		sendData(data);
+	}
 	
 	private boolean shouldDisableOnFinish = false; // Keeps track of previous bluetooth state
 	private void startDiscovery() {
 		if (adapter.isEnabled()) {
 			adapter.startDiscovery();
+			if (include_scan_started) sendScanStartedData();
 		} else {
 			shouldDisableOnFinish = true;
 			getContext().registerReceiver(stateChangedReceiver, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
@@ -135,6 +160,19 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 			Log.w(TAG, getClass().getName() + "Broadcast receiver not registered.", e);
 		}
 	}
-	
+
+	public class BluetoothExclusionStrategy implements ExclusionStrategy {
+		public boolean shouldSkipClass(Class<?> cls) {
+			return false;
+		}
+		public boolean shouldSkipField(FieldAttributes f) {
+			String name = f.getName();
+			return (f.getDeclaringClass() == BluetoothDevice.class &&
+					(name.equals("XXX")
+							//here we can remove fields from the scan result if we want to
+					)
+			);
+		}
+	}
 	
 }
