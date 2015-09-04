@@ -1,0 +1,2 @@
+# Built-in Probes #
+The 30+ probes that come with Funf by default can now be found in the [Javadoc](http://wiki.funf-open-sensing-framework.googlecode.com/git/docs/edu/mit/media/funf/probe/builtin/package-frame.html).
