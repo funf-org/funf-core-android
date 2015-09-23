@@ -95,6 +95,8 @@ public class UploadService {
 
   public void run(final FileArchive archive, final RemoteFileArchive remoteArchive) {
     Log.i(LogUtil.TAG, "Running upload...");
+    remoteArchiveFailures = new HashMap<String, Integer>();
+    fileFailures = new HashMap<String, Integer>();
     if (archive != null && remoteArchive != null) {
       if (lock == null) {
         lock = LockUtil.getWakeLock(context);
@@ -145,7 +147,7 @@ public class UploadService {
       }
     } else {
       Log.i(LogUtil.TAG, "Canceling upload.  Remote archive '" + remoteArchive.getId()
-          + "' is not currently available.");
+          + "' is not currently available. " + numRemoteFailures);
       filesToUpload.remove(file);
     }
   }
