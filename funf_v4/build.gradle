@@ -24,8 +24,6 @@ android {
 }
 
 dependencies {
-    compile files('libs/gson-2.1-javadoc.jar')
-    compile files('libs/gson-2.1-sources.jar')
     compile files('libs/gson-2.1.jar')
     compile('org.apache.httpcomponents:httpmime:4.3.6') {
         exclude module: 'httpclient'
