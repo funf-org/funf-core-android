@@ -209,6 +209,7 @@ public class FunfManager extends Service {
 	  if (pipelineConfig == null) {
         unregisterPipeline(name);
 	  } else {
+		  Log.i(TAG, pipelineConfig);
 	    Pipeline newPipeline = gson.fromJson(pipelineConfig, Pipeline.class);
 	    registerPipeline(name, newPipeline); // Will unregister previous before running
 	  }

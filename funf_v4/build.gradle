@@ -15,12 +15,25 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/DEPENDENCIES'
+    }
 }
 
 dependencies {
     compile files('libs/gson-2.1-javadoc.jar')
     compile files('libs/gson-2.1-sources.jar')
     compile files('libs/gson-2.1.jar')
+    compile('org.apache.httpcomponents:httpmime:4.3.6') {
+        exclude module: 'httpclient'
+    }
+    compile 'org.apache.httpcomponents:httpclient-android:4.3.5'
+    compile ('org.apache.httpcomponents:httpcore:4.4.1'){
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+    }
 }
 
 
