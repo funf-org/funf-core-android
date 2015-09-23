@@ -23,21 +23,6 @@
  */
 package edu.mit.media.funf;
 
-import static edu.mit.media.funf.util.LogUtil.TAG;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -66,6 +51,19 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.TypeAdapterFactory;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import edu.mit.media.funf.Schedule.BasicSchedule;
 import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.ConfigUpdater;
@@ -93,6 +91,8 @@ import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.StringUtil;
+
+import static edu.mit.media.funf.util.LogUtil.TAG;
 
 public class FunfManager extends Service {
 	
@@ -209,7 +209,6 @@ public class FunfManager extends Service {
 	  if (pipelineConfig == null) {
         unregisterPipeline(name);
 	  } else {
-		  Log.i(TAG, pipelineConfig);
 	    Pipeline newPipeline = gson.fromJson(pipelineConfig, Pipeline.class);
 	    registerPipeline(name, newPipeline); // Will unregister previous before running
 	  }
