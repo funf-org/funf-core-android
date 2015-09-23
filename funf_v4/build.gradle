@@ -65,24 +65,22 @@ def getVersionName = {->
         def assetsDir = android.sourceSets.main.assets.srcDirs.toArray()[0]
         println "assetsDir: "+assetsDir
 
+        def assetsDirObject = new File(assetsDir, '')
+
+        if (!assetsDirObject.exists()) {
+            assetsDirObject.mkdirs();
+        }
+
         def buildInfoFile = new File(assetsDir, 'build.info').getAbsolutePath()
         println "buildInfoFile: "+buildInfoFile
 
         new File(buildInfoFile).write(return_value);
-
-
 
         return return_value
     }
     catch (ignored) {
         return null;
     }
-
-
-
-
-
-
 
 }
 
