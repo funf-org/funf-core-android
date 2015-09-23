@@ -29,6 +29,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import android.content.Context;
@@ -125,7 +127,13 @@ public class HttpArchive implements RemoteFileArchive {
 	 */
 	public static boolean uploadFile(File file,String uploadurl) {
 		HttpClient httpClient = new DefaultHttpClient() ;
-		HttpPost httpPost = new HttpPost(uploadurl);
+		HttpPost httpPost;
+		try {
+			httpPost = new HttpPost(new URI(uploadurl));
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return false;
+		}
 
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
