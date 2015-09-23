@@ -62,6 +62,7 @@ import org.apache.http.params.HttpParams;
 
 import android.net.Uri;
 import android.util.Log;
+import android.util.Patterns;
 
 public class IOUtil {
 	
@@ -120,18 +121,7 @@ public class IOUtil {
 
   public static boolean isValidUrl(String url) {
   	Log.d(LogUtil.TAG, "Validating url");
-  	boolean isValidUrl = false;
-  	if (url != null &&  !url.trim().equals("")) {
-  		try {
-  			Uri test = Uri.parse(url);
-  			isValidUrl = test.getScheme() != null 
-  			&& test.getScheme().startsWith("http") 
-  			&& test.getHost() != null 
-  			&& !test.getHost().trim().equals("");
-  		} catch (Exception e) {
-  			Log.d(LogUtil.TAG, "Not valid", e);
-  		}
-  	}
+  	boolean isValidUrl = Patterns.WEB_URL.matcher(url).matches();
   	Log.d(LogUtil.TAG, "Valid url? " + isValidUrl);
   	return isValidUrl;
   }
