@@ -44,6 +44,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
@@ -135,30 +137,29 @@ public class HttpArchive implements RemoteFileArchive {
 			return false;
 		}
 
-		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-		FileBody fileBody = new FileBody(file);
-		builder.addPart("uploadedfile", fileBody);
-		HttpEntity entity = builder.build();
 
-		httpPost.setEntity(entity);
+		InputStreamEntity reqEntity = null;
 		HttpResponse response = null;
-
 		try {
+			reqEntity = new InputStreamEntity(new FileInputStream(file), -1);
+			reqEntity.setContentType("binary/octet-stream");
+			reqEntity.setChunked(true); // Send in multiple parts if needed
+			httpPost.setEntity(reqEntity);
 			response = httpClient.execute(httpPost);
-		} catch (ClientProtocolException e) {
-			Log.e("ClientProtocolExc: "+e, e.getMessage());
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 			return false;
 		} catch (IOException e) {
-			Log.e("IOException : "+e, e.getMessage());
+			e.printStackTrace();
 			return false;
 		}
-		if(response == null) {
+		if (response == null) {
 			return false;
 		}
-		if(response.getStatusLine().getStatusCode() == 200) {
+		if (response.getStatusLine().getStatusCode() == 200) {
 			return true;
 		}
+
 		return false;
 	}
 }
