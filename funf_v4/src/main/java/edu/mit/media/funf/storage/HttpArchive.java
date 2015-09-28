@@ -37,6 +37,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.NetworkInfo.State;
+import android.util.Base64;
 import android.util.Log;
 
 import org.apache.http.HttpEntity;
@@ -51,6 +52,7 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import edu.mit.media.funf.FunfManager;
 import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.util.IOUtil;
@@ -118,7 +120,8 @@ public class HttpArchive implements RemoteFileArchive {
 	
 	
 	public boolean add(File file) {
-		return IOUtil.isValidUrl(url) ? uploadFile(file, url) : false;
+		String currentUrl = IOUtil.formatServerUrl(url, file.getName());
+		return IOUtil.isValidUrl(currentUrl) ? uploadFile(file, currentUrl) : false;
 	}
 	
 	/**
@@ -136,7 +139,6 @@ public class HttpArchive implements RemoteFileArchive {
 			e.printStackTrace();
 			return false;
 		}
-
 
 		InputStreamEntity reqEntity = null;
 		HttpResponse response = null;
@@ -159,6 +161,13 @@ public class HttpArchive implements RemoteFileArchive {
 		if (response.getStatusLine().getStatusCode() == 200) {
 			return true;
 		}
+		if (response.getStatusLine().getStatusCode() == 401) {
+			//Auth error
+			Log.i(LogUtil.TAG, "Auth Error "+response.getStatusLine().getStatusCode());
+			//TODO propagate auth error up, in OAuth2 context this will require re-auth from user
+			FunfManager.funfManager.authError();
+		}
+
 
 		return false;
 	}
