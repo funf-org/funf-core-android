@@ -51,6 +51,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -60,9 +62,13 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpParams;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 import android.util.Patterns;
+
+import edu.mit.media.funf.FunfManager;
 
 public class IOUtil {
 	
@@ -125,4 +131,37 @@ public class IOUtil {
   	Log.d(LogUtil.TAG, "Valid url? " + isValidUrl);
   	return isValidUrl;
   }
+
+	public static String formatServerUrl(String uploadurl, String filename) {
+		String accessToken = FunfManager.context.getSharedPreferences("funf_auth", Context.MODE_PRIVATE).getString(md5(uploadurl), "");
+
+		String formattedUploadUrl = uploadurl;
+		formattedUploadUrl = formattedUploadUrl.replace("$FILENAME$", filename);
+		formattedUploadUrl = formattedUploadUrl.replace("$ACCESS_TOKEN$", accessToken);
+
+		return formattedUploadUrl;
+	}
+
+	public static final String md5(final String s) {
+		try {
+			// Create MD5 Hash
+			MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+			digest.update(s.getBytes());
+			byte messageDigest[] = digest.digest();
+
+			// Create Hex String
+			StringBuffer hexString = new StringBuffer();
+			for (int i = 0; i < messageDigest.length; i++) {
+				String h = Integer.toHexString(0xFF & messageDigest[i]);
+				while (h.length() < 2)
+					h = "0" + h;
+				hexString.append(h);
+			}
+			return hexString.toString();
+
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
 }
