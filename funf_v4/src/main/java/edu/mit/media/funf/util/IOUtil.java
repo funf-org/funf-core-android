@@ -52,6 +52,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -103,11 +105,9 @@ public class IOUtil {
 			}
 		} catch (ClientProtocolException e) {
 			Log.e(TAG, "HttpGet Error: ", e);
-			responseBody=null;
 			response=null;
 		} catch (IOException e) {
 			Log.e(TAG, "HttpGet Error: ", e);
-			responseBody=null;
 			response=null;
 		} finally{
 	        httpclient.getConnectionManager().shutdown();  
@@ -152,7 +152,15 @@ public class IOUtil {
   }
 
 	public static String formatServerUrl(String uploadurl, String filename) {
-		String accessToken = FunfManager.context.getSharedPreferences("funf_auth", Context.MODE_PRIVATE).getString(md5(uploadurl), "");
+
+		URI uri = null;
+		String accessToken = "";
+		try {
+			uri = new URI(uploadurl);
+			accessToken = FunfManager.context.getSharedPreferences("funf_auth", Context.MODE_PRIVATE).getString(md5(uri.getHost()), "");
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 
 		String formattedUploadUrl = uploadurl;
 		formattedUploadUrl = formattedUploadUrl.replace("$FILENAME$", filename);
@@ -179,6 +187,8 @@ public class IOUtil {
 			return hexString.toString();
 
 		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
 			e.printStackTrace();
 		}
 		return "";
