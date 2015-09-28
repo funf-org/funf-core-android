@@ -89,6 +89,7 @@ import edu.mit.media.funf.storage.FileArchive;
 import edu.mit.media.funf.storage.HttpArchive;
 import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.time.TimeUtil;
+import edu.mit.media.funf.util.IOUtil;
 import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.StringUtil;
 
@@ -112,7 +113,9 @@ public class FunfManager extends Service {
 	PROBE_ACTION_UNREGISTER = "unregister",
 	PROBE_ACTION_REGISTER_PASSIVE = "register-passive",
 	PROBE_ACTION_UNREGISTER_PASSIVE = "unregister-passive";
-	
+
+	public static Context context = null;
+	public static FunfManager funfManager = null;
 	
 	private Handler handler;
 	private JsonParser parser;
@@ -160,6 +163,8 @@ public class FunfManager extends Service {
 		this.disabledPipelines = new HashMap<String, Pipeline>();
 		this.disabledPipelineNames = new HashSet<String>(Arrays.asList(prefs.getString(DISABLED_PIPELINE_LIST, "").split(",")));
 		this.disabledPipelineNames.remove(""); // Remove the empty name, if no disabled pipelines exist
+		FunfManager.context = this;
+		funfManager = this;
 		reload();
 	}
 	
@@ -735,7 +740,17 @@ public class FunfManager extends Service {
 		scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_REGISTER_PASSIVE));
 		scheduler.cancel(PROBE_TYPE, getComponenentUri(probeConfig, PROBE_ACTION_UNREGISTER_PASSIVE));
 	}
-	
+
+	public void setAuthToken(String url, String accessToken) {
+		getSharedPreferences("funf_auth", MODE_PRIVATE).edit().putString(IOUtil.md5(url), accessToken).commit();
+	}
+
+	public void authError() {
+		Log.i(TAG, "sending authError broadcast");
+		Intent intent = new Intent(context.getPackageName() + "." + "AUTHENTICATION_ERROR");
+		sendBroadcast(intent);
+	}
+
 	////////////////////////////////////////////////////
 
 
@@ -812,7 +827,7 @@ public class FunfManager extends Service {
 			}
 						
 		}
-		
+
 		// TODO: Feature to wait a certain amount of seconds after boot to begin
 		// TODO: Feature to prevent too many things from running at once, w/ random backoff times
 		
