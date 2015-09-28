@@ -20,6 +20,7 @@ public class HttpConfigUpdater extends ConfigUpdater {
     try {
       String content = null;
       String currentUrl = IOUtil.formatServerUrl(url, "");
+      //TODO handling of auth error
       if (IOUtil.isValidUrl(currentUrl)) {
         content = IOUtil.httpGet(currentUrl, null);
       }
