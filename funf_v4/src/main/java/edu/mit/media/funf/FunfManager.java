@@ -56,6 +56,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -486,7 +488,6 @@ public class FunfManager extends Service {
 	
 	public void registerPipeline(String name, Pipeline pipeline) {
 		synchronized (pipelines) {
-		  Log.d(LogUtil.TAG, "Registering pipeline: " + name);
 			unregisterPipeline(name);
 			pipelines.put(name, pipeline);
 			pipeline.onCreate(this);
@@ -742,7 +743,15 @@ public class FunfManager extends Service {
 	}
 
 	public void setAuthToken(String url, String accessToken) {
-		getSharedPreferences("funf_auth", MODE_PRIVATE).edit().putString(IOUtil.md5(url), accessToken).commit();
+		URI uri = null;
+		try {
+			uri = new URI(url);
+			getSharedPreferences("funf_auth", MODE_PRIVATE).edit().putString(IOUtil.md5(uri.getHost()), accessToken).commit();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+
+
 	}
 
 	public void authError() {
