@@ -46,6 +46,7 @@ package edu.mit.media.funf.util;
 
 import static edu.mit.media.funf.util.LogUtil.TAG;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,11 +55,11 @@ import java.io.Reader;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpParams;
 
@@ -87,26 +88,44 @@ public class IOUtil {
 	}
 	
 	public static String httpGet(String uri,HttpParams params){
-		String responseBody=null;
+		HttpResponse response=null;
 		HttpClient httpclient = new DefaultHttpClient();
 		StringBuilder uriBuilder = new StringBuilder(uri);
 		HttpGet httpget = new HttpGet(uriBuilder.toString());
 		if (params != null) {
 			httpget.setParams(params);
 		}
-        ResponseHandler<String> responseHandler = new BasicResponseHandler();
         try {
-		    responseBody = httpclient.execute(httpget, responseHandler);
+		    response = httpclient.execute(httpget);
+			if (response.getStatusLine().getStatusCode() == 401) {
+				FunfManager.funfManager.authError();
+				response = null;
+			}
 		} catch (ClientProtocolException e) {
 			Log.e(TAG, "HttpGet Error: ", e);
 			responseBody=null;
+			response=null;
 		} catch (IOException e) {
 			Log.e(TAG, "HttpGet Error: ", e);
 			responseBody=null;
+			response=null;
 		} finally{
 	        httpclient.getConnectionManager().shutdown();  
 		}
-        return responseBody;
+		if (response != null) {
+			try {
+				StringBuilder sb = new StringBuilder();
+				HttpEntity entity = response.getEntity();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()), 65728);
+				String line;
+				while ((line = reader.readLine()) != null) {
+					sb.append(line);
+				}
+				return sb.toString();
+			} catch (IOException e) {e.printStackTrace();}
+			catch (Exception e) {e.printStackTrace();}
+		}
+        return null;
 	}
 
 	/**
