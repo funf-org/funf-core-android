@@ -131,6 +131,8 @@ public class HttpArchive implements RemoteFileArchive {
 	 * @return
 	 */
 	public static boolean uploadFile(File file,String uploadurl) {
+		if (uploadurl == null) return false;
+		if (uploadurl.equals("")) return false;
 		HttpClient httpClient = new DefaultHttpClient() ;
 		HttpPost httpPost;
 		try {
