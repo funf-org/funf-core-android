@@ -177,7 +177,10 @@ public class DefaultArchive implements FileArchive {
 	}
 	
 	static FileDirectoryArchive getTimestampedDbFileArchive(File archiveDir, Context context, SecretKey encryptionKey, Boolean compress) {
-		NameGenerator nameGenerator = new CompositeNameGenerator(new SystemUniqueTimestampNameGenerator(context), new RequiredSuffixNameGenerator(".db"));
+		String suffix = ".db";
+		if (compress) suffix += ".gz";
+		if (encryptionKey != null) suffix += ".enc";
+		NameGenerator nameGenerator = new CompositeNameGenerator(new SystemUniqueTimestampNameGenerator(context), new RequiredSuffixNameGenerator(suffix));
 		FileCopier copier = null;
 		if (compress) {
 			copier = (encryptionKey == null) ? new FileCopier.CompressedFileCopier() : new FileCopier.CompressedEncryptedFileCopier(encryptionKey, DES_ENCRYPTION);
