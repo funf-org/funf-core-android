@@ -1,0 +1,124 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+* .DS_Store
+* .gitignore
+* README
+* ant.properties
+* build.xml
+* custom_rules.xml
+* default.properties
+* proguard-project.txt
+* proguard.cfg
+* test/
+* test/.classpath
+* test/.gitignore
+* test/.project
+* test/AndroidManifest.xml
+* test/ant.properties
+* test/build.xml
+* test/default.properties
+* test/local.properties
+* test/old/
+* test/old/AccountsProbeTest.java
+* test/old/ActivityProbeTest.java
+* test/old/AndroidInfoProbeTest.java
+* test/old/ApplicationsProbeTest.java
+* test/old/AudioFilesProbeTest.java
+* test/old/BatteryProbeTest.java
+* test/old/BluetoothProbeTest.java
+* test/old/BrowserBookmarksProbeTest.java
+* test/old/BrowserSearchesProbeTest.java
+* test/old/CallLogProbeTest.java
+* test/old/CellProbeTest.java
+* test/old/ContactProbeTest.java
+* test/old/GravitySensorProbeTest.java
+* test/old/HardwareInfoProbeTest.java
+* test/old/ImagesProbeTest.java
+* test/old/LightSensorProbeTest.java
+* test/old/LocationProbeTest.java
+* test/old/ProbeUtilsTest.java
+* test/old/ProcessStatisticsProbeTest.java
+* test/old/RunningApplicationsProbeTest.java
+* test/old/SMSProbeTest.java
+* test/old/ServicesProbeTest.java
+* test/old/TelephonyProbeTest.java
+* test/old/TemperatureSensorProbeTest.java
+* test/old/TimeOffsetProbeTest.java
+* test/old/VideosProbeTest.java
+* test/old/WifiProbeTest.java
+* test/proguard-project.txt
+* test/proguard.cfg
+* test/project.properties
+* test/res/
+* test/res/.gitignore
+* test/src/
+* test/src/edu/
+* test/src/edu/mit/
+* test/src/edu/mit/media/
+* test/src/edu/mit/media/funf/
+* test/src/edu/mit/media/funf/AsyncSharedPrefsTest.java
+* test/src/edu/mit/media/funf/FunfManagerTest.java
+* test/src/edu/mit/media/funf/TestPipeline.java
+* test/src/edu/mit/media/funf/config/
+* test/src/edu/mit/media/funf/config/TestConfigurableParsing.java
+* test/src/edu/mit/media/funf/pipeline/
+* test/src/edu/mit/media/funf/pipeline/BasicPipelineTest.java
+* test/src/edu/mit/media/funf/probe/
+* test/src/edu/mit/media/funf/probe/AnnotationsTest.java
+* test/src/edu/mit/media/funf/probe/ProbeTest.java
+* test/src/edu/mit/media/funf/probe/ProbeTestCase.java
+* test/src/edu/mit/media/funf/probe/builtin/
+* test/src/edu/mit/media/funf/probe/builtin/ContactProbeTest.java
+* test/src/edu/mit/media/funf/probe/builtin/RunningApplicationsProbeTest.java
+* test/src/edu/mit/media/funf/probe/builtin/ServicesProbeTest.java
+* test/src/edu/mit/media/funf/probe/builtin/TelephonyProbeTest.java
+* test/src/edu/mit/media/funf/probe/builtin/TestAllBuiltinProbes.java
+* test/src/edu/mit/media/funf/probe/builtin/TestLocationProbes.java
+* test/src/edu/mit/media/funf/storage/
+* test/src/edu/mit/media/funf/storage/DefaultArchiveTest.java
+* test/src/edu/mit/media/funf/storage/PrefsWriteSpeedTest.java
+* test/src/edu/mit/media/funf/tests/
+* test/src/edu/mit/media/funf/tests/ExampleService.java
+* test/src/edu/mit/media/funf/tests/SensorTest.java
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+* AndroidManifest.xml => app/src/main/AndroidManifest.xml
+* libs/gson-2.1-javadoc.jar => app/libs/gson-2.1-javadoc.jar
+* libs/gson-2.1-sources.jar => app/libs/gson-2.1-sources.jar
+* libs/gson-2.1.jar => app/libs/gson-2.1.jar
+* lint.xml => app/lint.xml
+* res/ => app/src/main/res/
+* src/ => app/src/main/java/
+* src/.DS_Store => app/src/main/resources/.DS_Store
+* src/com/.DS_Store => app/src/main/resources/com/.DS_Store
+* src/edu/.DS_Store => app/src/main/resources/edu/.DS_Store
+* src/edu/mit/.DS_Store => app/src/main/resources/edu/mit/.DS_Store
+* src/edu/mit/media/.DS_Store => app/src/main/resources/edu/mit/media/.DS_Store
+* src/edu/mit/media/funf/.DS_Store => app/src/main/resources/edu/mit/media/funf/.DS_Store
+* src/edu/mit/media/funf/probe/.DS_Store => app/src/main/resources/edu/mit/media/funf/probe/.DS_Store
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)
