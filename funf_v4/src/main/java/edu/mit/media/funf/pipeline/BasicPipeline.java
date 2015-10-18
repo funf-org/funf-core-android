@@ -44,6 +44,7 @@ import edu.mit.media.funf.Schedule;
 import edu.mit.media.funf.config.ConfigUpdater;
 import edu.mit.media.funf.config.Configurable;
 import edu.mit.media.funf.config.RuntimeTypeAdapterFactory;
+import edu.mit.media.funf.data.Geofencer;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.builtin.ProbeKeys;
@@ -84,7 +85,10 @@ public class BasicPipeline implements Pipeline, DataListener {
   protected List<JsonElement> data = new ArrayList<JsonElement>();
   
   @Configurable
-  protected Map<String, Schedule> schedules = new HashMap<String, Schedule>(); 
+  protected Map<String, Schedule> schedules = new HashMap<String, Schedule>();
+
+  @Configurable
+  protected Geofencer geofence = new Geofencer();
   
   private UploadService uploader;
   
@@ -144,6 +148,7 @@ public class BasicPipeline implements Pipeline, DataListener {
   }
   
   protected void writeData(String name, IJsonObject data) {
+    if (!geofence.shouldSaveData(name, data)) return;
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     final double timestamp = data.get(ProbeKeys.BaseProbeKeys.TIMESTAMP).getAsDouble();
     final String value = data.toString();
@@ -347,5 +352,9 @@ public class BasicPipeline implements Pipeline, DataListener {
   public void onDataCompleted(IJsonObject probeConfig, JsonElement checkpoint) {
     // TODO Figure out what to do with continuations of probes, if anything
 
+  }
+
+  public List<JsonElement> getFences() {
+    return this.geofence.getFences();
   }
 }
