@@ -760,6 +760,12 @@ public class FunfManager extends Service {
 		sendBroadcast(intent);
 	}
 
+	public void broadcastDataCollectionStatus(Integer status) {
+		Intent intent = new Intent(context.getPackageName() + "." + "DATA_COLLECTION_STATUS");
+		intent.putExtra("status", status);
+		sendBroadcast(intent);
+	}
+
 	////////////////////////////////////////////////////
 
 

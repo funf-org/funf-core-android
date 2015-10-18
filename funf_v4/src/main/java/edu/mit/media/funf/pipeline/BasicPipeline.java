@@ -25,8 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -55,6 +58,8 @@ import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.storage.UploadService;
 import edu.mit.media.funf.util.LogUtil;
 import edu.mit.media.funf.util.StringUtil;
+
+import static edu.mit.media.funf.util.LogUtil.TAG;
 
 public class BasicPipeline implements Pipeline, DataListener {
 
@@ -91,7 +96,9 @@ public class BasicPipeline implements Pipeline, DataListener {
   protected Geofencer geofence = new Geofencer();
   
   private UploadService uploader;
-  
+
+  private Integer savingData = -1;
+
   private boolean enabled;
   private FunfManager manager;
   private SQLiteOpenHelper databaseHelper = null;
@@ -146,8 +153,28 @@ public class BasicPipeline implements Pipeline, DataListener {
     reloadDbHelper(manager);
     databaseHelper.getWritableDatabase(); // Build new database
   }
-  
+
+  private void broadcastDataCollection() {
+    Log.i(TAG, "broadcastDataCollectionStatus() "+savingData);
+    manager.broadcastDataCollectionStatus(savingData);
+  }
+
   protected void writeData(String name, IJsonObject data) {
+
+    if (geofence.shouldSaveData(System.currentTimeMillis())) {
+      if (savingData != 1) {
+        savingData = 1;
+        broadcastDataCollection();
+      }
+
+    } else {
+      if (savingData != 0) {
+        savingData = 0;
+        broadcastDataCollection();
+      }
+
+    }
+
     if (!geofence.shouldSaveData(name, data)) return;
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     final double timestamp = data.get(ProbeKeys.BaseProbeKeys.TIMESTAMP).getAsDouble();

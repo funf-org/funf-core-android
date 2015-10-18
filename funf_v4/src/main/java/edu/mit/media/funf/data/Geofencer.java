@@ -58,6 +58,10 @@ public class Geofencer {
         return checkFences(timestampToMillis(data.get("timestamp").getAsLong()));
     }
 
+    public boolean shouldSaveData(Long timestamp) {
+        return checkFences(timestamp);
+    }
+
 
     private void updateVisits(String name, IJsonObject data) {
 
