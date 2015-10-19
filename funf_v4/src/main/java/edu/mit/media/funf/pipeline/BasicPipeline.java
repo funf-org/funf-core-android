@@ -94,6 +94,9 @@ public class BasicPipeline implements Pipeline, DataListener {
 
   @Configurable
   protected Geofencer geofence = new Geofencer();
+
+  @Configurable
+  protected boolean broadcastCollectionState = true;
   
   private UploadService uploader;
 
@@ -155,27 +158,28 @@ public class BasicPipeline implements Pipeline, DataListener {
   }
 
   private void broadcastDataCollection() {
+    if (!broadcastCollectionState) return;
     Log.i(TAG, "broadcastDataCollectionStatus() "+savingData);
-    manager.broadcastDataCollectionStatus(savingData);
-  }
-
-  protected void writeData(String name, IJsonObject data) {
 
     if (geofence.shouldSaveData(System.currentTimeMillis())) {
       if (savingData != 1) {
         savingData = 1;
-        broadcastDataCollection();
+        manager.broadcastDataCollectionStatus(savingData);
       }
 
     } else {
       if (savingData != 0) {
         savingData = 0;
-        broadcastDataCollection();
+        manager.broadcastDataCollectionStatus(savingData);
       }
-
     }
+  }
 
+  protected void writeData(String name, IJsonObject data) {
+
+    broadcastDataCollection();
     if (!geofence.shouldSaveData(name, data)) return;
+
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     final double timestamp = data.get(ProbeKeys.BaseProbeKeys.TIMESTAMP).getAsDouble();
     final String value = data.toString();
