@@ -60,6 +60,9 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 
 	@Configurable
 	private boolean include_scan_started = true;
+
+	@Configurable
+	private boolean keepBluetoothVisible = false;
 	
 	private BluetoothAdapter adapter;	
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -149,6 +152,18 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 		if (shouldDisableOnFinish) {
 			adapter.disable();
 			shouldDisableOnFinish = false;
+		}
+		if (keepBluetoothVisible) {
+			makeVisible();
+		}
+	}
+
+	private void makeVisible() {
+		if(adapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+			Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+			discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
+			discoverableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			this.getContext().startActivity(discoverableIntent);
 		}
 	}
 
