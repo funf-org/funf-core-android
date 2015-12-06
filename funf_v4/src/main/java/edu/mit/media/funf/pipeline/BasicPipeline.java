@@ -159,7 +159,6 @@ public class BasicPipeline implements Pipeline, DataListener {
 
   private void broadcastDataCollection() {
     if (!broadcastCollectionState) return;
-    Log.i(TAG, "broadcastDataCollectionStatus() "+savingData);
 
     if (geofence.shouldSaveData(System.currentTimeMillis())) {
       if (savingData != 1) {
