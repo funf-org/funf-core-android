@@ -44,32 +44,25 @@
  */
 package edu.mit.media.funf.util;
 
-import static edu.mit.media.funf.util.LogUtil.TAG;
+import android.content.Context;
+import android.util.Log;
+import android.util.Patterns;
 
-import java.io.BufferedReader;
+import org.apache.http.params.HttpParams;
+
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.HttpParams;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.net.Uri;
-import android.util.Log;
-import android.util.Patterns;
 
 import edu.mit.media.funf.FunfManager;
 
@@ -90,40 +83,27 @@ public class IOUtil {
 	}
 
 	public static String httpGet(String uri,HttpParams params,String action,String accessToken) {
-		HttpResponse response=null;
-		HttpClient httpclient = new DefaultHttpClient();
-		StringBuilder uriBuilder = new StringBuilder(uri);
-		HttpGet httpget = new HttpGet(uriBuilder.toString());
-		if (params != null) {
-			httpget.setParams(params);
-		}
+		//params are deprecated
+
+		HttpURLConnection urlConnection = null;
+		int responseCode = 0;
 		try {
-			response = httpclient.execute(httpget);
-			if (response.getStatusLine().getStatusCode() == 401) {
-				FunfManager.funfManager.authError(action,accessToken);
-				response = null;
-			}
-		} catch (ClientProtocolException e) {
-			Log.e(TAG, "HttpGet Error: ", e);
-			response=null;
+			URL url = new URL(uri);
+			urlConnection = (HttpURLConnection) url.openConnection();
+			responseCode = urlConnection.getResponseCode();
+			InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+			String returnValue = inputStreamToString(in, "UTF-8");
+			return returnValue;
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
 		} catch (IOException e) {
-			Log.e(TAG, "HttpGet Error: ", e);
-			response=null;
-		} finally{
-			httpclient.getConnectionManager().shutdown();
+			e.printStackTrace();
+			if (responseCode == 401) FunfManager.funfManager.authError(action, accessToken);
 		}
-		if (response != null) {
-			try {
-				StringBuilder sb = new StringBuilder();
-				HttpEntity entity = response.getEntity();
-				BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()), 65728);
-				String line;
-				while ((line = reader.readLine()) != null) {
-					sb.append(line);
-				}
-				return sb.toString();
-			} catch (IOException e) {e.printStackTrace();}
-			catch (Exception e) {e.printStackTrace();}
+		finally {
+			if (urlConnection != null) {
+				urlConnection.disconnect();
+			}
 		}
 		return null;
 	}
