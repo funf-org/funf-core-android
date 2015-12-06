@@ -88,8 +88,8 @@ public class IOUtil {
 		} while (read>=0);
 		return out.toString();
 	}
-	
-	public static String httpGet(String uri,HttpParams params){
+
+	public static String httpGet(String uri,HttpParams params,String action,String accessToken) {
 		HttpResponse response=null;
 		HttpClient httpclient = new DefaultHttpClient();
 		StringBuilder uriBuilder = new StringBuilder(uri);
@@ -97,10 +97,10 @@ public class IOUtil {
 		if (params != null) {
 			httpget.setParams(params);
 		}
-        try {
-		    response = httpclient.execute(httpget);
+		try {
+			response = httpclient.execute(httpget);
 			if (response.getStatusLine().getStatusCode() == 401) {
-				FunfManager.funfManager.authError();
+				FunfManager.funfManager.authError(action,accessToken);
 				response = null;
 			}
 		} catch (ClientProtocolException e) {
@@ -110,7 +110,7 @@ public class IOUtil {
 			Log.e(TAG, "HttpGet Error: ", e);
 			response=null;
 		} finally{
-	        httpclient.getConnectionManager().shutdown();  
+			httpclient.getConnectionManager().shutdown();
 		}
 		if (response != null) {
 			try {
@@ -125,7 +125,11 @@ public class IOUtil {
 			} catch (IOException e) {e.printStackTrace();}
 			catch (Exception e) {e.printStackTrace();}
 		}
-        return null;
+		return null;
+	}
+
+	public static String httpGet(String uri,HttpParams params){
+		return httpGet(uri,params,"unknown","");
 	}
 
 	/**

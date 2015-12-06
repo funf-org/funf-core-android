@@ -750,13 +750,28 @@ public class FunfManager extends Service {
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
+	}
 
-
+	public String getAuthToken(String url) {
+		String authToken = "";
+		try {
+			URI uri = new URI(url);
+			authToken = getSharedPreferences("funf_auth", MODE_PRIVATE).getString(IOUtil.md5(uri.getHost()), "");
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+		return authToken;
 	}
 
 	public void authError() {
-		Log.i(TAG, "sending authError broadcast");
+		authError("unknown", "");
+	}
+
+	public void authError(String action, String accessToken) {
+		Log.i(TAG, "sending authError broadcast "+action);
 		Intent intent = new Intent(context.getPackageName() + "." + "AUTHENTICATION_ERROR");
+		intent.putExtra("action", action);
+		intent.putExtra("accessToken", accessToken);
 		sendBroadcast(intent);
 	}
 

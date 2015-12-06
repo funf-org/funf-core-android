@@ -51,10 +51,12 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.execchain.MainClientExec;
 
 import edu.mit.media.funf.FunfManager;
 import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.pipeline.BasicPipeline;
 import edu.mit.media.funf.util.IOUtil;
 import edu.mit.media.funf.util.LogUtil;
 
@@ -121,7 +123,8 @@ public class HttpArchive implements RemoteFileArchive {
 	
 	public boolean add(File file) {
 		String currentUrl = IOUtil.formatServerUrl(url, file.getName());
-		return IOUtil.isValidUrl(currentUrl) ? uploadFile(file, currentUrl) : false;
+		Log.i(LogUtil.TAG, "UPLOADER: "+currentUrl + " "+IOUtil.isValidUrl(currentUrl));
+		return IOUtil.isValidUrl(currentUrl) ? uploadFile(file, currentUrl,FunfManager.funfManager.getAuthToken(url)) : false;
 	}
 	
 	/**
@@ -130,7 +133,7 @@ public class HttpArchive implements RemoteFileArchive {
 	 * @param uploadurl
 	 * @return
 	 */
-	public static boolean uploadFile(File file,String uploadurl) {
+	public static boolean uploadFile(File file,String uploadurl,String accessToken) {
 		if (uploadurl == null) return false;
 		if (uploadurl.equals("")) return false;
 		HttpClient httpClient = new DefaultHttpClient() ;
@@ -166,8 +169,7 @@ public class HttpArchive implements RemoteFileArchive {
 		if (response.getStatusLine().getStatusCode() == 401) {
 			//Auth error
 			Log.i(LogUtil.TAG, "Auth Error "+response.getStatusLine().getStatusCode());
-			//TODO propagate auth error up, in OAuth2 context this will require re-auth from user
-			FunfManager.funfManager.authError();
+			FunfManager.funfManager.authError(BasicPipeline.ACTION_UPLOAD, accessToken);
 		}
 
 
