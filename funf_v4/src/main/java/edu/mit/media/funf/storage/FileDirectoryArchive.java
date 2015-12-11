@@ -54,7 +54,7 @@ public class FileDirectoryArchive implements FileArchive {
 	}
 	
 	public static FileDirectoryArchive getRollingFileArchive(File archiveDir) {
-		return new FileDirectoryArchive(archiveDir, new NameGenerator.IdentityNameGenerator(), new FileCopier.SimpleFileCopier(), new DirectoryCleaner.KeepUnderPercentageOfDiskFree(0.5, 10000000));
+		return new FileDirectoryArchive(archiveDir, new NameGenerator.IdentityNameGenerator(), new FileCopier.SimpleFileCopier(), new DirectoryCleaner.KeepMostRecent(20));
 	}
 	
 	

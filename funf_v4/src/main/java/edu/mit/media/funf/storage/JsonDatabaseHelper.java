@@ -38,7 +38,7 @@ public class JsonDatabaseHelper implements DatabaseHelper{
 
     private void createDatabaseFile() {
         try {
-            fos = this.context.openFileOutput(this.databaseName, Context.MODE_WORLD_READABLE);
+            fos = this.context.openFileOutput(this.databaseName, Context.MODE_PRIVATE);
             JsonObject dataObject = new JsonObject();
             dataObject.addProperty("ANDROID_ID",
                     Settings.Secure.getString(
