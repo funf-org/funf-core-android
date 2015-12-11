@@ -51,8 +51,10 @@ import edu.mit.media.funf.data.Geofencer;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.probe.Probe.DataListener;
 import edu.mit.media.funf.probe.builtin.ProbeKeys;
+import edu.mit.media.funf.storage.DatabaseHelper;
 import edu.mit.media.funf.storage.DefaultArchive;
 import edu.mit.media.funf.storage.FileArchive;
+import edu.mit.media.funf.storage.JsonDatabaseHelper;
 import edu.mit.media.funf.storage.NameValueDatabaseHelper;
 import edu.mit.media.funf.storage.RemoteFileArchive;
 import edu.mit.media.funf.storage.UploadService;
@@ -97,6 +99,9 @@ public class BasicPipeline implements Pipeline, DataListener {
 
   @Configurable
   protected boolean broadcastCollectionState = true;
+
+  @Configurable
+  protected String file_format = "sqlite"; //can be sqlite or json
   
   private UploadService uploader;
 
@@ -104,7 +109,9 @@ public class BasicPipeline implements Pipeline, DataListener {
 
   private boolean enabled;
   private FunfManager manager;
-  private SQLiteOpenHelper databaseHelper = null;
+  //private SQLiteOpenHelper databaseHelper = null;
+  //private JsonDatabaseHelper databaseHelper = null;
+  private DatabaseHelper databaseHelper = null;
   private Looper looper;
   private Handler handler;
   private Handler.Callback callback = new Handler.Callback() {
@@ -142,19 +149,23 @@ public class BasicPipeline implements Pipeline, DataListener {
   };
   
   protected void reloadDbHelper(Context ctx) {
-    this.databaseHelper = new NameValueDatabaseHelper(ctx, StringUtil.simpleFilesafe(name), version);
+    if (this.file_format.equals("json")) {
+      this.databaseHelper = new JsonDatabaseHelper(ctx, StringUtil.simpleFilesafe(name), version);
+      this.databaseHelper.init();
+    } else {
+      this.databaseHelper = new NameValueDatabaseHelper(ctx, StringUtil.simpleFilesafe(name), version);
+      this.databaseHelper.init();
+    }
+
   }
   
   protected void runArchive() {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    // TODO: add check to make sure this is not empty
-    File dbFile = new File(db.getPath());
-    db.close();
+    File dbFile = new File(this.databaseHelper.getPath());
+    this.databaseHelper.finish();
     if (archive.add(dbFile)) {
       dbFile.delete();
     }
     reloadDbHelper(manager);
-    databaseHelper.getWritableDatabase(); // Build new database
   }
 
   private void broadcastDataCollection() {
@@ -179,18 +190,15 @@ public class BasicPipeline implements Pipeline, DataListener {
     broadcastDataCollection();
     if (!geofence.shouldSaveData(name, data)) return;
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
     final double timestamp = data.get(ProbeKeys.BaseProbeKeys.TIMESTAMP).getAsDouble();
-    final String value = data.toString();
+    final IJsonObject value = data;
     if (timestamp == 0L || name == null || value == null) {
         Log.e(LogUtil.TAG, "Unable to save data.  Not all required values specified. " + timestamp + " " + name + " - " + value);
+        //TODO custom exception
         throw new SQLException("Not all required fields specified.");
     }
-    ContentValues cv = new ContentValues();
-    cv.put(NameValueDatabaseHelper.COLUMN_NAME, name);
-    cv.put(NameValueDatabaseHelper.COLUMN_VALUE, value);
-    cv.put(NameValueDatabaseHelper.COLUMN_TIMESTAMP, timestamp);
-    db.insertOrThrow(NameValueDatabaseHelper.DATA_TABLE.name, "", cv);
+
+    this.databaseHelper.insert(name, timestamp, value);
   }
 
 
@@ -272,9 +280,9 @@ public class BasicPipeline implements Pipeline, DataListener {
   }
   
   
-  public SQLiteDatabase getDb() {
-    return databaseHelper.getReadableDatabase();
-  }
+  //public SQLiteDatabase getDb() {
+  //  return databaseHelper.getReadableDatabase();
+  //}
   
   public List<JsonElement> getDataRequests() {
     return data == null ? null : Collections.unmodifiableList(data);
@@ -360,14 +368,14 @@ public class BasicPipeline implements Pipeline, DataListener {
   }
 
 
-  public SQLiteOpenHelper getDatabaseHelper() {
-    return databaseHelper;
-  }
+  //public SQLiteOpenHelper getDatabaseHelper() {
+  //  return databaseHelper;
+  //}
 
 
-  public void setDatabaseHelper(SQLiteOpenHelper databaseHelper) {
-    this.databaseHelper = databaseHelper;
-  }
+  //public void setDatabaseHelper(SQLiteOpenHelper databaseHelper) {
+  //  this.databaseHelper = databaseHelper;
+  //}
 
 
   @Override

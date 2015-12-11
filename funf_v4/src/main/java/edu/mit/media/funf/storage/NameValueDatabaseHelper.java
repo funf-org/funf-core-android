@@ -29,20 +29,22 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import edu.mit.media.funf.json.IJsonObject;
+import edu.mit.media.funf.probe.builtin.ProbeKeys;
 import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.StringUtil;
 import edu.mit.media.funf.util.UuidUtil;
 
-public class NameValueDatabaseHelper extends SQLiteOpenHelper {
+public class NameValueDatabaseHelper extends SQLiteOpenHelper implements DatabaseHelper {
 
 	public static final int CURRENT_VERSION = 1;
 	
-	public static final String COLUMN_NAME = "name";
-	public static final String COLUMN_TIMESTAMP = "timestamp";
-	public static final String COLUMN_VALUE = "value";
+
 	public static final Table DATA_TABLE = new Table("data", 
 			Arrays.asList(new Column(COLUMN_NAME, "TEXT"), // ACTION from data broadcast
 					      new Column(COLUMN_TIMESTAMP, "FLOAT"), // TIMESTAMP in data broadcast
@@ -84,8 +86,35 @@ public class NameValueDatabaseHelper extends SQLiteOpenHelper {
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		// Nothing yet
-	}	
-	
+	}
+
+	@Override
+	public void init() {
+		this.getWritableDatabase();
+	}
+
+	@Override
+	public String getPath() {
+		return this.getWritableDatabase().getPath();
+	}
+
+	@Override
+	public void insert(String name, double timestamp, IJsonObject value) {
+		SQLiteDatabase db = this.getWritableDatabase();
+		final String valueString = value.toString();
+		ContentValues cv = new ContentValues();
+		cv.put(NameValueDatabaseHelper.COLUMN_NAME, name);
+		cv.put(NameValueDatabaseHelper.COLUMN_VALUE, valueString);
+		cv.put(NameValueDatabaseHelper.COLUMN_TIMESTAMP, timestamp);
+		db.insertOrThrow(NameValueDatabaseHelper.DATA_TABLE.name, "", cv);
+
+	}
+
+	@Override
+	public void finish() {
+		this.getWritableDatabase().close();
+	}
+
 	// TODO: Consider moving these to an external utils class
 	/**
 	 * Immutable Table Definition
