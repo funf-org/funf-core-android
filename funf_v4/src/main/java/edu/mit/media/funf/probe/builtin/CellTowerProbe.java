@@ -55,10 +55,28 @@ public class CellTowerProbe extends Base implements CellKeys {
 			GsmCellLocation gsmLocation = (GsmCellLocation) location;
 			gsmLocation.fillInNotifierBundle(data);
 			data.putInt(TYPE, TelephonyManager.PHONE_TYPE_GSM);
+			String networkOperator = manager.getNetworkOperator();
+			int mcc = 0;
+			int mnc = 0;
+			if (networkOperator != null && !networkOperator.isEmpty()) {
+				mcc = Integer.parseInt(networkOperator.substring(0, 3));
+				mnc = Integer.parseInt(networkOperator.substring(3));
+			}
+			data.putInt("mcc", mcc);
+			data.putInt("mnc", mnc);
 		} else if (location instanceof CdmaCellLocation) {
 			CdmaCellLocation cdmaLocation = (CdmaCellLocation) location;
 			cdmaLocation.fillInNotifierBundle(data);
 			data.putInt(TYPE, TelephonyManager.PHONE_TYPE_CDMA);
+			String networkOperator = manager.getNetworkOperator();
+			int mcc = 0;
+			int mnc = 0;
+			if (networkOperator != null && !networkOperator.isEmpty()) {
+				mcc = Integer.parseInt(networkOperator.substring(0, 3));
+				mnc = Integer.parseInt(networkOperator.substring(3));
+			}
+			data.putInt("mcc", mcc);
+			data.putInt("mnc", mnc);
 		} else {
 			data.putInt(TYPE, TelephonyManager.PHONE_TYPE_NONE);
 		}
