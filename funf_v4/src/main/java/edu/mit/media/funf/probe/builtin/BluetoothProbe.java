@@ -63,6 +63,9 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 
 	@Configurable
 	private boolean keepBluetoothVisible = false;
+
+	@Configurable
+	private String bluetooth_id = "";
 	
 	private BluetoothAdapter adapter;	
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -153,6 +156,9 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 			adapter.disable();
 			shouldDisableOnFinish = false;
 		}
+		if (!this.bluetooth_id.isEmpty()) {
+			setBluetoothId();
+		}
 		if (keepBluetoothVisible) {
 			makeVisible();
 		}
@@ -165,6 +171,13 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 			discoverableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			this.getContext().startActivity(discoverableIntent);
 		}
+	}
+
+	private void setBluetoothId() {
+		if (this.bluetooth_id.isEmpty()) return;
+		String currentBluetoothName = adapter.getName();
+		if (currentBluetoothName.contains(this.bluetooth_id)) return;
+		adapter.setName(currentBluetoothName + "$" + this.bluetooth_id + "$");
 	}
 
 	@Override
