@@ -1,8 +1,7 @@
 # Change Log
 
-## [Unreleased](https://github.com/OpenSensing/funf-core-android/tree/HEAD)
-
-[Full Changelog](https://github.com/OpenSensing/funf-core-android/compare/0.4.3...HEAD)
+## [0.4.4](https://github.com/OpenSensing/funf-core-android/tree/0.4.4) (2015-12-20)
+[Full Changelog](https://github.com/OpenSensing/funf-core-android/compare/0.4.3...0.4.4)
 
 **Implemented enhancements:**
 
@@ -20,7 +19,10 @@
 - Bluetooth Probe can be now configured to keep phone discoverable [\#5](https://github.com/OpenSensing/funf-core-android/pull/5) ([h0pbeat](https://github.com/h0pbeat))
 
 ## [0.4.3](https://github.com/OpenSensing/funf-core-android/tree/0.4.3) (2015-10-16)
-[Full Changelog](https://github.com/OpenSensing/funf-core-android/compare/0.4.2...0.4.3)
+[Full Changelog](https://github.com/OpenSensing/funf-core-android/compare/v0.5.0RC1...0.4.3)
+
+## [v0.5.0RC1](https://github.com/OpenSensing/funf-core-android/tree/v0.5.0RC1) (2013-09-19)
+[Full Changelog](https://github.com/OpenSensing/funf-core-android/compare/0.4.2...v0.5.0RC1)
 
 ## [0.4.2](https://github.com/OpenSensing/funf-core-android/tree/0.4.2) (2013-04-10)
 [Full Changelog](https://github.com/OpenSensing/funf-core-android/compare/0.4.1...0.4.2)
