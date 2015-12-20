@@ -45,7 +45,15 @@ public class JsonDatabaseHelper implements DatabaseHelper{
                             this.context.getContentResolver(), Settings.Secure.ANDROID_ID
                     ));
             dataObject.addProperty(this.COLUMN_TIME_OFFSET,
-                    TimeZone.getDefault().getOffset(System.currentTimeMillis())/1000/60);
+                TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000 / 60);
+
+            try {
+                dataObject.addProperty("FUNF_VERSION", FunfManager.funfManager.getVersion());
+            } catch (NullPointerException e) {}
+
+            try {
+                dataObject.addProperty("APPLICATION_VERSION", FunfManager.funfManager.getApplicationVersion());
+            } catch (NullPointerException e) {}
 
             fos.write((dataObject.toString() + "\n").getBytes());
         } catch (FileNotFoundException e) {
