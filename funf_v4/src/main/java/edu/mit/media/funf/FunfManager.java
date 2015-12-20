@@ -789,6 +789,23 @@ public class FunfManager extends Service {
 		sendBroadcast(intent);
 	}
 
+	public void setApplicationVersion(String version) {
+		try {
+			getSharedPreferences("funf_version", MODE_PRIVATE).edit().putString("application_version", version).commit();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public String getApplicationVersion() {
+		try {
+			return getSharedPreferences("funf_version", MODE_PRIVATE).getString("application_version", "unknown");
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			return  "unknown";
+		}
+	}
+
 	////////////////////////////////////////////////////
 
 
