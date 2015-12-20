@@ -37,6 +37,7 @@ import android.util.Log;
 import com.google.gson.JsonObject;
 
 import edu.mit.media.funf.config.Configurable;
+import edu.mit.media.funf.probe.Probe;
 import edu.mit.media.funf.probe.Probe.Base;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.TimeOffsetKeys;
 import edu.mit.media.funf.time.NtpMessage;
@@ -49,6 +50,7 @@ import edu.mit.media.funf.util.LogUtil;
  * @author alangardner
  *
  */
+@Probe.DisplayName("Status of time synchronization")
 public class TimeOffsetProbe extends Base implements TimeOffsetKeys {
 	
 	private static final BigDecimal SECONDS_1900_TO_1970 = new BigDecimal(2208988800L);
