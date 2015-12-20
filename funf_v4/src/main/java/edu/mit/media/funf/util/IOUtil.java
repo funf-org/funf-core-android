@@ -99,6 +99,7 @@ public class IOUtil {
 		} catch (IOException e) {
 			e.printStackTrace();
 			if (responseCode == 401) FunfManager.funfManager.authError(action, accessToken);
+			if (responseCode == 500) FunfManager.funfManager.broadcastServerError("SERVER_ERROR", accessToken);
 		}
 		finally {
 			if (urlConnection != null) {

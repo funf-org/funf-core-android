@@ -171,6 +171,10 @@ public class HttpArchive implements RemoteFileArchive {
 			Log.i(LogUtil.TAG, "Auth Error "+response.getStatusLine().getStatusCode());
 			FunfManager.funfManager.authError(BasicPipeline.ACTION_UPLOAD, accessToken);
 		}
+		if (response.getStatusLine().getStatusCode() == 500) {
+			//Server error
+			FunfManager.funfManager.broadcastServerError("SERVER_ERROR", accessToken);
+		}
 
 
 		return false;

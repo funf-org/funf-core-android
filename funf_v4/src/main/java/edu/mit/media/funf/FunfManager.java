@@ -781,6 +781,14 @@ public class FunfManager extends Service {
 		sendBroadcast(intent);
 	}
 
+	public void broadcastServerError(String action, String accessToken) {
+		Log.i(TAG, "sending serverError broadcast");
+		Intent intent = new Intent(context.getPackageName() + "." + "SERVER_ERROR");
+		intent.putExtra("action", action);
+		intent.putExtra("accessToken", accessToken);
+		sendBroadcast(intent);
+	}
+
 	////////////////////////////////////////////////////
 
 
