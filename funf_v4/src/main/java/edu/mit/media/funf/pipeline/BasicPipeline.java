@@ -105,6 +105,8 @@ public class BasicPipeline implements Pipeline, DataListener {
   
   private UploadService uploader;
 
+  public static BasicPipeline basicPipeline = null;
+
   private Integer savingData = -1;
 
   private boolean enabled;
@@ -204,6 +206,7 @@ public class BasicPipeline implements Pipeline, DataListener {
 
   @Override
   public void onCreate(FunfManager manager) {
+    basicPipeline = this;
     if (archive == null) {
       archive = new DefaultArchive(manager, name);
     }
@@ -259,7 +262,6 @@ public class BasicPipeline implements Pipeline, DataListener {
    * @param config the configuration for the action
    */
   protected void onBeforeRun(int action, JsonElement config) {
-    
   }
   
   /**
@@ -394,5 +396,9 @@ public class BasicPipeline implements Pipeline, DataListener {
 
   public List<JsonElement> getFences() {
     return this.geofence.getFences();
+  }
+
+  public Geofencer getGeofence() {
+    return this.geofence;
   }
 }

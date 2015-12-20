@@ -41,6 +41,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -51,14 +52,17 @@ import com.google.gson.TypeAdapterFactory;
 import edu.mit.media.funf.FunfManager;
 import edu.mit.media.funf.Schedule.DefaultSchedule;
 import edu.mit.media.funf.data.DataNormalizer;
+import edu.mit.media.funf.data.Geofencer;
 import edu.mit.media.funf.json.BundleTypeAdapter;
 import edu.mit.media.funf.json.IJsonObject;
 import edu.mit.media.funf.json.JsonUtils;
+import edu.mit.media.funf.pipeline.BasicPipeline;
 import edu.mit.media.funf.probe.builtin.ProbeKeys.BaseProbeKeys;
 import edu.mit.media.funf.security.HashUtil;
 import edu.mit.media.funf.security.HashUtil.HashingType;
 import edu.mit.media.funf.time.TimeUtil;
 import edu.mit.media.funf.util.LockUtil;
+import edu.mit.media.funf.util.LogUtil;
 
 public interface Probe {
 
@@ -577,12 +581,20 @@ public interface Probe {
 			}
 		}
 
+		private boolean shouldFire() {
+			Geofencer geofence = null;
+			if (BasicPipeline.basicPipeline != null) geofence = BasicPipeline.basicPipeline.getGeofence();
+			if (geofence != null && !geofence.shouldFire(this.getClass().getName())) return false;
+			return true;
+		}
+
 		protected final void enable() {
 			ensureLooperThreadExists();
 			handler.sendMessage(handler.obtainMessage(ENABLE_MESSAGE));
 		}
 
 		protected final void start() {
+			if (!shouldFire()) return;
 			ensureLooperThreadExists();
 			handler.sendMessage(handler.obtainMessage(START_MESSAGE));
 		}
