@@ -152,12 +152,12 @@ public class BluetoothProbe extends Base implements PassiveProbe {
 		if (adapter.isDiscovering()) {
 			adapter.cancelDiscovery();
 		}
+		if (!this.bluetooth_id.isEmpty()) {
+			setBluetoothId();
+		}
 		if (shouldDisableOnFinish) {
 			adapter.disable();
 			shouldDisableOnFinish = false;
-		}
-		if (!this.bluetooth_id.isEmpty()) {
-			setBluetoothId();
 		}
 		if (keepBluetoothVisible) {
 			makeVisible();
