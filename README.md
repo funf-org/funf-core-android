@@ -16,27 +16,27 @@ to gather a wide array of in depth data on users' social behavior.
 Setup data collection across multiple devices by loading a
 [configuration file](https://github.com/funf-org/funf-core-android/wiki/Configuration)
 on the phone, or using the automatic
-[server synchronization](https://github.com/funf-org/funf-core-android/wiki/ServerCommunication.wiki).
+[server synchronization](https://github.com/funf-org/funf-core-android/wiki/ServerCommunication).
 
 ## Customize Collection
 Build your own
-[custom probes](https://github.com/funf-org/funf-core-android/wiki/DevelopingNewProbes.wiki)
+[custom probes](https://github.com/funf-org/funf-core-android/wiki/DevelopingNewProbes)
 to collect the data you want. You can extend existing probes or build a new type
 of probe. You can even combine data from other probes.
 
 ## Reliably Store
 Let Funf ensure the
-[data is reliably stored](https://github.com/funf-org/funf-core-android/wiki/StoringData.wiki),
+[data is reliably stored](https://github.com/funf-org/funf-core-android/wiki/StoringData),
 encrypted, and transparently moved to disks with available space.
 
 ## Automatically Upload
 Gather data from one or more phones automatically by having the
-[data routinely uploaded](https://github.com/funf-org/funf-core-android/wiki/ServerCommunication.wiki)
+[data routinely uploaded](https://github.com/funf-org/funf-core-android/wiki/ServerCommunication)
 to your server.
 
 ## Analyze
 Easily decrypt and merge many data files into
-[one convenient database](https://github.com/funf-org/funf-core-android/wiki/ProcessingData.wiki).
+[one convenient database](https://github.com/funf-org/funf-core-android/wiki/ProcessingData).
 
 
 # How to Build
