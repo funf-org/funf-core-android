@@ -1,0 +1,84 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 17
+    buildToolsVersion "23.0.0"
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 14
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/DEPENDENCIES'
+    }
+}
+
+dependencies {
+    compile files('libs/gson-2.1.jar')
+}
+
+
+def getVersionName = {->
+    println '*** getVersionName'
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'symbolic-ref', '--short', '-q', 'HEAD'
+            standardOutput = stdout
+        }
+
+        def stdout2 = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'log', '-1', '--format=%h'
+            standardOutput = stdout2
+        }
+
+        def stdout3 = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'describe', '--tags', '--abbrev=0'
+            standardOutput = stdout3
+            errorOutput = new ByteArrayOutputStream()
+            ignoreExitValue = true
+        }
+
+
+        def return_value = stdout3.toString().trim() + "-" +stdout.toString().trim() + "-" + stdout2.toString().trim()
+        println "return_value: "+return_value
+
+        def assetsDir = android.sourceSets.main.assets.srcDirs.toArray()[0]
+        println "assetsDir: "+assetsDir
+
+        def assetsDirObject = new File(assetsDir, '')
+
+        if (!assetsDirObject.exists()) {
+            assetsDirObject.mkdirs();
+        }
+
+        def buildInfoFile = new File(assetsDir, 'build.info').getAbsolutePath()
+        println "buildInfoFile: "+buildInfoFile
+
+        new File(buildInfoFile).write(return_value);
+
+        return return_value
+    }
+    catch (ignored) {
+        return null;
+    }
+
+}
+
+android {
+    defaultConfig {
+        versionName getVersionName()
+    }
+}
