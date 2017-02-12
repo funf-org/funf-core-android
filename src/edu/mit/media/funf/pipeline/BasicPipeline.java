@@ -253,6 +253,10 @@ public class BasicPipeline implements Pipeline, DataListener {
         this.databaseHelper = new NameValueDatabaseHelper(ctx, StringUtil.simpleFilesafe(name), version);
     }
 
+    public SQLiteOpenHelper getDbHelper() {
+        return this.databaseHelper;
+    }
+    
     public String getName() {
         return name;
     }
