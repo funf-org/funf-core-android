@@ -1,0 +1,325 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+* .gitignore
+* .idea/
+* .idea/compiler.xml
+* .idea/copyright/
+* .idea/copyright/profiles_settings.xml
+* .idea/misc.xml
+* .idea/workspace.xml
+* README.md
+* ant.properties
+* app/
+* app/build.gradle
+* app/lint.xml
+* app/src/
+* app/src/main/
+* app/src/main/AndroidManifest.xml
+* app/src/main/java/
+* app/src/main/java/com/
+* app/src/main/java/com/google/
+* app/src/main/java/com/google/gson/
+* app/src/main/java/com/google/gson/internal/
+* app/src/main/java/com/google/gson/internal/bind/
+* app/src/main/java/com/google/gson/internal/bind/JsonTreeReader.java
+* app/src/main/java/com/google/gson/internal/bind/JsonTreeWriter.java
+* app/src/main/java/edu/
+* app/src/main/java/edu/mit/
+* app/src/main/java/edu/mit/media/
+* app/src/main/java/edu/mit/media/funf/
+* app/src/main/java/edu/mit/media/funf/FunfManager.java
+* app/src/main/java/edu/mit/media/funf/Launcher.java
+* app/src/main/java/edu/mit/media/funf/Schedule.java
+* app/src/main/java/edu/mit/media/funf/action/
+* app/src/main/java/edu/mit/media/funf/action/Action.java
+* app/src/main/java/edu/mit/media/funf/action/ActionAdapter.java
+* app/src/main/java/edu/mit/media/funf/action/RunArchiveAction.java
+* app/src/main/java/edu/mit/media/funf/action/RunUpdateAction.java
+* app/src/main/java/edu/mit/media/funf/action/RunUploadAction.java
+* app/src/main/java/edu/mit/media/funf/action/StartDataSourceAction.java
+* app/src/main/java/edu/mit/media/funf/action/StartableAction.java
+* app/src/main/java/edu/mit/media/funf/action/StopDataSourceAction.java
+* app/src/main/java/edu/mit/media/funf/action/WriteDataAction.java
+* app/src/main/java/edu/mit/media/funf/config/
+* app/src/main/java/edu/mit/media/funf/config/ConfigRewriteUtil.java
+* app/src/main/java/edu/mit/media/funf/config/ConfigUpdater.java
+* app/src/main/java/edu/mit/media/funf/config/Configurable.java
+* app/src/main/java/edu/mit/media/funf/config/ConfigurableTypeAdapterFactory.java
+* app/src/main/java/edu/mit/media/funf/config/ContextInjectorTypeAdapaterFactory.java
+* app/src/main/java/edu/mit/media/funf/config/DefaultRuntimeTypeAdapterFactory.java
+* app/src/main/java/edu/mit/media/funf/config/DefaultScheduleSerializer.java
+* app/src/main/java/edu/mit/media/funf/config/HttpConfigUpdater.java
+* app/src/main/java/edu/mit/media/funf/config/ListenerInjectorTypeAdapterFactory.java
+* app/src/main/java/edu/mit/media/funf/config/RuntimeTypeAdapterFactory.java
+* app/src/main/java/edu/mit/media/funf/config/SingletonTypeAdapterFactory.java
+* app/src/main/java/edu/mit/media/funf/data/
+* app/src/main/java/edu/mit/media/funf/data/DataNormalizer.java
+* app/src/main/java/edu/mit/media/funf/datasource/
+* app/src/main/java/edu/mit/media/funf/datasource/CompositeDataSource.java
+* app/src/main/java/edu/mit/media/funf/datasource/DataSource.java
+* app/src/main/java/edu/mit/media/funf/datasource/ProbeDataSource.java
+* app/src/main/java/edu/mit/media/funf/datasource/Startable.java
+* app/src/main/java/edu/mit/media/funf/datasource/StartableDataSource.java
+* app/src/main/java/edu/mit/media/funf/filter/
+* app/src/main/java/edu/mit/media/funf/filter/CompositeFilter.java
+* app/src/main/java/edu/mit/media/funf/filter/KeyValueFilter.java
+* app/src/main/java/edu/mit/media/funf/filter/LocalTimeOfDayFilter.java
+* app/src/main/java/edu/mit/media/funf/filter/ProbabilisticFilter.java
+* app/src/main/java/edu/mit/media/funf/json/
+* app/src/main/java/edu/mit/media/funf/json/BundleTypeAdapter.java
+* app/src/main/java/edu/mit/media/funf/json/IJsonArray.java
+* app/src/main/java/edu/mit/media/funf/json/IJsonObject.java
+* app/src/main/java/edu/mit/media/funf/json/JsonUtils.java
+* app/src/main/java/edu/mit/media/funf/math/
+* app/src/main/java/edu/mit/media/funf/math/FFT.java
+* app/src/main/java/edu/mit/media/funf/math/MFCC.java
+* app/src/main/java/edu/mit/media/funf/math/Matrix.java
+* app/src/main/java/edu/mit/media/funf/math/Window.java
+* app/src/main/java/edu/mit/media/funf/pipeline/
+* app/src/main/java/edu/mit/media/funf/pipeline/BasicPipeline.java
+* app/src/main/java/edu/mit/media/funf/pipeline/Pipeline.java
+* app/src/main/java/edu/mit/media/funf/pipeline/PipelineFactory.java
+* app/src/main/java/edu/mit/media/funf/probe/
+* app/src/main/java/edu/mit/media/funf/probe/Probe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/
+* app/src/main/java/edu/mit/media/funf/probe/builtin/AccelerometerFeaturesProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/AccelerometerSensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/AccountsProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ActivityProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/AlarmProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/AndroidInfoProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ApplicationsProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/AudioCaptureProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/AudioFeaturesProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/AudioMediaProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/BatteryProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/BluetoothProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/BrowserBookmarksProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/BrowserSearchesProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/CallLogProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/CellTowerProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ContactProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ContentProviderProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/DatedContentProviderProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/GravitySensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/GyroscopeSensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/HardwareInfoProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ImageCaptureProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ImageMediaProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ImpulseProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/LightSensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/LinearAccelerationSensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/LocationProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/MagneticFieldSensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/OrientationSensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/PressureSensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ProbeKeys.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ProcessStatisticsProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ProximitySensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/RotationVectorSensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/RunningApplicationsProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ScreenProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/SensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/ServicesProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/SimpleLocationProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/SimpleProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/SmsProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/TelephonyProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/TemperatureSensorProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/TimeOffsetProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/VideoCaptureProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/VideoMediaProbe.java
+* app/src/main/java/edu/mit/media/funf/probe/builtin/WifiProbe.java
+* app/src/main/java/edu/mit/media/funf/security/
+* app/src/main/java/edu/mit/media/funf/security/Base64Coder.java
+* app/src/main/java/edu/mit/media/funf/security/HashUtil.java
+* app/src/main/java/edu/mit/media/funf/security/MD5.java
+* app/src/main/java/edu/mit/media/funf/security/RSAEncode.java
+* app/src/main/java/edu/mit/media/funf/storage/
+* app/src/main/java/edu/mit/media/funf/storage/BackedUpArchive.java
+* app/src/main/java/edu/mit/media/funf/storage/CompositeFileArchive.java
+* app/src/main/java/edu/mit/media/funf/storage/DefaultArchive.java
+* app/src/main/java/edu/mit/media/funf/storage/DirectoryCleaner.java
+* app/src/main/java/edu/mit/media/funf/storage/FileArchive.java
+* app/src/main/java/edu/mit/media/funf/storage/FileCopier.java
+* app/src/main/java/edu/mit/media/funf/storage/FileDirectoryArchive.java
+* app/src/main/java/edu/mit/media/funf/storage/HttpArchive.java
+* app/src/main/java/edu/mit/media/funf/storage/LargeFileArchive.java
+* app/src/main/java/edu/mit/media/funf/storage/NameValueDatabaseHelper.java
+* app/src/main/java/edu/mit/media/funf/storage/RemoteFileArchive.java
+* app/src/main/java/edu/mit/media/funf/storage/UploadService.java
+* app/src/main/java/edu/mit/media/funf/time/
+* app/src/main/java/edu/mit/media/funf/time/DecimalTimeUnit.java
+* app/src/main/java/edu/mit/media/funf/time/NtpMessage.java
+* app/src/main/java/edu/mit/media/funf/time/TimeUnit.java
+* app/src/main/java/edu/mit/media/funf/time/TimeUtil.java
+* app/src/main/java/edu/mit/media/funf/util/
+* app/src/main/java/edu/mit/media/funf/util/AnnotationUtil.java
+* app/src/main/java/edu/mit/media/funf/util/ArrayUtil.java
+* app/src/main/java/edu/mit/media/funf/util/AsyncSharedPrefs.java
+* app/src/main/java/edu/mit/media/funf/util/BundleUtil.java
+* app/src/main/java/edu/mit/media/funf/util/CameraUtil.java
+* app/src/main/java/edu/mit/media/funf/util/EqualsUtil.java
+* app/src/main/java/edu/mit/media/funf/util/FileUtil.java
+* app/src/main/java/edu/mit/media/funf/util/HashCodeUtil.java
+* app/src/main/java/edu/mit/media/funf/util/IOUtil.java
+* app/src/main/java/edu/mit/media/funf/util/LockUtil.java
+* app/src/main/java/edu/mit/media/funf/util/LogUtil.java
+* app/src/main/java/edu/mit/media/funf/util/NameGenerator.java
+* app/src/main/java/edu/mit/media/funf/util/StringUtil.java
+* app/src/main/java/edu/mit/media/funf/util/UuidUtil.java
+* app/src/main/res/
+* app/src/main/res/values/
+* app/src/main/res/values/strings.xml
+* app/src/main/resources/
+* app/src/main/resources/edu/
+* app/src/main/resources/edu/mit/
+* app/src/main/resources/edu/mit/media/
+* app/src/main/resources/edu/mit/media/funf/
+* app/src/main/resources/edu/mit/media/funf/probe/
+* app/src/main/resources/edu/mit/media/funf/probe/.DS_Store
+* build.gradle
+* build.xml
+* custom_rules.xml
+* default.properties
+* gradle/
+* gradle/wrapper/
+* gradle/wrapper/gradle-wrapper.jar
+* gradle/wrapper/gradle-wrapper.properties
+* gradlew
+* gradlew.bat
+* proguard-project.txt
+* proguard.cfg
+* settings.gradle
+* test/
+* test/.classpath
+* test/.gitignore
+* test/.project
+* test/AndroidManifest.xml
+* test/ant.properties
+* test/build.xml
+* test/default.properties
+* test/local.properties
+* test/old/
+* test/old/AccountsProbeTest.java
+* test/old/ActivityProbeTest.java
+* test/old/AndroidInfoProbeTest.java
+* test/old/ApplicationsProbeTest.java
+* test/old/AudioFilesProbeTest.java
+* test/old/BatteryProbeTest.java
+* test/old/BluetoothProbeTest.java
+* test/old/BrowserBookmarksProbeTest.java
+* test/old/BrowserSearchesProbeTest.java
+* test/old/CallLogProbeTest.java
+* test/old/CellProbeTest.java
+* test/old/ContactProbeTest.java
+* test/old/GravitySensorProbeTest.java
+* test/old/HardwareInfoProbeTest.java
+* test/old/ImagesProbeTest.java
+* test/old/LightSensorProbeTest.java
+* test/old/LocationProbeTest.java
+* test/old/ProbeUtilsTest.java
+* test/old/ProcessStatisticsProbeTest.java
+* test/old/RunningApplicationsProbeTest.java
+* test/old/SMSProbeTest.java
+* test/old/ServicesProbeTest.java
+* test/old/TelephonyProbeTest.java
+* test/old/TemperatureSensorProbeTest.java
+* test/old/TimeOffsetProbeTest.java
+* test/old/VideosProbeTest.java
+* test/old/WifiProbeTest.java
+* test/proguard-project.txt
+* test/proguard.cfg
+* test/project.properties
+* test/res/
+* test/res/.gitignore
+* test/res/values/
+* test/res/values/strings.xml
+* test/src/
+* test/src/edu/
+* test/src/edu/mit/
+* test/src/edu/mit/media/
+* test/src/edu/mit/media/funf/
+* test/src/edu/mit/media/funf/AsyncSharedPrefsTest.java
+* test/src/edu/mit/media/funf/FunfManagerTest.java
+* test/src/edu/mit/media/funf/TestPipeline.java
+* test/src/edu/mit/media/funf/config/
+* test/src/edu/mit/media/funf/config/TestConfigurableParsing.java
+* test/src/edu/mit/media/funf/pipeline/
+* test/src/edu/mit/media/funf/pipeline/BasicPipelineTest.java
+* test/src/edu/mit/media/funf/probe/
+* test/src/edu/mit/media/funf/probe/AnnotationsTest.java
+* test/src/edu/mit/media/funf/probe/ProbeTest.java
+* test/src/edu/mit/media/funf/probe/ProbeTestCase.java
+* test/src/edu/mit/media/funf/probe/builtin/
+* test/src/edu/mit/media/funf/probe/builtin/ContactProbeTest.java
+* test/src/edu/mit/media/funf/probe/builtin/RunningApplicationsProbeTest.java
+* test/src/edu/mit/media/funf/probe/builtin/ServicesProbeTest.java
+* test/src/edu/mit/media/funf/probe/builtin/TelephonyProbeTest.java
+* test/src/edu/mit/media/funf/probe/builtin/TestAllBuiltinProbes.java
+* test/src/edu/mit/media/funf/probe/builtin/TestLocationProbes.java
+* test/src/edu/mit/media/funf/storage/
+* test/src/edu/mit/media/funf/storage/DefaultArchiveTest.java
+* test/src/edu/mit/media/funf/storage/PrefsWriteSpeedTest.java
+* test/src/edu/mit/media/funf/tests/
+* test/src/edu/mit/media/funf/tests/ExampleService.java
+* test/src/edu/mit/media/funf/tests/SensorTest.java
+
+Replaced Jars with Dependencies:
+--------------------------------
+The importer recognized the following .jar files as third party
+libraries and replaced them with Gradle dependencies instead. This has
+the advantage that more explicit version information is known, and the
+libraries can be updated automatically. However, it is possible that
+the .jar file in your project was of an older version than the
+dependency we picked, which could render the project not compileable.
+You can disable the jar replacement in the import wizard and try again:
+
+gson-2.1-javadoc.jar => com.google.code.gson:gson:2.3.1
+gson-2.1-sources.jar => com.google.code.gson:gson:2.3.1
+gson-2.1.jar => com.google.code.gson:gson:2.1
+
+Potentially Missing Dependency:
+-------------------------------
+When we replaced the following .jar files with a Gradle dependency, we
+inferred the dependency version number from the filename. This
+specific version may not actually be available from the repository.
+If you get a build error stating that the dependency is missing, edit
+the version number to for example "+" to pick up the latest version
+instead. (This may require you to update your code if the library APIs
+have changed.)
+
+gson-2.1.jar => version 2.1 in com.google.code.gson:gson:2.1
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+* AndroidManifest.xml => app/src/main/AndroidManifest.xml
+* lint.xml => app/lint.xml
+* res/ => app/src/main/res/
+* src/ => app/src/main/java/
+* src/edu/mit/media/funf/probe/.DS_Store => app/src/main/resources/edu/mit/media/funf/probe/.DS_Store
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)

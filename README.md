@@ -38,20 +38,14 @@ to your server.
 Easily decrypt and merge many data files into
 [one convenient database](https://github.com/funf-org/funf-core-android/wiki/ProcessingData).
 
-
 # How to Build
-The Funf project can be used as an Android library, or can be packaged as a jar file.
-The typical method of using Funf is by using the Funf jar file.  To build the funf jar
-file, use the 'release' target of the Ant build script.  (Make sure you have ant 1.8.*
-or later installed.)  Then, copy the jar file (bin/funf.jar) to the libs directory of your project.
-The Android build scripts (Command line Ant or in Eclipse) will take care of compiling
-the jar.
+The Funf project can be used as an Android library module, or can be packaged as a compiled ARR/JAR
+file. The typical method of using Funf is by using an ARR/JAR file. See the [Android
+documentation](https://developer.android.com/studio/projects/android-library.html) for building the
+ARR/JAR file.
 
-If you think that you will be making frequent changes to the Funf library, you may
-want to integrate Funf as a library project.
-To use it as an Android library, add this project as a library dependency of your
-Android application project.  See the Android documentation for integrating a
-library project for
-[Eclipse projects](http://developer.android.com/guide/developing/projects/projects-eclipse.html#ReferencingLibraryProject) 
-or via the
-[command line](http://developer.android.com/guide/developing/projects/projects-cmdline.html#ReferencingLibraryProject).
+If you think that you will be making frequent changes to the Funf library, you may want to integrate
+Funf as a library module. To use it as an Android library, add this project as a library dependency
+of your Android application project. See the [Android
+documentation](https://developer.android.com/studio/projects/android-library.html) for integrating a
+library project.

@@ -1,4 +1,14 @@
-bin/*
-gen/*
-*.log
+# Specifies intentionally untracked files to ignore when using Git.
+# http://git-scm.com/docs/gitignore
+
+# IntelliJ
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+build/
 local.properties
+
+# macOS
+.DS_Store
