@@ -744,10 +744,8 @@ public interface Probe {
 		 ********************************/
 
 		/** 
-		 * Sensitive data is hidden by default
-		 * This can not be changed by configuration alone
-		 * If you uncomment this line please submit the change
-		 * to funf@media.mit.edu in accordance with the LGPL license. *
+		 * Sensitive data is hidden by default.
+		 * This can not be changed by configuration alone.
 		 */
 		//@Configurable
 		private boolean hideSensitiveData = true;
